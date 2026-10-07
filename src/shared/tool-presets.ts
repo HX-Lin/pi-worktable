@@ -10,6 +10,12 @@ export const PRESET_NONE: string[] = [];
 export const PRESET_DEFAULT: string[] = ["read", "bash", "edit", "write"];
 export const PRESET_FULL: string[] = ["bash", "read", "edit", "write", "grep", "find", "ls"];
 
+/**
+ * Extension tools the `full` preset also activates. Kept out of `PRESET_FULL` so preset detection
+ * still recognizes a full loadout whether or not an extension activated them.
+ */
+export const PRESET_FULL_EXTENSIONS: string[] = ["codemode"];
+
 const BUILTIN_TOOL_NAMES = new Set(PRESET_FULL);
 
 export function getPresetFromTools(tools: ToolEntry[]): ToolPreset {
@@ -29,6 +35,6 @@ export function getPresetFromTools(tools: ToolEntry[]): ToolPreset {
 
 export function getToolNamesForPreset(preset: ToolPreset): string[] {
   if (preset === "none") return [...PRESET_NONE];
-  if (preset === "full") return [...PRESET_FULL];
+  if (preset === "full") return [...PRESET_FULL, ...PRESET_FULL_EXTENSIONS];
   return [...PRESET_DEFAULT];
 }

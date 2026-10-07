@@ -94,7 +94,7 @@ const requiredMarkers = [
   ["src/agent-host/builtin-providers.ts", "createToolSearchExtension"],
   ["src/agent-host/builtin-providers.ts", "createMcpExtension"],
   ["src/agent-host/builtin-providers.ts", "builtin: true"],
-  ["src/agent-host/rpc-manager.ts", "NON_DIRECT_EXPOSURES"],
+  ["src/agent-host/tool-activation.ts", "NON_DIRECT_EXPOSURES"],
   ["scripts/build-runtime.mjs", "quickjs-wasi"],
   // Pre-existing contract markers.
   ["src/agent-host/model-runtime.ts", "allowNetwork: true"],

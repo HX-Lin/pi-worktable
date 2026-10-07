@@ -26,6 +26,7 @@ import {
 } from "../shared/auto-compact";
 import { createDesktopSystemPromptExtension, type DesktopPromptSettings } from "./system-prompt-extension";
 import { readHostSettings } from "./host-settings";
+import { withExtensionTools } from "./tool-activation";
 import { getFoldSession } from "./context-fold";
 import { MEMORY_DISTILLATION_PROMPT } from "./memory-prompt";
 import { planMemoryCompaction, type MemoryCompactionPlan } from "./memory-compaction";
@@ -112,7 +113,6 @@ type ExtensionBindingOptions = {
 
 export type ExternalSessionCommand = "compact" | "memory" | "reload";
 
-const CODING_TOOL_NAMES = ["read", "bash", "edit", "write", "grep", "find", "ls"];
 const LEGACY_CHANNEL_PROMPT = /^\[外部消息来源：(微信|Telegram|飞书 \/ Lark)\]\n/;
 const LEGACY_CHANNEL_PROMPT_DELIMITER = "\n---\n";
 
@@ -144,25 +144,6 @@ function stripLegacyChannelPrompts(messages: unknown[]): unknown[] {
     });
     return changed ? { ...message, content } : message;
   });
-}
-
-/** Tools with these exposures are callable from scripts without being declared to the model. */
-const NON_DIRECT_EXPOSURES = new Set(["codemode", "deferred", "hidden"]);
-
-function withExtensionTools(session: AgentSessionLike, toolNames: string[]): string[] {
-  if (toolNames.length === 0) return [];
-
-  const codingToolNames = new Set(CODING_TOOL_NAMES);
-  const extensionToolNames = session
-    .getAllTools()
-    .filter((tool) => !codingToolNames.has(tool.name))
-    // `codemode`/`deferred` tools (MCP tools, by default) are reached through codemode scripts and
-    // `tool_search`; activating them would declare every MCP tool to every request. `hidden` tools
-    // stay unreachable. Only `direct` extension tools join the active set.
-    .filter((tool) => !NON_DIRECT_EXPOSURES.has(tool.exposure ?? "direct"))
-    .map((tool) => tool.name);
-
-  return [...new Set([...toolNames, ...extensionToolNames])];
 }
 
 // ============================================================================
