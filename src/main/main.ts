@@ -64,6 +64,9 @@ const LEGACY_MIGRATION_ENTRIES = [
   "channels.state.json",
   "channel-media",
   "channel-workspaces",
+  // Renderer preferences (theme choice, drafts) live in Chromium's local storage, not in a file we
+  // own. The legacy app is stopped when this runs, so copying the store is safe.
+  "Local Storage",
 ];
 
 function migrateLegacyUserData(): void {
