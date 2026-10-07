@@ -18,7 +18,6 @@
  */
 import type { ExtensionAPI, InlineExtension, SessionBeforeCompactEvent } from "@earendil-works/pi-coding-agent";
 import type { Usage } from "@earendil-works/pi-ai";
-import { MEMORY_DISTILLATION_PROMPT } from "../../memory-prompt";
 import { estimateTokens, goalFromMessages, type JevAsker, type JevResponse } from "../../vendor/jev/index";
 import { readJevSettings, type JevCompactionSettings, type JevSettings } from "../settings";
 import { getJevRuntime, type JevRuntime } from "../service";
@@ -149,17 +148,6 @@ export async function runJevCompaction(
   };
 }
 
-/**
- * True only for this app's memory-distillation prompt. Plain context compaction
- * may also carry custom focus instructions and must still be eligible for Jev.
- */
-export function isMemoryCompaction(customInstructions: unknown): boolean {
-  return (
-    typeof customInstructions === "string" &&
-    customInstructions.startsWith(MEMORY_DISTILLATION_PROMPT.split("\n", 1)[0])
-  );
-}
-
 export function jevCompactionActive(settings: JevSettings = readJevSettings()): boolean {
   return settings.enabled && settings.compaction.enabled;
 }
@@ -170,9 +158,6 @@ export const JEV_COMPACTION_EXTENSION: InlineExtension = {
     pi.on("session_before_compact", async (event, ctx) => {
       try {
         if (!jevCompactionActive()) return undefined;
-        // Only the memory-distillation prompt opts out; other custom focus
-        // instructions still belong to context compaction.
-        if (isMemoryCompaction(event.customInstructions)) return undefined;
         if (event.signal?.aborted) return undefined;
 
         const runtime = await getJevRuntime(ctx.modelRegistry);

@@ -293,11 +293,6 @@ export async function contextFold(sessionId: string, command: ContextFoldCommand
   return call("context.fold", { sessionId, command });
 }
 
-/** Read-only summary of what "压缩为记忆" has stored for a session. */
-export async function memoryOverview(sessionId: string) {
-  return call("memory.overview", { sessionId });
-}
-
 export async function listWorktrees(projectRoot: string) {
   return call("worktrees.list", { projectRoot });
 }

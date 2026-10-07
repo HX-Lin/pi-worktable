@@ -196,103 +196,6 @@ test("a finished turn archives its file diff as a UI-only session entry", async 
   }
 });
 
-test("a chat past the turn threshold triggers automatic compaction", async () => {
-  const { AgentSessionWrapper } = await loadRpcManager();
-  const { inner, state } = createFakeSession({ branch: conversationTurns(AUTO_COMPACT_TURN_THRESHOLD) });
-  const wrapper = new AgentSessionWrapper(inner);
-  try {
-    await wrapper.runExternalTurn({ runId: "run-auto", message: "hello", channel: "telegram" });
-    await waitFor(() => state.compactCalls === 1);
-    assert.equal(state.compactCalls, 1);
-    // Desktop compactions are memory compactions, so the distillation prompt is
-    // attached and the trigger reason is spelled out on top of it.
-    const instructions = String(state.compactInstructions[0]);
-    assert.match(instructions, /压缩为记忆/);
-    assert.match(instructions, new RegExp(`已达到 ${AUTO_COMPACT_TURN_THRESHOLD} 条对话`));
-    assert.ok(countBranchConversationMessages(state.branch) < AUTO_COMPACT_TURN_THRESHOLD * 3);
-  } finally {
-    wrapper.destroy();
-  }
-});
-
-test("context pressure takes priority without resetting the independent memory turn threshold", async () => {
-  const { AgentSessionWrapper } = await loadRpcManager();
-  const { inner, state } = createFakeSession({
-    branch: conversationTurns(AUTO_COMPACT_TURN_THRESHOLD),
-    contextUsage: { percent: 82, contextWindow: 200_000, tokens: 164_000 },
-  });
-  inner.compact = async (instructions) => {
-    state.compactCalls += 1;
-    state.compactInstructions.push(instructions ?? null);
-    if (instructions) state.branch = state.branch.slice(-6);
-    else state.contextUsage = { percent: 40, contextWindow: 200_000, tokens: 80_000 };
-  };
-  const wrapper = new AgentSessionWrapper(inner);
-  try {
-    await wrapper.runExternalTurn({ runId: "run-both", message: "hello", channel: "telegram" });
-    await waitFor(() => state.compactCalls === 2);
-    assert.equal(state.compactInstructions[0], null);
-    assert.match(String(state.compactInstructions[1]), /压缩为记忆/);
-    await settle();
-    assert.equal(state.compactCalls, 2);
-  } finally {
-    wrapper.destroy();
-  }
-});
-
-test("a memory compaction that does not shrink history cannot block context compaction", async () => {
-  const { AgentSessionWrapper } = await loadRpcManager();
-  const { inner, state } = createFakeSession({
-    branch: conversationTurns(AUTO_COMPACT_TURN_THRESHOLD),
-    contextUsage: { percent: 70, contextWindow: 200_000, tokens: 140_000 },
-  });
-  inner.compact = async (instructions) => {
-    state.compactCalls += 1;
-    state.compactInstructions.push(instructions ?? null);
-    state.contextUsage = {
-      percent: instructions ? 82 : 40,
-      contextWindow: 200_000,
-      tokens: instructions ? 164_000 : 80_000,
-    };
-  };
-  const wrapper = new AgentSessionWrapper(inner);
-  try {
-    await wrapper.runExternalTurn({ runId: "run-memory-first", message: "hello", channel: "telegram" });
-    await waitFor(() => state.compactCalls === 2);
-    assert.match(String(state.compactInstructions[0]), /压缩为记忆/);
-    assert.equal(state.compactInstructions[1], null);
-    await settle();
-    assert.equal(state.compactCalls, 2);
-  } finally {
-    wrapper.destroy();
-  }
-});
-
-test("a failed context compaction does not suppress turn-count memory compaction", async () => {
-  const { AgentSessionWrapper } = await loadRpcManager();
-  const { inner, state } = createFakeSession({
-    branch: conversationTurns(AUTO_COMPACT_TURN_THRESHOLD),
-    contextUsage: { percent: 82, contextWindow: 200_000, tokens: 164_000 },
-  });
-  inner.compact = async (instructions) => {
-    state.compactCalls += 1;
-    state.compactInstructions.push(instructions ?? null);
-    if (!instructions) throw new Error("context summary unavailable");
-    state.branch = state.branch.slice(-6);
-  };
-  const wrapper = new AgentSessionWrapper(inner);
-  try {
-    await wrapper.runExternalTurn({ runId: "run-context-fail", message: "hello", channel: "telegram" });
-    await waitFor(() => state.compactCalls === 2);
-    assert.equal(state.compactInstructions[0], null);
-    assert.match(String(state.compactInstructions[1]), /压缩为记忆/);
-    await settle();
-    assert.equal(state.compactCalls, 2);
-  } finally {
-    wrapper.destroy();
-  }
-});
-
 test("many assistant steps in a few turns never auto-compact", async () => {
   const { AgentSessionWrapper } = await loadRpcManager();
   // One turn that produced 140 assistant steps used to look like 140 messages.
@@ -300,7 +203,7 @@ test("many assistant steps in a few turns never auto-compact", async () => {
   const { inner, state } = createFakeSession({ branch });
   const wrapper = new AgentSessionWrapper(inner);
   try {
-    await wrapper.runExternalTurn({ runId: "run-steps", message: "hello", channel: "telegram" });
+    await wrapper.runExternalTurn({ runId: "run-steps", message: "hello", channel: "feishu" });
     await settle();
     assert.ok(countBranchConversationMessages(state.branch) > AUTO_COMPACT_TURN_THRESHOLD * 2);
     assert.equal(state.compactCalls, 0);
@@ -314,26 +217,9 @@ test("a short session never auto-compacts", async () => {
   const { inner, state } = createFakeSession({ branch: conversationTurns(AUTO_COMPACT_TURN_THRESHOLD - 2) });
   const wrapper = new AgentSessionWrapper(inner);
   try {
-    await wrapper.runExternalTurn({ runId: "run-short", message: "hello", channel: "telegram" });
+    await wrapper.runExternalTurn({ runId: "run-short", message: "hello", channel: "feishu" });
     await settle();
     assert.equal(state.compactCalls, 0);
-  } finally {
-    wrapper.destroy();
-  }
-});
-
-test("pi's auto-context switch cannot disable turn-count memory compaction", async () => {
-  const { AgentSessionWrapper } = await loadRpcManager();
-  const { inner, state } = createFakeSession({
-    branch: conversationTurns(AUTO_COMPACT_TURN_THRESHOLD),
-    autoCompactionEnabled: false,
-    contextUsage: { percent: 82, contextWindow: 200_000, tokens: 164_000 },
-  });
-  const wrapper = new AgentSessionWrapper(inner);
-  try {
-    await wrapper.runExternalTurn({ runId: "run-off", message: "hello", channel: "telegram" });
-    await waitFor(() => state.compactCalls === 1);
-    assert.match(String(state.compactInstructions[0]), /压缩为记忆/);
   } finally {
     wrapper.destroy();
   }
@@ -348,27 +234,11 @@ test("pi's auto-context switch still disables percent-based compaction", async (
   });
   const wrapper = new AgentSessionWrapper(inner);
   try {
-    await wrapper.runExternalTurn({ runId: "run-context-off", message: "hello", channel: "telegram" });
+    await wrapper.runExternalTurn({ runId: "run-context-off", message: "hello", channel: "feishu" });
     await settle();
     assert.equal(state.compactCalls, 0);
   } finally {
     wrapper.destroy();
-  }
-});
-
-test("the persisted threshold setting decides when to compact", async () => {
-  const { AgentSessionWrapper } = await loadRpcManager();
-  writeFileSync(path.join(agentDir, "pi-desktop-settings.json"), JSON.stringify({ autoCompactTurns: 5 }), "utf8");
-  const { inner, state } = createFakeSession({ branch: conversationTurns(5) });
-  const wrapper = new AgentSessionWrapper(inner);
-  try {
-    await wrapper.runExternalTurn({ runId: "run-setting", message: "hello", channel: "telegram" });
-    await waitFor(() => state.compactCalls === 1);
-    assert.equal(state.compactCalls, 1);
-    assert.match(String(state.compactInstructions[0]), /已达到 5 条对话/);
-  } finally {
-    wrapper.destroy();
-    rmSync(path.join(agentDir, "pi-desktop-settings.json"), { force: true });
   }
 });
 
@@ -411,7 +281,7 @@ test("a filling context window compacts the context without deleting history", a
   });
   const wrapper = new AgentSessionWrapper(inner);
   try {
-    await wrapper.runExternalTurn({ runId: "run-window", message: "hello", channel: "telegram" });
+    await wrapper.runExternalTurn({ runId: "run-window", message: "hello", channel: "feishu" });
     await waitFor(() => state.compactCalls === 1);
     // pi's own summarization prompt: no distillation instructions attached...
     assert.equal(state.compactInstructions[0], null);
@@ -423,115 +293,12 @@ test("a filling context window compacts the context without deleting history", a
   }
 });
 
-test("a plain compact command is a context compaction, not a memory compaction", async () => {
-  const { AgentSessionWrapper } = await loadRpcManager();
-  const { inner, state } = createFakeSession({ branch: conversationTurns(2) });
-  const wrapper = new AgentSessionWrapper(inner);
-
-  await wrapper.send({ type: "compact", customInstructions: "focus" });
-  assert.equal(state.compactCalls, 1);
-  // pi's own summarization prompt only: no distillation instructions attached.
-  assert.equal(state.compactInstructions[0], "focus");
-
-  await wrapper.send({ type: "compact", mode: "memory" });
-  assert.equal(state.compactCalls, 2);
-  assert.match(String(state.compactInstructions[1]), /^这是一次「压缩为记忆」/);
-
-  wrapper.destroy();
-});
-
-test("a memory compaction loads the rewritten memory back into the session", async () => {
-  const { AgentSessionWrapper } = await loadRpcManager();
-  const dir = mkdtempSync(path.join(tmpdir(), "pi-compact-load-"));
-  const filePath = path.join(dir, "session.jsonl");
-  // The span that leaves the context has to be worth removing (see
-  // MEMORY_PRUNE_MIN_BYTES), so the fixture holds a realistic amount of history.
-  const history = Array.from({ length: 80 }, (_, index) => ({
-    type: "message",
-    id: `m${index + 1}`,
-    parentId: index === 0 ? null : `m${index}`,
-    message: { role: "user", content: `turn ${index + 1} ${"x".repeat(1024)}` },
-  }));
-  writeFileSync(
-    filePath,
-    `${[
-      { type: "session", version: 3, id: "session-load", timestamp: new Date().toISOString(), cwd: dir },
-      ...history,
-      {
-        type: "compaction",
-        id: "c1",
-        parentId: "m80",
-        summary: `## Goal\n${"memory line\n".repeat(40)}`,
-        firstKeptEntryId: "m78",
-        tokensBefore: 10,
-      },
-    ]
-      .map((entry) => JSON.stringify(entry))
-      .join("\n")}\n`,
-    "utf8",
-  );
-
-  // What pi's session manager would hand back after the file was rewritten.
-  const reloadedMessages = [{ role: "user", content: "memory + kept tail from disk" }];
-  const { inner, state } = createFakeSession({
-    branch: [],
-    sessionFile: filePath,
-    contextMessages: reloadedMessages,
-  });
-  const wrapper = new AgentSessionWrapper(inner);
-
-  await wrapper.send({ type: "compact", mode: "memory" });
-  // The rewrite must become the live context, not just sit in the file.
-  assert.deepEqual(inner.agent.state.messages, reloadedMessages);
-  assert.equal(state.refreshCalls, 1);
-
-  // A plain context compaction leaves the live context alone.
-  inner.agent.state.messages = [{ role: "user", content: "untouched" }];
-  await wrapper.send({ type: "compact" });
-  assert.deepEqual(inner.agent.state.messages, [{ role: "user", content: "untouched" }]);
-
-  wrapper.destroy();
-  rmSync(dir, { recursive: true, force: true });
-  assert.equal(state.compactCalls, 2);
-});
-
-test("a memory compaction leaves tiny spans in place", async () => {
-  const { AgentSessionWrapper } = await loadRpcManager();
-  const dir = mkdtempSync(path.join(tmpdir(), "pi-compact-small-"));
-  const filePath = path.join(dir, "session.jsonl");
-  const entries = [
-    { type: "session", version: 3, id: "session-small", timestamp: new Date().toISOString(), cwd: dir },
-    { type: "message", id: "u1", parentId: null, message: { role: "user", content: "tiny" } },
-    {
-      type: "compaction",
-      id: "c1",
-      parentId: "u1",
-      summary: `## Goal\n${"memory line\n".repeat(40)}`,
-      firstKeptEntryId: "u1",
-      tokensBefore: 10,
-    },
-  ];
-  writeFileSync(filePath, `${entries.map((entry) => JSON.stringify(entry)).join("\n")}\n`, "utf8");
-  const before = readFileSync(filePath, "utf8");
-
-  const reloadedMessages = [{ role: "user", content: "should not be reloaded" }];
-  const { inner, state } = createFakeSession({ branch: [], sessionFile: filePath, contextMessages: reloadedMessages });
-  const wrapper = new AgentSessionWrapper(inner);
-  await wrapper.send({ type: "compact", mode: "memory" });
-
-  // Nothing was deleted and the live context was left alone: the memory file is
-  // still updated, but the session keeps its history.
-  assert.equal(readFileSync(filePath, "utf8"), before);
-  assert.notDeepEqual(inner.agent.state.messages, reloadedMessages);
-  assert.equal(state.refreshCalls, 0);
-
-  wrapper.destroy();
-  rmSync(dir, { recursive: true, force: true });
-});
-
 test("a failing auto-compaction says so in the UI, not only in the log", async () => {
   const { AgentSessionWrapper } = await loadRpcManager();
-  const { inner, state } = createFakeSession({ branch: conversationTurns(AUTO_COMPACT_TURN_THRESHOLD) });
+  const { inner, state } = createFakeSession({
+    branch: conversationTurns(2),
+    contextUsage: { percent: 82, contextWindow: 200_000, tokens: 164_000 },
+  });
   // What the session model's summarizer does when its quota is gone, which is
   // how a context grows past the window with no compaction to show for it.
   inner.compact = async () => {
@@ -542,7 +309,7 @@ test("a failing auto-compaction says so in the UI, not only in the log", async (
   const events = [];
   wrapper.onEvent((event) => events.push(event));
   try {
-    await wrapper.runExternalTurn({ runId: "run-fail", message: "hello", channel: "telegram" });
+    await wrapper.runExternalTurn({ runId: "run-fail", message: "hello", channel: "feishu" });
     await waitFor(() => state.compactCalls === 1);
     await settle();
 

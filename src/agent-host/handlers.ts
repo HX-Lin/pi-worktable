@@ -83,7 +83,6 @@ import { readHostSettings, writeHostSettings } from "./host-settings";
 import type { ContextFoldCommand } from "../shared/api-types";
 import { applyFoldCommand, emptyFoldSnapshot, peekFoldSession } from "./context-fold";
 import { readJevConfig, setJevKey, testJevChannel, updateJevConfig } from "./jev/service";
-import { readMemoryOverview } from "./memory-store";
 import { createAuthLoginService, resolveLoginCode } from "./auth-login";
 import { getSharedModelRuntime, modelCatalogRefreshCoordinator, reloadSharedModelRuntimeConfig } from "./model-runtime";
 import { writeInterruptedSnapshot } from "./resume-interrupted";
@@ -741,12 +740,6 @@ export function registerHandlers(server: RpcServer): () => Promise<void> {
       const { sessionId, command } = params as { sessionId: string; command: ContextFoldCommand };
       if (!sessionId) throw new RpcError({ code: "INVALID_ARGUMENT", message: "sessionId is required" });
       return applyFoldCommand(sessionId, command);
-    },
-
-    "memory.overview": async (params) => {
-      const { sessionId } = params as { sessionId: string };
-      if (!sessionId) throw new RpcError({ code: "INVALID_ARGUMENT", message: "sessionId is required" });
-      return readMemoryOverview(sessionId);
     },
 
     "settings.get": async () => readHostSettings(),

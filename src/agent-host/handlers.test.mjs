@@ -56,7 +56,7 @@ async function captureHandlers() {
 
 test("registerHandlers exposes every contract method exactly once", async () => {
   const { handlers } = await captureHandlers();
-  assert.equal(Object.keys(handlers).length, 88);
+  assert.equal(Object.keys(handlers).length, 87);
   for (const method of [
     "jev.getConfig",
     "jev.updateConfig",
@@ -70,7 +70,6 @@ test("registerHandlers exposes every contract method exactly once", async () => 
     "mcp.runCommand",
     "context.map",
     "context.fold",
-    "memory.overview",
     "settings.get",
     "settings.update",
     "host.ping",

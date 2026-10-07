@@ -61,14 +61,8 @@ interface Props {
   onModelsRefreshCancel?: () => void;
   /** Plain context compaction (pi's own pass): frees the window, keeps history. */
   onCompactContext?: () => void;
-  /** "压缩为记忆": distillation prompt, sedimented scripts, history prune. */
-  onCompactMemory?: () => void;
-  /** Open the read-only overview of what this session has in memory. */
-  onShowMemory?: () => void;
   onAbortCompaction?: () => void;
   isCompacting?: boolean;
-  /** Only the memory compaction control reacts to this; a plain context compaction is false. */
-  isMemoryCompacting?: boolean;
   compactError?: string | null;
   compactResult?: CompactResultInfo | null;
   /** Conversation turns (user messages) on the active branch. */
@@ -241,11 +235,8 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
     onModelsRefresh,
     onModelsRefreshCancel,
     onCompactContext,
-    onCompactMemory,
-    onShowMemory,
     onAbortCompaction,
     isCompacting,
-    isMemoryCompacting = false,
     compactError,
     compactResult,
     conversationTurns = 0,
@@ -962,15 +953,14 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
   const compactHintAt = Math.min(AUTO_COMPACT_HINT_TURNS, Math.max(1, compactThreshold - 1));
   // Always show the compaction control for any chat (even empty ones) so the
   // manual action is permanently discoverable, never gated on message count.
-  const showCompactHint = Boolean(onCompactMemory || onShowMemory);
+  const showCompactHint = Boolean(onCompactContext);
   /**
    * `isCompacting` is pi's flag and is true for both operations, so each button
    * must subtract the other's scope: otherwise a memory compaction paints the
    * context button red and lets it cancel a run it did not start.
    */
-  const isContextCompacting = Boolean(isCompacting) && !isMemoryCompacting;
-  const memoryCompactDisabled = isContextCompacting || (isStreaming && !isMemoryCompacting);
-  const contextCompactDisabled = isMemoryCompacting || (isStreaming && !isContextCompacting);
+  const isContextCompacting = Boolean(isCompacting);
+  const contextCompactDisabled = isStreaming && !isContextCompacting;
   const compactIsNearLimit = conversationTurns >= compactHintAt;
   const compactBarText =
     conversationTurns >= compactThreshold
@@ -1325,52 +1315,6 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
               {compactBarLabel}
               {compactMessageDetail ? ` · ${compactMessageDetail}` : ""}
             </span>
-            {onShowMemory && (
-              <button
-                type="button"
-                onClick={onShowMemory}
-                title={t("memoryOverview", "Memory map")}
-                style={{
-                  flexShrink: 0,
-                  padding: "3px 10px",
-                  background: "transparent",
-                  border: "1px solid var(--border)",
-                  borderRadius: 5,
-                  color: "var(--text-muted)",
-                  cursor: "pointer",
-                  fontSize: 12,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "var(--bg-hover)";
-                  e.currentTarget.style.color = "var(--text)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.color = "var(--text-muted)";
-                }}
-              >
-                {t("memoryOverview", "Memory map")}
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => (isMemoryCompacting ? onAbortCompaction?.() : onCompactMemory?.())}
-              disabled={memoryCompactDisabled}
-              style={{
-                flexShrink: 0,
-                padding: "3px 10px",
-                background: isMemoryCompacting ? "rgba(239,68,68,0.1)" : "var(--accent)",
-                border: isMemoryCompacting ? "1px solid rgba(239,68,68,0.3)" : "none",
-                borderRadius: 5,
-                color: isMemoryCompacting ? "#ef4444" : "#fff",
-                cursor: memoryCompactDisabled ? "not-allowed" : "pointer",
-                fontSize: 12,
-                fontWeight: 600,
-                opacity: memoryCompactDisabled ? 0.5 : 1,
-              }}
-            >
-              {isMemoryCompacting ? t("compacting", "Compacting…") : t("compactNow", "Compact to memory")}
-            </button>
           </div>
         )}
         {/* Image previews */}

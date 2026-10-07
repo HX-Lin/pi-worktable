@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import type {
   AgentMessage,
   AssistantContentBlock,
@@ -15,7 +15,6 @@ import {
   isAssistantFailure,
   splitFinalAssistantBlocks,
 } from "@/lib/message-display";
-import { MemoryMapPanel } from "./MemoryMapPanel";
 import { MessageView } from "./MessageView";
 import { SessionProfiler } from "./SessionProfiler";
 import { ChatInput, type ChatInputHandle } from "./ChatInput";
@@ -240,7 +239,6 @@ export function ChatWindow({
     contextUsage,
     forkingEntryId,
     isCompacting,
-    isMemoryCompacting,
     compactError,
     compactResult,
     conversationTurns,
@@ -381,11 +379,6 @@ export function ChatWindow({
     return () => observer.disconnect();
   }, [hasOlder, loadOlder, loadingOlder, messages.length, scrollContainerRef]);
 
-  const [memoryPanelOpen, setMemoryPanelOpen] = useState(false);
-  // The map reads host state on demand; re-reading after each turn keeps the tiles
-  // honest without polling while the panel is closed.
-  const memoryPanelRefreshKey = useMemo(() => messages.length + entryIds.length, [messages.length, entryIds.length]);
-
   const isEmptyNew = isNew && messages.length === 0 && !streamState.isStreaming && !agentRunning;
   const messageCwd = session?.cwd ?? newSessionCwd ?? undefined;
 
@@ -415,12 +408,9 @@ export function ChatWindow({
       onModelChange={handleModelChange}
       onModelsRefresh={refreshModels}
       onModelsRefreshCancel={cancelModelRefresh}
-      onCompactContext={session || isNew ? () => void handleCompact("context") : undefined}
-      onShowMemory={session || isNew ? () => setMemoryPanelOpen(true) : undefined}
-      onCompactMemory={session || isNew ? () => void handleCompact("memory") : undefined}
+      onCompactContext={session || isNew ? () => void handleCompact() : undefined}
       onAbortCompaction={handleAbortCompaction}
       isCompacting={isCompacting}
-      isMemoryCompacting={isMemoryCompacting}
       compactError={compactError}
       compactResult={compactResult}
       conversationTurns={conversationTurns}
@@ -543,14 +533,6 @@ export function ChatWindow({
       )}
 
       {extensionDialog && <ExtensionDialog request={extensionDialog} onRespond={respondToExtensionUi} />}
-
-      {memoryPanelOpen && (
-        <MemoryMapPanel
-          sessionId={sessionStats?.sessionId ?? session?.id ?? null}
-          contextRefreshKey={memoryPanelRefreshKey}
-          onClose={() => setMemoryPanelOpen(false)}
-        />
-      )}
 
       {extensionCustomUi && <ExtensionCustomPanel request={extensionCustomUi} onInput={sendExtensionCustomInput} />}
 

@@ -19,7 +19,7 @@ await build({
   packages: "external",
   logLevel: "silent",
 });
-const { isMemoryCompaction, runJevCompaction } = await import(`${pathToFileURL(output).href}?v=${Date.now()}`);
+const { runJevCompaction } = await import(`${pathToFileURL(output).href}?v=${Date.now()}`);
 process.once("exit", () => rmSync(output, { force: true }));
 
 const config = {
@@ -153,13 +153,4 @@ test("a Jev failure surfaces as a throw so the caller falls back", async () => {
     },
   };
   await assert.rejects(() => runJevCompaction(input(), failing, config), /Jev unavailable/);
-});
-
-test("only the memory prompt opts out of Jev context compaction", () => {
-  assert.equal(isMemoryCompaction("这是一次「压缩为记忆」，不是普通的上下文压缩。\n\n用户额外要求：聚焦安全"), true);
-  assert.equal(isMemoryCompaction(undefined), false);
-  assert.equal(isMemoryCompaction(""), false);
-  assert.equal(isMemoryCompaction("   "), false);
-  assert.equal(isMemoryCompaction("focus on the latest changes"), false);
-  assert.equal(isMemoryCompaction("这是一次普通的上下文压缩，聚焦安全"), false);
 });

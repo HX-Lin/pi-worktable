@@ -230,51 +230,6 @@ export type ContextFoldCommand =
   | { action: "folding"; enabled: boolean }
   | { action: "budget" | "protect"; tokens: number };
 
-/** One `## section` of a memory text, sized so the UI can draw it as a tile. */
-export interface MemorySectionOverview {
-  title: string;
-  bytes: number;
-  preview: string;
-}
-
-/** Read-only view of one on-disk memory text (primary or archived). */
-export interface MemoryTextOverview {
-  path: string;
-  bytes: number;
-  /** mtime in ms, when the file is readable. */
-  updatedAt?: number;
-  /** `## ` sections found in the scanned slice, in file order. */
-  sections: MemorySectionOverview[];
-  /** Bytes held by sections outside the scanned slice, if any. */
-  uncoveredBytes: number;
-  /** True when only the newest part of a large file was scanned. */
-  tailOnly: boolean;
-}
-
-export interface MemoryScriptOverview {
-  name: string;
-  description: string;
-  bytes: number;
-}
-
-export interface MemoryArchiveFile {
-  name: string;
-  bytes: number;
-}
-
-/** What "压缩为记忆" has produced for one session so far. */
-export interface MemoryOverview {
-  sessionId: string;
-  dir: string;
-  exists: boolean;
-  primary: MemoryTextOverview | null;
-  secondary: MemoryTextOverview | null;
-  scripts: MemoryScriptOverview[];
-  /** Newest first. */
-  archives: MemoryArchiveFile[];
-  archivesBytes: number;
-}
-
 export type PromptScope = "project" | "global";
 
 export interface PromptRecord {

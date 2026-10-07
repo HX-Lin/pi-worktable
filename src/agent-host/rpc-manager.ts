@@ -28,39 +28,9 @@ import { createDesktopSystemPromptExtension, type DesktopPromptSettings } from "
 import { readHostSettings } from "./host-settings";
 import { withExtensionTools } from "./tool-activation";
 import { getFoldSession } from "./context-fold";
-import { MEMORY_DISTILLATION_PROMPT } from "./memory-prompt";
-import { planMemoryCompaction, type MemoryCompactionPlan } from "./memory-compaction";
 import { captureTurnStart, collectTurnChanges, type TurnStartSnapshot } from "./turn-changes";
-import { pruneSummarizedEntries, readSessionFileEntries, writeSessionFileEntries } from "./session-prune";
 
 export { countBranchConversationMessages };
-
-/** Grow the message count by this much before retrying a compaction that could not reduce context. */
-const AUTO_COMPACT_RETRY_TURN_GROWTH = 10;
-
-/** Rebuild the live transcript from the rewritten session after memory pruning. */
-function reloadAgentMessagesFromSession(session: AgentSessionLike): void {
-  try {
-    session.refreshContext();
-  } catch (error) {
-    console.error(
-      "[pi-desktop] failed to reload session context after pruning:",
-      error instanceof Error ? error.message : error,
-    );
-  }
-}
-
-/**
- * "压缩为记忆" instructions.
- *
- * Every desktop-triggered compaction is a memory compaction, so the distillation
- * prompt is always attached; caller-supplied focus is kept as an extra
- * requirement instead of replacing it.
- */
-function compactToMemoryInstructions(extraFocus?: string): string {
-  const focus = extraFocus?.trim();
-  return focus ? `${MEMORY_DISTILLATION_PROMPT}\n\n用户额外要求：${focus}` : MEMORY_DISTILLATION_PROMPT;
-}
 
 // ============================================================================
 // Types
@@ -111,7 +81,7 @@ type ExtensionBindingOptions = {
   forceEmptySystemPrompt?: boolean;
 };
 
-export type ExternalSessionCommand = "compact" | "memory" | "reload";
+export type ExternalSessionCommand = "compact" | "reload";
 
 const LEGACY_CHANNEL_PROMPT = /^\[外部消息来源：(微信|Telegram|飞书 \/ Lark)\]\n/;
 const LEGACY_CHANNEL_PROMPT_DELIMITER = "\n---\n";
@@ -180,10 +150,7 @@ export class AgentSessionWrapper {
   private onDestroyCallback: (() => void) | null = null;
   private _alive = true;
   private autoCompactInFlight = false;
-  private autoCompactSkipUntilCount = 0;
   private autoCompactSkipUntilPercent = 0;
-  /** True while this wrapper is running a "压缩为记忆" compaction. */
-  private memoryCompactionActive = false;
   private turnStart: Promise<TurnStartSnapshot | null> | null = null;
   private turnChangesWrite: Promise<void> = Promise.resolve();
 
@@ -238,7 +205,7 @@ export class AgentSessionWrapper {
       // in the model context and must not touch session history. Deleting the
       // summarized turns belongs to a memory compaction, which happens on its own
       // threshold or when the user asks for it.
-      const displayEvent = this.withExternalChannelSource(this.withCompactionScope(event));
+      const displayEvent = this.withExternalChannelSource(event);
       if (event.type === "agent_start") {
         this.turnStart ??= captureTurnStart(this.cwd);
       } else if (event.type === "agent_end" && this.turnStart) {
@@ -265,18 +232,6 @@ export class AgentSessionWrapper {
     });
     this.resetIdleTimer();
     notifyRunningChange();
-  }
-
-  /**
-   * Tell the renderer which kind of compaction an event belongs to.
-   *
-   * pi reports every compaction the same way, so the memory flag is what lets the
-   * "压缩为记忆" control show its own progress instead of reacting to a plain
-   * context compaction.
-   */
-  private withCompactionScope(event: AgentEvent): AgentEvent {
-    if (event.type !== "compaction_start" && event.type !== "compaction_end") return event;
-    return { ...event, memoryCompaction: this.memoryCompactionActive };
   }
 
   private withExternalChannelSource(event: AgentEvent): AgentEvent {
@@ -433,78 +388,40 @@ export class AgentSessionWrapper {
     setImmediate(() => void this.maybeAutoCompact());
   }
 
-  /** Retry the two compaction triggers independently after an attempt that could not shrink them. */
-  private rescheduleAfterMemoryCompact(turns: number, removed: boolean): void {
-    this.autoCompactSkipUntilCount = removed ? 0 : turns + AUTO_COMPACT_RETRY_TURN_GROWTH;
-  }
-
+  /** Retry the context trigger after an attempt that could not shrink it. */
   private rescheduleAfterContextCompact(percent: number, reduced: boolean): void {
     this.autoCompactSkipUntilPercent = reduced ? 0 : percent + AUTO_COMPACT_RETRY_PERCENT_GROWTH;
   }
 
   /**
-   * "压缩为记忆": the memory prompt, the distilled scripts and the history prune.
-   */
-  private async compactToMemory(extraFocus?: string): Promise<unknown> {
-    this.memoryCompactionActive = true;
-    try {
-      const result = await this.inner.compact(compactToMemoryInstructions(extraFocus));
-      this.pruneSummarizedHistory();
-      return result;
-    } finally {
-      this.memoryCompactionActive = false;
-    }
-  }
-
-  /**
-   * Automatic compaction, with the two operations kept apart.
+   * Automatic context compaction.
    *
-   * Reaching the turn threshold is a **memory** compaction: distil, sediment
-   * scripts, archive and prune the digested history. A context window that is
-   * merely filling up is a **context** compaction: pi's own summarization, which
-   * frees room for the model and leaves every message on disk. Deletion only ever
-   * follows the memory threshold the user controls.
-   *
-   * Only runs when the session is fully idle, so a queued or streaming turn never
-   * gets compacted mid-flight; that turn schedules its own check when it finishes.
-   * A compaction that cannot reduce the context raises the floor so the next
-   * attempt waits for meaningful growth instead of retrying every turn.
+   * A context window that is filling up is summarised by pi itself, which frees room for the model
+   * and leaves every message on disk. Only runs when the session is fully idle, so a queued or
+   * streaming turn never gets compacted mid-flight; that turn schedules its own check when it
+   * finishes. A compaction that cannot reduce the context raises the floor so the next attempt waits
+   * for meaningful growth instead of retrying every turn.
    */
   private async maybeAutoCompact(): Promise<void> {
     if (!this._alive || this.autoCompactInFlight) return;
     if (this.queuedTurnCount > 0 || this.promptRunning || this.inner.isStreaming || this.inner.isCompacting) return;
-    // Context compactions never reset the turns since the last memory pass.
-    // Pi's auto-context switch does not control memory distillation.
-    const turns = countBranchConversationTurns(this.inner.sessionManager.getBranch());
-    const { autoCompactTurns } = readHostSettings();
     const percent = this.inner.getContextUsage()?.percent ?? 0;
-    const overTurns = turns >= autoCompactTurns && turns >= this.autoCompactSkipUntilCount;
     const overPercent =
       this.inner.autoCompactionEnabled !== false &&
       percent >= AUTO_COMPACT_CONTEXT_PERCENT &&
       percent >= this.autoCompactSkipUntilPercent;
-    if (!overTurns && !overPercent) return;
+    if (!overPercent) return;
 
     this.autoCompactInFlight = true;
     try {
-      if (overPercent) {
-        // Free a full context window first, without deleting or distilling history.
-        await this.enqueueTurn(async () => {
-          await this.inner.compact(undefined);
-        });
-        const afterPercent = this.inner.getContextUsage()?.percent ?? 0;
-        this.rescheduleAfterContextCompact(percent, afterPercent < percent - 1);
-      } else {
-        await this.enqueueTurn(async () => {
-          await this.compactToMemory(`自动触发：已达到 ${turns} 条对话。`);
-        });
-        const after = countBranchConversationTurns(this.inner.sessionManager.getBranch());
-        this.rescheduleAfterMemoryCompact(after, after < turns);
-      }
+      await this.enqueueTurn(async () => {
+        await this.inner.compact(undefined);
+      });
+      const afterPercent = this.inner.getContextUsage()?.percent ?? 0;
+      this.rescheduleAfterContextCompact(percent, afterPercent < percent - 1);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      if (overPercent) this.rescheduleAfterContextCompact(percent, false);
-      else this.rescheduleAfterMemoryCompact(turns, false);
+      this.rescheduleAfterContextCompact(percent, false);
       console.error("[pi-desktop] automatic compaction failed:", message);
       // Also tell the UI. A compaction that keeps failing is otherwise invisible:
       // the context grows until the model itself refuses the request, and the only
@@ -521,57 +438,6 @@ export class AgentSessionWrapper {
       // enqueueTurn's idle check ran while this flag was still set. Give the
       // other trigger a chance without waiting for another user turn.
       this.scheduleAutoCompactCheck();
-    }
-  }
-
-  /**
-   * Run the local half of a memory compaction over the session file.
-   *
-   * pi keeps summarized turns on disk forever, so without this the file (and the
-   * message counts in the UI) grows without bound even though the context stays
-   * small. `planMemoryCompaction` owns the pipeline — ground-truth facts, script
-   * sediment, cold archive, memory tiering and the delete gate — and tells us
-   * whether the destructive rewrite is allowed.
-   */
-  private pruneSummarizedHistory(): void {
-    const manager = this.inner.sessionManager;
-    const filePath = typeof manager?.getSessionFile === "function" ? manager.getSessionFile() : undefined;
-    if (!filePath || typeof manager.setSessionFile !== "function") return;
-    try {
-      const { header, entries } = readSessionFileEntries(filePath);
-      if (!header) return;
-      const sessionId = typeof manager.getSessionId === "function" ? manager.getSessionId() : String(header.id ?? "");
-      if (!sessionId) return;
-
-      let planned: MemoryCompactionPlan | undefined;
-      const { entries: kept } = pruneSummarizedEntries(entries, (memory, context) => {
-        planned = planMemoryCompaction({
-          sessionId,
-          memory,
-          dropped: context.dropped,
-          reason: "memory-compaction",
-        });
-        return planned.memory;
-      });
-
-      const outcome = planned;
-      if (!outcome) return;
-      if (!outcome.prune) {
-        // The memory file is already up to date; history stays where it is.
-        console.log(
-          `[pi-desktop] kept summarized history (${outcome.skipReason}): span=${outcome.spanBytes}B entries=${entries.length}`,
-        );
-        return;
-      }
-      if (kept === entries) return;
-      writeSessionFileEntries(filePath, header, kept);
-      manager.setSessionFile(filePath);
-      reloadAgentMessagesFromSession(this.inner);
-      console.log(
-        `[pi-desktop] memory compaction archived ${outcome.archived?.entries ?? 0} entries to ${outcome.archived?.path ?? "?"}`,
-      );
-    } catch (error) {
-      console.error("[pi-desktop] session pruning failed:", error instanceof Error ? error.message : error);
     }
   }
 
@@ -647,10 +513,6 @@ export class AgentSessionWrapper {
 
   async runExternalCommand(params: { command: ExternalSessionCommand; customInstructions?: string }): Promise<void> {
     await this.enqueueTurn(async () => {
-      if (params.command === "memory") {
-        await this.compactToMemory(params.customInstructions);
-        return;
-      }
       if (params.command === "compact") {
         // Plain context compaction: pi's own prompt, nothing else is touched.
         await this.inner.compact(params.customInstructions);
@@ -760,7 +622,6 @@ export class AgentSessionWrapper {
           isStreaming: this.inner.isStreaming,
           isPromptRunning: this.promptRunning,
           isCompacting: this.inner.isCompacting,
-          isMemoryCompacting: this.memoryCompactionActive,
           autoCompactionEnabled: this.inner.autoCompactionEnabled,
           autoRetryEnabled: this.inner.autoRetryEnabled,
           model: model ? { id: model.id, provider: model.provider } : undefined,
@@ -849,9 +710,6 @@ export class AgentSessionWrapper {
         const result = await this.withFinalRunningNotification(() =>
           this.enqueueTurn(async () => {
             const focus = command.customInstructions as string | undefined;
-            // Only an explicit memory request distills and prunes; a plain
-            // "compact" frees the context window and leaves history alone.
-            if (command.mode === "memory") return await this.compactToMemory(focus);
             return await this.inner.compact(focus);
           }),
         );

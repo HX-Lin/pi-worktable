@@ -31,7 +31,6 @@ import type {
   ContextFoldResult,
   ContextMapSnapshot,
   GitStatusResult,
-  MemoryOverview,
   PluginActionParams,
   PluginsResponse,
   PromptScope,
@@ -267,11 +266,6 @@ export interface Api {
   "context.fold": {
     params: { sessionId: string; command: ContextFoldCommand };
     result: ContextFoldResult;
-  };
-
-  "memory.overview": {
-    params: { sessionId: string };
-    result: MemoryOverview;
   };
 
   // Desktop settings that the Host persists (auto-compaction, ...)

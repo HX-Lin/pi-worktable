@@ -90,6 +90,9 @@ test("UI prompts and messaging-channel turns share one serial session scheduler"
     async compact(instructions) {
       order.push(`compact:${instructions}`);
     },
+    async reload() {
+      order.push("reload");
+    },
     getLastAssistantText: () => last,
   };
   const wrapper = new AgentSessionWrapper(inner);
@@ -104,7 +107,7 @@ test("UI prompts and messaging-channel turns share one serial session scheduler"
   const external = wrapper.runExternalTurn({
     runId: "run-one",
     message: "im",
-    channel: "telegram",
+    channel: "feishu",
     images: [{ type: "image", data: "aGVsbG8=", mimeType: "image/png" }],
     attachmentContext: "Attachment 1 is available at /tmp/file.txt",
     onProgress: (event) => progress.push(event),
@@ -115,20 +118,19 @@ test("UI prompts and messaging-channel turns share one serial session scheduler"
   releaseUi();
   const result = await external;
   await compact;
-  const memory = wrapper.runExternalCommand({ command: "memory", customInstructions: "沉淀部署步骤" });
-  await memory;
+  const reload = wrapper.runExternalCommand({ command: "reload" });
+  await reload;
   assert.equal(order.length, 6);
   assert.deepEqual(order.slice(0, 4), ["ui-start", "ui-end", "im-start", "im-end"]);
   // A plain context compaction keeps the caller's focus and nothing else.
   assert.equal(order[4], "compact:keep decisions");
-  // "压缩为记忆" carries the distillation prompt plus the extra focus.
-  assert.match(order[5], /^compact:这是一次「压缩为记忆」/);
-  assert.match(order[5], /用户额外要求：沉淀部署步骤$/);
+  // A reload is queued behind it on the same scheduler.
+  assert.equal(order[5], "reload");
   assert.equal(result.finalText, "reply:im");
   assert.deepEqual(externalPromptOptions.images, [{ type: "image", data: "aGVsbG8=", mimeType: "image/png" }]);
   assert.equal(externalPromptOptions.expandPromptTemplates, false);
   assert.deepEqual(customEntries, [
-    { customType: "pi-desktop-channel-source", data: { runId: "run-one", channel: "telegram" } },
+    { customType: "pi-desktop-channel-source", data: { runId: "run-one", channel: "feishu" } },
   ]);
   assert.deepEqual(customMessages, [
     {
@@ -140,7 +142,7 @@ test("UI prompts and messaging-channel turns share one serial session scheduler"
       options: { deliverAs: "nextTurn" },
     },
   ]);
-  assert.equal(progress[0].message.channelSource, "telegram");
+  assert.equal(progress[0].message.channelSource, "feishu");
   assert.deepEqual(
     progress.map((event) => event.type),
     ["message_end", "message_update"],

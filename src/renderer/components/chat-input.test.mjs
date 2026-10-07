@@ -28,7 +28,6 @@ function controls(props) {
     createElement(ChatInput, {
       onSend: () => {},
       onAbort: () => {},
-      onCompactMemory: () => {},
       onCompactContext: () => {},
       onAbortCompaction: () => {},
       isStreaming: false,
@@ -36,22 +35,14 @@ function controls(props) {
     }),
   );
   const context = html.match(/<button[^>]*title="(?:Stop compaction|Compact context)"[^>]*>/)?.[0];
-  const memory = html.match(/<button[^>]*>[^<]*(?:Compact to memory|Compacting…)<\/button>/)?.[0];
   assert.ok(context, "context compaction button is always visible");
-  assert.ok(memory, "memory compaction button is always visible");
-  return { context, memory };
+  return { context };
 }
 
-test("memory compaction leaves only its own stop button enabled", () => {
-  const { context, memory } = controls({ isCompacting: true, isMemoryCompacting: true });
-  assert.match(context, /disabled=""/);
-  assert.match(context, /title="Compact context"/);
-  assert.doesNotMatch(memory, /disabled=""/);
-});
-
-test("context compaction leaves only its own stop button enabled", () => {
-  const { context, memory } = controls({ isCompacting: true, isMemoryCompacting: false });
-  assert.doesNotMatch(context, /disabled=""/);
-  assert.match(context, /title="Stop compaction"/);
-  assert.match(memory, /disabled=""/);
+test("the context compaction control is the only compaction control", () => {
+  const idle = controls({ isCompacting: false }).context;
+  assert.match(idle, /title="Compact context"/);
+  const running = controls({ isCompacting: true }).context;
+  assert.match(running, /title="Stop compaction"/);
+  assert.doesNotMatch(running, /disabled=""/);
 });
