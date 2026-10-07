@@ -152,20 +152,6 @@ export async function runSmokeHostChecks(
         "initial",
       ]);
       await call("system.allowRoot", { path: repo });
-      const skillDir = path.join(repo, ".pi", "skills", "smoke-skill");
-      const skillPath = path.join(skillDir, "SKILL.md");
-      fs.mkdirSync(skillDir, { recursive: true });
-      fs.writeFileSync(skillPath, "---\nname: smoke-skill\ndescription: smoke\n---\n\nOriginal body.\n");
-      const skills = await call<{ skills?: Array<{ name?: string; filePath?: string }> }>("skills.list", { cwd: repo });
-      const smokeSkill = skills.skills?.find((skill) => skill.name === "smoke-skill");
-      if (!smokeSkill?.filePath) throw new Error("skills.list did not load the project smoke skill");
-      const updatedSkill = "---\nname: smoke-skill\ndescription: edited smoke\n---\n\nEdited body.\n";
-      await call("skills.set", { cwd: repo, filePath: smokeSkill.filePath, content: updatedSkill });
-      const skillContent = await call<{ content?: string }>("skills.getContent", {
-        cwd: repo,
-        filePath: smokeSkill.filePath,
-      });
-      if (skillContent.content !== updatedSkill) throw new Error("skills.set did not persist exact content");
       await call("files.watchStart", { path: repo });
       const changeEvent = waitForEvent(
         "files.changed",

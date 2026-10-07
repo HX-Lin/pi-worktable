@@ -3,8 +3,6 @@ import { useTheme, type Theme } from "@/hooks/useTheme";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useI18n, type AppLanguage } from "@/i18n";
 import { ModelsConfig } from "./ModelsConfig";
-import { SkillsConfig } from "./SkillsConfig";
-import { PromptsConfig } from "./PromptsConfig";
 import { JevConfig } from "./JevConfig";
 import { CapabilitiesPanel } from "./CapabilitiesPanel";
 import { McpConfig } from "./McpConfig";
@@ -17,17 +15,7 @@ import { APP_AUTHOR, APP_DISPLAY_NAME, APP_GITHUB_URL, APP_VERSION, PI_VERSION }
 import appIconUrl from "../../../build/icon.png";
 
 export type SettingsTab =
-  | "general"
-  | "capabilities"
-  | "channels"
-  | "models"
-  | "tools"
-  | "skills"
-  | "prompts"
-  | "plugins"
-  | "mcp"
-  | "jev"
-  | "about";
+  "general" | "capabilities" | "channels" | "models" | "tools" | "plugins" | "mcp" | "jev" | "about";
 
 interface SettingsConfigProps {
   cwd: string | null;
@@ -82,8 +70,6 @@ export function SettingsConfig({
   const tabs: { id: SettingsTab; label: string }[] = [
     { id: "general", label: t("general", "General") },
     { id: "models", label: t("models", "Models") },
-    { id: "skills", label: t("skills", "Skills") },
-    { id: "prompts", label: t("prompts", "Prompts") },
     { id: "plugins", label: t("plugins", "Plugins") },
     { id: "capabilities", label: t("capabilitiesTitle", "Capabilities") },
     { id: "mcp", label: t("mcpTitle", "MCP") },
@@ -286,10 +272,6 @@ export function SettingsConfig({
             {activeTab === "models" && <ModelsConfig embedded onClose={() => undefined} onChanged={onModelsChanged} />}
             {activeTab === "tools" && <ToolchainsConfig cwd={cwd} />}
             {activeTab === "channels" && <ChannelsConfig onSnapshotChange={onChannelsChanged} />}
-            {activeTab === "skills" &&
-              (cwd ? <SkillsConfig embedded cwd={cwd} onClose={() => undefined} /> : <ProjectRequired />)}
-            {activeTab === "prompts" &&
-              (cwd ? <PromptsConfig embedded cwd={cwd} onClose={() => undefined} /> : <ProjectRequired />)}
             {activeTab === "plugins" &&
               (cwd ? (
                 <PluginsConfig

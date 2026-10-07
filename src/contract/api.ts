@@ -33,10 +33,6 @@ import type {
   GitStatusResult,
   PluginActionParams,
   PluginsResponse,
-  PromptScope,
-  PromptsListResult,
-  SkillRecord,
-  SkillUpdateParams,
 } from "../shared/api-types";
 import type {
   ChannelAccountConfig,
@@ -344,44 +340,6 @@ export interface Api {
   };
   "auth.loginCancel": {
     params: { provider: string };
-    result: { ok: true };
-  };
-
-  "skills.list": {
-    params: { cwd?: string } | void;
-    result: { skills: SkillRecord[]; diagnostics?: unknown[] };
-  };
-  "skills.search": {
-    params: { query: string };
-    result: { results: unknown[] };
-  };
-  "skills.install": {
-    params: { package: string; [key: string]: unknown };
-    result: { ok: true; [key: string]: unknown };
-  };
-  "skills.set": {
-    params: SkillUpdateParams;
-    result: { ok: true };
-  };
-  "skills.getContent": {
-    params: { cwd: string; filePath: string };
-    result: { content: string };
-  };
-
-  "prompts.list": {
-    params: { cwd?: string } | void;
-    result: PromptsListResult;
-  };
-  "prompts.read": {
-    params: { cwd?: string; scope: PromptScope; filePath: string };
-    result: { content: string };
-  };
-  "prompts.write": {
-    params: { cwd?: string; scope: PromptScope; filePath: string; content: string };
-    result: { ok: true };
-  };
-  "prompts.delete": {
-    params: { cwd?: string; scope: PromptScope; filePath: string };
     result: { ok: true };
   };
 

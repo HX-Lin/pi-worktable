@@ -8,7 +8,6 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
-  realpathSync,
   renameSync,
   rmSync,
   statSync,
@@ -19,14 +18,12 @@ import { homedir, tmpdir } from "os";
 import { randomUUID } from "node:crypto";
 import path from "path";
 import {
-  DefaultResourceLoader,
   CredentialSynchronizationError,
   ModelRegistry,
   ModelRuntime,
   SessionManager,
   createAgentSessionServices,
   getAgentDir,
-  parseFrontmatter,
   type SettingsManager,
 } from "@earendil-works/pi-coding-agent";
 import { getSupportedThinkingLevels, type AuthInteraction } from "@earendil-works/pi-ai";
@@ -90,11 +87,8 @@ import {
   type McpScope,
 } from "./mcp-config";
 import { applyPluginAction, readPlugins } from "./plugins-service";
-import { installSkill, searchSkills } from "./skills-service";
 import { projectSessionTreeForResponse } from "./project-tree";
-import type { PromptRecord, PromptScope } from "../shared/api-types";
 import { ChannelManager } from "./channels/channel-manager";
-import { ToolchainError } from "../shared/toolchains/errors";
 import { toolchainRuntime } from "./toolchain-runtime";
 import {
   logSessionPerformance,
@@ -241,41 +235,6 @@ function writeModelsJson(data: Record<string, unknown>): void {
       /* ignore */
     }
     throw e;
-  }
-}
-
-async function resolveLoadedSkill(cwd: string, filePath: string) {
-  if (!cwd || !filePath) {
-    throw new RpcError({ code: "BAD_REQUEST", message: "cwd and filePath are required" });
-  }
-  const loader = new DefaultResourceLoader({ cwd, agentDir: getAgentDir() });
-  await loader.reload();
-  const requested = realpathSync(filePath);
-  const skill = loader.getSkills().skills.find((candidate) => {
-    try {
-      return realpathSync(candidate.filePath) === requested;
-    } catch {
-      return false;
-    }
-  });
-  if (!skill) {
-    throw new RpcError({ code: "FORBIDDEN", message: "Skill is not loaded for this project" });
-  }
-  return skill;
-}
-
-function writeTextAtomically(filePath: string, content: string): void {
-  const tmp = `${filePath}.${process.pid}.tmp`;
-  writeFileSync(tmp, content, "utf8");
-  try {
-    renameSync(tmp, filePath);
-  } catch (error) {
-    try {
-      unlinkSync(tmp);
-    } catch {
-      /* ignore cleanup failure */
-    }
-    throw error;
   }
 }
 
@@ -1579,115 +1538,6 @@ export function registerHandlers(server: RpcServer): () => Promise<void> {
       return { ok: true as const };
     },
 
-    "skills.list": async (params) => {
-      const cwd = (params as { cwd?: string } | void)?.cwd;
-      if (!cwd) throw new RpcError({ code: "BAD_REQUEST", message: "cwd required" });
-      const loader = new DefaultResourceLoader({ cwd, agentDir: getAgentDir() });
-      await loader.reload();
-      const { skills, diagnostics } = loader.getSkills();
-      return { skills, diagnostics };
-    },
-
-    "skills.search": async (params) => {
-      const { query } = params as { query: string };
-      try {
-        return (await searchSkills(query)) as never;
-      } catch (e) {
-        if (e instanceof ToolchainError) throw e;
-        throw new RpcError({
-          code: "INTERNAL",
-          message: e instanceof Error ? e.message : String(e),
-        });
-      }
-    },
-
-    "skills.install": async (params) => {
-      try {
-        return await installSkill(params as { package: string; scope?: "global" | "project"; cwd?: string });
-      } catch (e) {
-        if (e instanceof ToolchainError) throw e;
-        throw new RpcError({
-          code: "INTERNAL",
-          message: e instanceof Error ? e.message : String(e),
-        });
-      }
-    },
-
-    "skills.set": async (params) => {
-      const body = params as {
-        cwd: string;
-        filePath: string;
-        disableModelInvocation?: boolean;
-        content?: string;
-      };
-      const skill = await resolveLoadedSkill(body.cwd, body.filePath);
-      const { filePath } = skill;
-      const content = body.content ?? readFileSync(filePath, "utf8");
-      if (content.length > 2 * 1024 * 1024) {
-        throw new RpcError({ code: "BAD_REQUEST", message: "Skill file is too large" });
-      }
-      const key = "disable-model-invocation";
-      const { frontmatter } = parseFrontmatter<Record<string, unknown>>(content);
-      const alreadySet = Boolean(frontmatter[key]);
-      let updated = content;
-      if (body.disableModelInvocation === true && !alreadySet) {
-        updated = content.replace(/^---\r?\n/, `---\n${key}: true\n`);
-        if (updated === content) updated = `---\n${key}: true\n---\n${content}`;
-      } else if (body.disableModelInvocation === false && alreadySet) {
-        updated = content.replace(new RegExp(`^${key}\\s*:.*\\r?\\n`, "m"), "");
-      }
-      writeTextAtomically(filePath, updated);
-      return { ok: true as const };
-    },
-
-    "skills.getContent": async (params) => {
-      const body = params as { cwd: string; filePath: string };
-      const skill = await resolveLoadedSkill(body.cwd, body.filePath);
-      return { content: readFileSync(skill.filePath, "utf8") };
-    },
-
-    "prompts.list": async (params) => {
-      const cwd = (params as { cwd?: string } | void)?.cwd;
-      if (!cwd) throw new RpcError({ code: "BAD_REQUEST", message: "cwd required" });
-      const projectDir = path.join(cwd, ".pi", "prompts");
-      const globalDir = path.join(getAgentDir(), "prompts");
-      return {
-        project: readPromptDir(projectDir, "project"),
-        global: readPromptDir(globalDir, "global"),
-        projectDir,
-        globalDir,
-      };
-    },
-
-    "prompts.read": async (params) => {
-      const body = params as { cwd?: string; scope?: PromptScope; filePath: string };
-      const target = resolvePromptTarget(body.cwd, body.scope, body.filePath);
-      if (!existsSync(target)) throw new RpcError({ code: "NOT_FOUND", message: "Prompt file not found" });
-      return { content: readFileSync(target, "utf8") };
-    },
-
-    "prompts.write": async (params) => {
-      const body = params as { cwd?: string; scope?: PromptScope; filePath: string; content: string };
-      if (typeof body.content !== "string") {
-        throw new RpcError({ code: "BAD_REQUEST", message: "content required" });
-      }
-      const target = resolvePromptTarget(body.cwd, body.scope, body.filePath);
-      if (body.content.length > 512 * 1024) {
-        throw new RpcError({ code: "BAD_REQUEST", message: "Prompt file is too large" });
-      }
-      mkdirSync(path.dirname(target), { recursive: true });
-      writeFileSync(target, body.content, "utf8");
-      return { ok: true as const };
-    },
-
-    "prompts.delete": async (params) => {
-      const body = params as { cwd?: string; scope?: PromptScope; filePath: string };
-      const target = resolvePromptTarget(body.cwd, body.scope, body.filePath);
-      if (!existsSync(target)) throw new RpcError({ code: "NOT_FOUND", message: "Prompt file not found" });
-      unlinkSync(target);
-      return { ok: true as const };
-    },
-
     "plugins.list": async (params) => {
       const cwd = (params as { cwd?: string } | void)?.cwd;
       if (!cwd) throw new RpcError({ code: "BAD_REQUEST", message: "cwd required" });
@@ -1812,69 +1662,3 @@ function ensureSessionEvents(
 // ---------------------------------------------------------------------------
 // Prompt templates (`.pi/prompts/` project + `~/.pi/agent/prompts/` global)
 // ---------------------------------------------------------------------------
-
-function promptsRootFor(cwd: string | undefined, scope: "project" | "global"): string | null {
-  if (scope === "project") {
-    if (!cwd || !path.isAbsolute(cwd)) return null;
-    return path.join(cwd, ".pi", "prompts");
-  }
-  return path.join(getAgentDir(), "prompts");
-}
-
-function isFileInside(dir: string, filePath: string): boolean {
-  const resolved = path.resolve(filePath);
-  const base = path.resolve(dir);
-  return resolved === base || resolved.startsWith(base + path.sep);
-}
-
-/** Resolve a read/write/delete target, enforcing it stays inside its scope dir. */
-function resolvePromptTarget(cwd: string | undefined, scope: PromptScope | undefined, filePath: string): string {
-  if (typeof filePath !== "string" || !filePath.trim()) {
-    throw new RpcError({ code: "BAD_REQUEST", message: "filePath required" });
-  }
-  const dir = promptsRootFor(cwd, scope === "global" ? "global" : "project");
-  if (!dir) throw new RpcError({ code: "BAD_REQUEST", message: "cwd required for project prompts" });
-  const target = path.isAbsolute(filePath) ? filePath : path.join(dir, filePath);
-  if (!isFileInside(dir, target)) {
-    throw new RpcError({ code: "FORBIDDEN", message: "Path is outside the prompts directory" });
-  }
-  return target;
-}
-
-function readPromptDir(dir: string, scope: "project" | "global"): PromptRecord[] {
-  if (!existsSync(dir)) return [];
-  let entries: string[];
-  try {
-    entries = readdirSync(dir, { withFileTypes: true })
-      .filter((e) => e.isFile() && e.name.toLowerCase().endsWith(".md"))
-      .map((e) => e.name)
-      .sort();
-  } catch {
-    return [];
-  }
-  return entries.map((name) => {
-    const filePath = path.join(dir, name);
-    const record: PromptRecord = {
-      name: name.replace(/\.md$/i, ""),
-      description: "",
-      filePath,
-      scope,
-    };
-    try {
-      const content = readFileSync(filePath, "utf8");
-      const { frontmatter } = parseFrontmatter<Record<string, unknown>>(content);
-      if (typeof frontmatter.description === "string" && frontmatter.description.trim()) {
-        record.description = frontmatter.description.trim();
-      } else {
-        const firstLine = content
-          .split(/\r?\n/)
-          .map((l) => l.trim())
-          .find((l) => l.length > 0 && !l.startsWith("#") && !l.startsWith("---"));
-        record.description = (firstLine ?? "").slice(0, 80);
-      }
-    } catch {
-      /* unreadable file — keep the name only */
-    }
-    return record;
-  });
-}

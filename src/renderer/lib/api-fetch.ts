@@ -193,49 +193,6 @@ export async function apiFetch(input: string | URL | Request, init?: RequestInit
       return jsonResponse({ ok: true });
     }
 
-    if (segs[0] === "skills" && segs.length === 1 && method === "GET") {
-      const cwd = u.searchParams.get("cwd") ?? undefined;
-      return jsonResponse(await call("skills.list", cwd ? { cwd } : undefined));
-    }
-    if (segs[0] === "skills" && segs.length === 1 && (method === "PATCH" || method === "POST")) {
-      const body = await parseBody(init);
-      return jsonResponse(
-        await call("skills.set", {
-          cwd: String(body.cwd ?? ""),
-          filePath: String(body.filePath ?? ""),
-          ...(typeof body.disableModelInvocation === "boolean"
-            ? { disableModelInvocation: body.disableModelInvocation }
-            : {}),
-          ...(typeof body.content === "string" ? { content: body.content } : {}),
-        }),
-      );
-    }
-    if (segs[0] === "skills" && segs[1] === "search" && method === "POST") {
-      const body = await parseBody(init);
-      return jsonResponse(await call("skills.search", { query: String(body.query ?? "") }));
-    }
-    if (segs[0] === "skills" && segs[1] === "install" && method === "POST") {
-      const body = await parseBody(init);
-      return jsonResponse(await call("skills.install", body as never));
-    }
-
-    if (segs[0] === "prompts" && segs.length === 1 && method === "GET") {
-      const cwd = u.searchParams.get("cwd") ?? undefined;
-      return jsonResponse(await call("prompts.list", cwd ? { cwd } : undefined));
-    }
-    if (segs[0] === "prompts" && segs.length === 1 && method === "POST") {
-      const body = await parseBody(init);
-      return jsonResponse(await call("prompts.write", body as never));
-    }
-    if (segs[0] === "prompts" && segs.length === 1 && method === "DELETE") {
-      const body = await parseBody(init);
-      return jsonResponse(await call("prompts.delete", body as never));
-    }
-    if (segs[0] === "prompts" && segs[1] === "read" && method === "POST") {
-      const body = await parseBody(init);
-      return jsonResponse(await call("prompts.read", body as never));
-    }
-
     if (segs[0] === "plugins" && method === "GET") {
       const cwd = u.searchParams.get("cwd") ?? undefined;
       return jsonResponse(await call("plugins.list", cwd ? { cwd } : undefined));

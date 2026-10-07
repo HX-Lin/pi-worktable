@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -55,7 +55,7 @@ async function captureHandlers() {
 
 test("registerHandlers exposes every contract method exactly once", async () => {
   const { handlers } = await captureHandlers();
-  assert.equal(Object.keys(handlers).length, 85);
+  assert.equal(Object.keys(handlers).length, 76);
   for (const method of [
     "jev.getConfig",
     "jev.updateConfig",
@@ -86,11 +86,6 @@ test("registerHandlers exposes every contract method exactly once", async () => 
     "models.refresh",
     "models.refreshCancel",
     "auth.providers",
-    "skills.list",
-    "prompts.list",
-    "prompts.read",
-    "prompts.write",
-    "prompts.delete",
     "plugins.list",
     "system.allowRoot",
   ]) {
@@ -160,7 +155,7 @@ test("environment credentials are never reported as app-managed provider connect
   assert.deepEqual(describeApiKeyProviderAuth({ configured: true, source: "runtime" }), { configured: true });
 });
 
-test("file, git, worktree, skill, plugin, and system handlers return contract-shaped results", async (t) => {
+test("file, git, worktree, plugin, and system handlers return contract-shaped results", async (t) => {
   const base = mkdtempSync(path.join(tmpdir(), "pi-handler-test-"));
   t.after(() => rmSync(base, { recursive: true, force: true }));
   const project = path.join(base, "project");
@@ -208,63 +203,8 @@ test("file, git, worktree, skill, plugin, and system handlers return contract-sh
   const agentState = await handlers["agent.state"]({ sessionId: "missing-session" });
   assert.deepEqual(agentState, { running: false });
 
-  const skills = await handlers["skills.list"]({ cwd: project });
-  assert.equal(Array.isArray(skills.skills), true);
-
   const plugins = await handlers["plugins.list"]({ cwd: project });
   assert.equal(typeof plugins, "object");
-
-  // prompts: list, write, read, delete, and path-safety
-  const promptsRoot = path.join(project, ".pi", "prompts");
-  const listedPrompts = await handlers["prompts.list"]({ cwd: project });
-  assert.equal(Array.isArray(listedPrompts.project), true);
-  assert.equal(Array.isArray(listedPrompts.global), true);
-  assert.equal(listedPrompts.projectDir, promptsRoot);
-  assert.equal(listedPrompts.globalDir, path.join(isolatedAgentDirectory, "prompts"));
-
-  const promptFile = path.join(promptsRoot, "review.md");
-  await handlers["prompts.write"]({
-    cwd: project,
-    scope: "project",
-    filePath: promptFile,
-    content: "---\ndescription: Code review expert\n---\n\nReview the code with $1 in mind.\n",
-  });
-  assert.equal(readFileSync(promptFile, "utf8").includes("Code review expert"), true);
-
-  const reread = await handlers["prompts.read"]({ cwd: project, scope: "project", filePath: promptFile });
-  assert.equal(reread.content.includes("Review the code"), true);
-
-  const relWrite = await handlers["prompts.write"]({
-    cwd: project,
-    scope: "project",
-    filePath: "sub/deep.md",
-    content: "# Deep\n",
-  });
-  assert.deepEqual(relWrite, { ok: true });
-  assert.equal(existsSync(path.join(promptsRoot, "sub", "deep.md")), true);
-
-  await assert.rejects(
-    handlers["prompts.write"]({
-      cwd: project,
-      scope: "project",
-      filePath: promptFile,
-      content: "x".repeat(600 * 1024),
-    }),
-    (error) => error.code === "BAD_REQUEST",
-  );
-  await assert.rejects(
-    handlers["prompts.read"]({ cwd: project, scope: "project", filePath: path.join(base, "outside.md") }),
-    (error) => error.code === "FORBIDDEN",
-  );
-
-  const afterWrite = await handlers["prompts.list"]({ cwd: project });
-  assert.equal(
-    afterWrite.project.some((p) => p.name === "review" && p.description === "Code review expert"),
-    true,
-  );
-
-  await handlers["prompts.delete"]({ cwd: project, scope: "project", filePath: promptFile });
-  assert.equal(existsSync(promptFile), false);
 
   const running = await handlers["system.runningCount"]();
   assert.equal(running.count, running.sessionIds.length);
