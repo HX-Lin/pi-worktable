@@ -127,7 +127,7 @@ export function defaultJevSettings(): JevSettings {
 }
 
 export function jevSettingsPath(): string {
-  return join(getAgentDir(), "pi-desktop-jev.json");
+  return join(getAgentDir(), "pi-worktable-jev.json");
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

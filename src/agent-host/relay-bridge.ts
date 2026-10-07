@@ -38,7 +38,7 @@ import {
 import { invalidateSessionContent } from "./session-content-cache";
 import { entryToUiMessage, listAllSessions, readSessionTailEntries, resolveSessionPath } from "./session-reader";
 
-const RELAY_CONFIG_FILE = "pi-desktop-relay.json";
+const RELAY_CONFIG_FILE = "pi-worktable-relay.json";
 const HISTORY_LIMIT = 120;
 /** Lines read from the end before filtering; some entries are not renderable messages. */
 const HISTORY_TAIL_LINES = 500;
@@ -68,7 +68,7 @@ function stringField(source: Record<string, unknown>, key: string): string {
 
 /**
  * Resolve relay configuration from the environment first, then
- * ~/.pi/agent/pi-desktop-relay.json. Returns null when the bridge is unconfigured,
+ * ~/.pi/agent/pi-worktable-relay.json. Returns null when the bridge is unconfigured,
  * which is the default: no relay traffic unless the user opts in.
  */
 export function readRelayConfig(): RelayConfig | null {

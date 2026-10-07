@@ -32,7 +32,7 @@ const {
   writeJevSettings,
 } = await import(`${pathToFileURL(output).href}?v=${Date.now()}`);
 
-const settingsFile = path.join(agentDir, "pi-desktop-jev.json");
+const settingsFile = path.join(agentDir, "pi-worktable-jev.json");
 
 test("defaults are inert: nothing calls Jev until it is switched on", () => {
   const defaults = readJevSettings();

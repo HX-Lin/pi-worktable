@@ -13,9 +13,13 @@ import { startRelayBridge, stopRelayBridge } from "./relay-bridge";
 import { startRpcSession } from "./rpc-manager";
 import { resolveSessionPath } from "./session-reader";
 import { CONTINUE_AFTER_RESTART_PROMPT, takeInterruptedSnapshot } from "./resume-interrupted";
+import { migrateLegacyAgentFiles } from "./agent-file-migration";
 import { SessionManager } from "@earendil-works/pi-coding-agent";
 
 const piRuntimeVersion = readPiRuntimeVersion();
+
+// Rename this app's own config files before anything reads them.
+migrateLegacyAgentFiles();
 
 const server = createRpcServer();
 const restoreGitRunner = installToolchainGitRunner();

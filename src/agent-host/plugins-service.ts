@@ -38,7 +38,7 @@ function keyFor(source: string, scope: PluginScope): string {
 }
 
 function disabledBackupPath(): string {
-  return join(getAgentDir(), "pi-desktop-plugin-filters.json");
+  return join(getAgentDir(), "pi-worktable-plugin-filters.json");
 }
 
 function readDisabledBackups(): Record<string, PackageSource> {

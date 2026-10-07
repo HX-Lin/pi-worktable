@@ -43,7 +43,7 @@ function clearEnv() {
   delete process.env.PI_RELAY_DEVICE_NAME;
   delete process.env.PI_RELAY_SESSION_ID;
   delete process.env.PI_RELAY_CWD;
-  rmSync(path.join(agentDirectory, "pi-desktop-relay.json"), { force: true });
+  rmSync(path.join(agentDirectory, "pi-worktable-relay.json"), { force: true });
 }
 
 test("normalizeRelayUrl maps http(s) to ws(s) and passes others through", async () => {
@@ -62,7 +62,7 @@ test("readRelayConfig returns null when unconfigured", async () => {
 test("readRelayConfig reads the JSON file and lets the environment override it", async () => {
   clearEnv();
   writeFileSync(
-    path.join(agentDirectory, "pi-desktop-relay.json"),
+    path.join(agentDirectory, "pi-worktable-relay.json"),
     JSON.stringify({ url: "https://pi.hxlin.fun/ws", pairingSecret: "file-secret", deviceName: "studio" }),
   );
   const { readRelayConfig } = await load();
