@@ -29,7 +29,7 @@ import { useIsMobile } from "@/hooks/useIsMobile";
 import { useI18n } from "@/i18n";
 import { MAX_ATTACHED_IMAGES, shrinkImageFiles } from "@/lib/image-attachments";
 import type { ModelCatalogStatus } from "@contract/types";
-import { AUTO_COMPACT_HINT_TURNS, AUTO_COMPACT_TURN_THRESHOLD } from "@shared/auto-compact";
+import { AUTO_COMPACT_CONTEXT_PERCENT } from "@shared/auto-compact";
 
 export interface AttachedImage {
   data: string; // base64, no prefix
@@ -65,12 +65,10 @@ interface Props {
   isCompacting?: boolean;
   compactError?: string | null;
   compactResult?: CompactResultInfo | null;
-  /** Conversation turns (user messages) on the active branch. */
-  conversationTurns?: number;
   /** Conversation (user/assistant) message count on the active branch. */
   conversationMessageCount?: number;
-  /** Message count that triggers automatic compaction in the Host. */
-  autoCompactThreshold?: number;
+  /** How full the context window is, in percent. */
+  contextUsagePercent?: number | null;
   toolPreset?: "none" | "default" | "full";
   onToolPresetChange?: (preset: "none" | "default" | "full") => void;
   thinkingLevel?: "auto" | "off" | "minimal" | "low" | "medium" | "high" | "xhigh";
@@ -239,9 +237,8 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
     isCompacting,
     compactError,
     compactResult,
-    conversationTurns = 0,
     conversationMessageCount = 0,
-    autoCompactThreshold,
+    contextUsagePercent,
     toolPreset,
     onToolPresetChange,
     thinkingLevel,
@@ -948,28 +945,17 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
     : null;
   // Keep the compaction control visible for any active chat so the manual
   // action is always discoverable; the text states when the Host will compact
-  // on its own. The bar becomes highlighted as the chat approaches the limit.
-  const compactThreshold = autoCompactThreshold ?? AUTO_COMPACT_TURN_THRESHOLD;
-  const compactHintAt = Math.min(AUTO_COMPACT_HINT_TURNS, Math.max(1, compactThreshold - 1));
+  // on its own. The bar becomes highlighted as the window fills up.
+  const contextPercent = Math.round(contextUsagePercent ?? 0);
   // Always show the compaction control for any chat (even empty ones) so the
   // manual action is permanently discoverable, never gated on message count.
   const showCompactHint = Boolean(onCompactContext);
-  /**
-   * `isCompacting` is pi's flag and is true for both operations, so each button
-   * must subtract the other's scope: otherwise a memory compaction paints the
-   * context button red and lets it cancel a run it did not start.
-   */
   const isContextCompacting = Boolean(isCompacting);
   const contextCompactDisabled = isStreaming && !isContextCompacting;
-  const compactIsNearLimit = conversationTurns >= compactHintAt;
-  const compactBarText =
-    conversationTurns >= compactThreshold
-      ? t("compactAutoRunning", "{count} conversations pending — compacting to memory now")
-      : t("compactAutoHint", "{count} conversations pending — compacts to memory at {threshold}");
-  const compactBarLabel = compactBarText
-    .replace("{count}", String(conversationTurns))
-    .replace("{threshold}", String(compactThreshold))
-    .replace("{messages}", String(conversationMessageCount));
+  const compactIsNearLimit = contextPercent >= AUTO_COMPACT_CONTEXT_PERCENT - 10;
+  const compactBarLabel = t("compactContextHint", "Context {percent}% full — compacts automatically at {threshold}%")
+    .replace("{percent}", String(contextPercent))
+    .replace("{threshold}", String(AUTO_COMPACT_CONTEXT_PERCENT));
   const compactMessageDetail =
     conversationMessageCount > 0
       ? t("compactMessageDetail", "context holds {messages} messages").replace(

@@ -6,7 +6,7 @@ import path from "node:path";
 import test from "node:test";
 import { pathToFileURL } from "node:url";
 import { build } from "esbuild";
-import { AUTO_COMPACT_TURN_THRESHOLD, countBranchConversationMessages } from "../shared/auto-compact.ts";
+import { countBranchConversationMessages } from "../shared/auto-compact.ts";
 
 const root = path.resolve(import.meta.dirname, "..", "..");
 // Isolate the Host settings file so a developer's local threshold cannot
@@ -205,7 +205,7 @@ test("many assistant steps in a few turns never auto-compact", async () => {
   try {
     await wrapper.runExternalTurn({ runId: "run-steps", message: "hello", channel: "feishu" });
     await settle();
-    assert.ok(countBranchConversationMessages(state.branch) > AUTO_COMPACT_TURN_THRESHOLD * 2);
+    assert.ok(countBranchConversationMessages(state.branch) > 100);
     assert.equal(state.compactCalls, 0);
   } finally {
     wrapper.destroy();
@@ -214,7 +214,7 @@ test("many assistant steps in a few turns never auto-compact", async () => {
 
 test("a short session never auto-compacts", async () => {
   const { AgentSessionWrapper } = await loadRpcManager();
-  const { inner, state } = createFakeSession({ branch: conversationTurns(AUTO_COMPACT_TURN_THRESHOLD - 2) });
+  const { inner, state } = createFakeSession({ branch: conversationTurns(2) });
   const wrapper = new AgentSessionWrapper(inner);
   try {
     await wrapper.runExternalTurn({ runId: "run-short", message: "hello", channel: "feishu" });

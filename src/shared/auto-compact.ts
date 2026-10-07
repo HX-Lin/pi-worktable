@@ -1,44 +1,16 @@
 /**
- * Turn-count based auto-compaction.
+ * Auto-compaction helpers.
  *
- * pi already compacts on token thresholds, but a long chat can accumulate many
- * small messages before that fires, which slows session reloads and dilutes the
- * model's attention. The desktop app additionally compacts once a session
- * reaches {@link AUTO_COMPACT_TURN_THRESHOLD} conversation turns, and surfaces
- * a manual control near the composer before that point.
+ * pi compacts on token thresholds on its own; the desktop app additionally
+ * triggers a context compaction once the window passes
+ * {@link AUTO_COMPACT_CONTEXT_PERCENT}, and surfaces a manual control near the
+ * composer before that point. Session history is never deleted.
  *
- * The unit is a **turn** (one message the user sent), not a raw message: a
- * single turn routinely produces dozens of assistant steps and tool results, so
- * counting messages made one exchange look like a hundred and compacted the
- * session almost immediately. {@link countBranchConversationMessages} is kept
- * for showing that raw figure alongside the turn count.
+ * A **turn** is one message the user sent, not a raw message: a single turn
+ * routinely produces dozens of assistant steps and tool results, so counting
+ * messages made one exchange look like a hundred. The counting helpers here
+ * feed the figures the UI shows.
  */
-export const AUTO_COMPACT_TURN_THRESHOLD = 50;
-
-/** Bounds accepted from the Settings UI for the automatic compaction threshold. */
-export const AUTO_COMPACT_TURNS_MIN = 5;
-export const AUTO_COMPACT_TURNS_MAX = 200;
-
-/** Host-side auto-compaction configuration, persisted across restarts. */
-export interface AutoCompactSettings {
-  /** Compact a chat once it reaches this many conversation turns. */
-  autoCompactTurns: number;
-}
-
-/** Coerce an arbitrary value into a usable turn threshold. */
-export function clampAutoCompactTurns(value: unknown): number {
-  const numeric = typeof value === "number" ? value : Number(value);
-  if (!Number.isFinite(numeric)) return AUTO_COMPACT_TURN_THRESHOLD;
-  return Math.min(AUTO_COMPACT_TURNS_MAX, Math.max(AUTO_COMPACT_TURNS_MIN, Math.round(numeric)));
-}
-
-/** Defaults applied when no settings file exists yet. */
-export const AUTO_COMPACT_SETTINGS_DEFAULTS: AutoCompactSettings = {
-  autoCompactTurns: AUTO_COMPACT_TURN_THRESHOLD,
-};
-
-/** Highlight the manual compaction control once the chat reaches this many turns. */
-export const AUTO_COMPACT_HINT_TURNS = 30;
 
 /**
  * Context fill level that triggers an automatic *context* compaction.
@@ -98,31 +70,6 @@ function activeContextStartIndex(entries: readonly unknown[]): number {
     if ((entries[index] as { type?: unknown } | null)?.type === "compaction") return index + 1;
   }
   return 0;
-}
-
-/**
- * Index of the first entry since the latest memory compaction.
- *
- * Context compactions pi runs on its own are deliberately *not* a boundary: they
- * leave session history in place, so the work since the last memory compaction is
- * still waiting to be distilled and must keep counting towards its threshold.
- */
-function memoryCompactionStartIndex(entries: readonly unknown[]): number {
-  for (let index = entries.length - 1; index >= 0; index -= 1) {
-    if (isMemoryCompactionEntry(entries[index])) return index + 1;
-  }
-  return 0;
-}
-
-/** Count the conversation turns (user messages) since the last memory compaction. */
-export function countBranchConversationTurns(entries: readonly unknown[]): number {
-  let count = 0;
-  for (let index = memoryCompactionStartIndex(entries); index < entries.length; index += 1) {
-    const record = entries[index] as { type?: unknown; message?: { role?: unknown } } | null;
-    if (!record || record.type !== "message") continue;
-    if (record.message?.role === "user") count += 1;
-  }
-  return count;
 }
 
 /**

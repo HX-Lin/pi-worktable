@@ -7,7 +7,6 @@ import { pathToFileURL } from "node:url";
 import { SessionManager } from "@earendil-works/pi-coding-agent";
 import { CredentialSynchronizationError } from "@earendil-works/pi-coding-agent";
 import { build } from "esbuild";
-import { AUTO_COMPACT_TURN_THRESHOLD } from "../shared/auto-compact.ts";
 
 const root = path.resolve(import.meta.dirname, "..", "..");
 const isolatedAgentDirectory = mkdtempSync(path.join(tmpdir(), "pi-handler-agent-"));
@@ -56,7 +55,7 @@ async function captureHandlers() {
 
 test("registerHandlers exposes every contract method exactly once", async () => {
   const { handlers } = await captureHandlers();
-  assert.equal(Object.keys(handlers).length, 87);
+  assert.equal(Object.keys(handlers).length, 85);
   for (const method of [
     "jev.getConfig",
     "jev.updateConfig",
@@ -70,8 +69,6 @@ test("registerHandlers exposes every contract method exactly once", async () => 
     "mcp.runCommand",
     "context.map",
     "context.fold",
-    "settings.get",
-    "settings.update",
     "host.ping",
     "host.toolchain",
     "sessions.list",
@@ -480,8 +477,6 @@ test("sessions.get returns the contract shape without rescanning known session p
   const withState = await handlers["sessions.get"]({ id: sessionId, includeState: true });
   assert.equal(withState.agentState.running, false);
   assert.equal(withState.agentState.state.messageCount, 4);
-  assert.equal(withState.agentState.state.autoCompactThreshold, AUTO_COMPACT_TURN_THRESHOLD);
-  assert.equal(withState.agentState.state.conversationTurns, 2);
 
   const paged = await handlers["sessions.get"]({ id: sessionId, historyWindow: { maxTurns: 1, maxBytes: 64 * 1024 } });
   assert.deepEqual(paged.context.entryIds, ["user-two", "assistant-two"]);

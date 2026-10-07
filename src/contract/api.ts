@@ -38,7 +38,6 @@ import type {
   SkillRecord,
   SkillUpdateParams,
 } from "../shared/api-types";
-import type { AutoCompactSettings } from "../shared/auto-compact";
 import type {
   ChannelAccountConfig,
   ChannelBinding,
@@ -269,15 +268,6 @@ export interface Api {
   };
 
   // Desktop settings that the Host persists (auto-compaction, ...)
-  "settings.get": {
-    params: void;
-    result: AutoCompactSettings;
-  };
-  "settings.update": {
-    params: { autoCompactTurns: number };
-    result: AutoCompactSettings;
-  };
-
   "files.write": {
     params: { path: string; content: string; sourceSessionId?: string };
     result: { ok: true };

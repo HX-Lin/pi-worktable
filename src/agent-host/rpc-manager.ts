@@ -22,10 +22,8 @@ import {
   AUTO_COMPACT_CONTEXT_PERCENT,
   AUTO_COMPACT_RETRY_PERCENT_GROWTH,
   countBranchConversationMessages,
-  countBranchConversationTurns,
 } from "../shared/auto-compact";
 import { createDesktopSystemPromptExtension, type DesktopPromptSettings } from "./system-prompt-extension";
-import { readHostSettings } from "./host-settings";
 import { withExtensionTools } from "./tool-activation";
 import { getFoldSession } from "./context-fold";
 import { captureTurnStart, collectTurnChanges, type TurnStartSnapshot } from "./turn-changes";
@@ -378,11 +376,6 @@ export class AgentSessionWrapper {
     return run;
   }
 
-  /** Apply a changed compaction threshold without waiting for the next turn. */
-  recheckAutoCompaction(): void {
-    this.scheduleAutoCompactCheck();
-  }
-
   private scheduleAutoCompactCheck(): void {
     if (!this._alive) return;
     setImmediate(() => void this.maybeAutoCompact());
@@ -625,9 +618,7 @@ export class AgentSessionWrapper {
           autoCompactionEnabled: this.inner.autoCompactionEnabled,
           autoRetryEnabled: this.inner.autoRetryEnabled,
           model: model ? { id: model.id, provider: model.provider } : undefined,
-          conversationTurns: countBranchConversationTurns(this.inner.sessionManager.getBranch()),
           messageCount: countBranchConversationMessages(this.inner.sessionManager.getBranch()),
-          autoCompactThreshold: readHostSettings().autoCompactTurns,
           pendingMessageCount: this.inner.pendingMessageCount,
           queuedMessages: {
             steering: [...this.inner.getSteeringMessages()],
@@ -1301,14 +1292,7 @@ export function getRpcSession(sessionId: string): AgentSessionWrapper | undefine
 
 /**
  * Re-evaluate the automatic compaction threshold for every live session.
- *
- * Called when the user changes the threshold in Settings so a lowered value
- * takes effect immediately instead of on the next turn.
  */
-export function recheckAutoCompaction(): void {
-  for (const session of getRegistry().values()) session.recheckAutoCompaction();
-}
-
 export function getRunningRpcSessionIds(): string[] {
   const ids = new Set<string>();
   for (const [sessionId, session] of getRegistry()) {
