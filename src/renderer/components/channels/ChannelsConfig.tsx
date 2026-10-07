@@ -1,10 +1,8 @@
-import { QRCodeSVG } from "@rc-component/qrcode";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type {
   ChannelAccountConfig,
   ChannelAccountView,
   ChannelBinding,
-  ChannelLoginEvent,
   ChannelProbeResult,
   ChannelStatus,
   ChannelsSnapshot,
@@ -16,7 +14,6 @@ import { copyText } from "@/lib/clipboard";
 import { useI18n } from "@/i18n";
 
 const EMPTY: ChannelsSnapshot = { accounts: [], statuses: [], pairings: [], bindings: [], activities: [] };
-const TELEGRAM_BASE_URL = "https://api.telegram.org";
 const FEISHU_BASE_URLS: Record<FeishuDomain, string> = {
   feishu: "https://open.feishu.cn",
   lark: "https://open.larksuite.com",
@@ -83,19 +80,14 @@ function statusColor(status?: ChannelStatus): string {
 type Translate = (key: string, fallback: string) => string;
 
 function channelLabel(channel: ChannelAccountConfig["channel"], t: Translate, domain?: FeishuDomain): string {
-  if (channel === "telegram") return "Telegram";
-  if (channel === "feishu") {
-    if (domain === "lark") return "Lark";
-    if (domain === "feishu") return t("feishu", "Feishu");
-    return t("feishuLark", "Feishu / Lark");
-  }
-  return t("weixin", "WeChat");
+  if (domain === "lark") return "Lark";
+  if (domain === "feishu") return t("feishu", "Feishu");
+  if (channel === "feishu") return t("feishuLark", "Feishu / Lark");
+  return channel;
 }
 
-function channelAccent(channel: ChannelAccountConfig["channel"]): string {
-  if (channel === "telegram") return "#229ed9";
-  if (channel === "feishu") return "#3370ff";
-  return "#07c160";
+function channelAccent(_channel: ChannelAccountConfig["channel"]): string {
+  return "#3370ff";
 }
 
 export function ChannelsConfig({ onSnapshotChange }: { onSnapshotChange?: (snapshot: ChannelsSnapshot) => void }) {
@@ -105,10 +97,6 @@ export function ChannelsConfig({ onSnapshotChange }: { onSnapshotChange?: (snaps
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [login, setLogin] = useState<ChannelLoginEvent | null>(null);
-  const [verificationCode, setVerificationCode] = useState("");
-  const [telegramDialogOpen, setTelegramDialogOpen] = useState(false);
-  const [telegramError, setTelegramError] = useState("");
   const [feishuDialogOpen, setFeishuDialogOpen] = useState(false);
   const [feishuError, setFeishuError] = useState("");
 
@@ -134,36 +122,9 @@ export function ChannelsConfig({ onSnapshotChange }: { onSnapshotChange?: (snaps
       subscribe("channels.pairing", "*", () => void refresh()),
       subscribe("channels.binding", "*", () => void refresh()),
       subscribe("channels.activity", "*", () => void refresh()),
-      subscribe("channels.login", "*", (event) => setLogin(event)),
     ]).then((items) => unsubs.push(...items));
     return () => unsubs.forEach((unsubscribe) => unsubscribe());
   }, [refresh]);
-
-  useEffect(() => {
-    if (
-      !login ||
-      ["confirmed", "already_connected", "expired", "error", "cancelled", "verification_required"].includes(login.phase)
-    ) {
-      return;
-    }
-    let cancelled = false;
-    const timer = setTimeout(() => {
-      void call("channels.loginWait", { channel: "weixin", sessionKey: login.sessionKey })
-        .then((event) => {
-          if (!cancelled) {
-            setLogin(event);
-            if (event.phase === "confirmed") void refresh();
-          }
-        })
-        .catch((cause) => {
-          if (!cancelled) setError(cause instanceof Error ? cause.message : String(cause));
-        });
-    }, 600);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [login, refresh]);
 
   const run = useCallback(
     async (task: () => Promise<unknown>) => {
@@ -180,55 +141,6 @@ export function ChannelsConfig({ onSnapshotChange }: { onSnapshotChange?: (snaps
     },
     [refresh],
   );
-
-  const beginLogin = () =>
-    run(async () => {
-      const event = await call("channels.loginStart", { channel: "weixin", force: true });
-      setLogin(event);
-    });
-
-  const connectTelegram = async (token: string) => {
-    setBusy(true);
-    setTelegramError("");
-    try {
-      const now = new Date().toISOString();
-      const accountId = `telegram-${crypto.randomUUID()}`;
-      const account: ChannelAccountConfig = {
-        id: accountId,
-        channel: "telegram",
-        name: "",
-        enabled: false,
-        dmPolicy: "pairing",
-        allowFrom: [],
-        groupPolicy: "disabled",
-        groupIds: [],
-        groupAllowFrom: [],
-        requireMention: true,
-        commandsEnabled: false,
-        toolNames: [],
-        createdAt: now,
-        updatedAt: now,
-      };
-      if (typeof window.piBridge.setChannelCredential !== "function") {
-        throw new Error(
-          t("telegramBridgeUnavailable", "The desktop runtime is outdated. Restart Pi Desktop and try again."),
-        );
-      }
-      await window.piBridge.setChannelCredential({
-        channel: "telegram",
-        accountId,
-        credential: { token, providerAccountId: accountId, baseUrl: TELEGRAM_BASE_URL },
-      });
-      const next = await call("channels.accountConnect", { account });
-      setSnapshot(next);
-      onSnapshotChange?.(next);
-      setTelegramDialogOpen(false);
-    } catch (cause) {
-      setTelegramError(cause instanceof Error ? cause.message : String(cause));
-    } finally {
-      setBusy(false);
-    }
-  };
 
   const connectFeishu = async (appId: string, appSecret: string, domain: FeishuDomain) => {
     setBusy(true);
@@ -280,14 +192,6 @@ export function ChannelsConfig({ onSnapshotChange }: { onSnapshotChange?: (snaps
     }
   };
 
-  const closeLogin = () => {
-    if (login && !["confirmed", "already_connected", "expired", "error", "cancelled"].includes(login.phase)) {
-      void call("channels.loginCancel", { channel: "weixin", sessionKey: login.sessionKey });
-    }
-    setLogin(null);
-    setVerificationCode("");
-  };
-
   const configuredCount = snapshot.accounts.filter((account) => account.configured).length;
 
   return (
@@ -311,20 +215,6 @@ export function ChannelsConfig({ onSnapshotChange }: { onSnapshotChange?: (snaps
               }}
             >
               {t("connectFeishu", "Connect Feishu / Lark")}
-            </button>
-            <button
-              type="button"
-              disabled={busy}
-              style={buttonStyle()}
-              onClick={() => {
-                setTelegramError("");
-                setTelegramDialogOpen(true);
-              }}
-            >
-              {t("connectTelegram", "Connect Telegram")}
-            </button>
-            <button type="button" disabled={busy} style={buttonStyle()} onClick={beginLogin}>
-              {t("connectWeixin", "Connect WeChat")}
             </button>
           </div>
         </div>
@@ -388,41 +278,6 @@ export function ChannelsConfig({ onSnapshotChange }: { onSnapshotChange?: (snaps
                   onStop={() => run(() => call("channels.stop", { accountId: account.id }))}
                   onRestart={() => run(() => call("channels.restart", { accountId: account.id }))}
                   onProbe={() => call("channels.probe", { accountId: account.id })}
-                  onUpdateToken={async (token) => {
-                    await window.piBridge.setChannelCredential({
-                      channel: account.channel,
-                      accountId: account.id,
-                      credential: {
-                        token,
-                        providerAccountId: account.providerAccountId ?? account.id,
-                        ...(account.providerUsername ? { providerUsername: account.providerUsername } : {}),
-                        baseUrl: account.baseUrl || TELEGRAM_BASE_URL,
-                      },
-                    });
-                    const probe = await call("channels.probe", { accountId: account.id });
-                    if (!probe.ok || !probe.providerAccountId) throw new Error(probe.message);
-                    await window.piBridge.setChannelCredential({
-                      channel: account.channel,
-                      accountId: account.id,
-                      credential: {
-                        token,
-                        providerAccountId: probe.providerAccountId,
-                        ...(probe.providerUsername ? { providerUsername: probe.providerUsername } : {}),
-                        baseUrl: account.baseUrl || TELEGRAM_BASE_URL,
-                      },
-                    });
-                    await call("channels.accountUpsert", {
-                      account: {
-                        ...account,
-                        enabled: true,
-                        providerAccountId: probe.providerAccountId,
-                        ...(probe.providerUsername ? { providerUsername: probe.providerUsername } : {}),
-                        name: account.name || probe.providerUsername || probe.displayName || "Telegram",
-                        updatedAt: new Date().toISOString(),
-                      },
-                    });
-                    return probe;
-                  }}
                   onUpdateFeishuCredential={async (nextAccount, appSecret) => {
                     const appId = nextAccount.appId?.trim();
                     const domain = nextAccount.domain === "lark" ? "lark" : "feishu";
@@ -491,33 +346,6 @@ export function ChannelsConfig({ onSnapshotChange }: { onSnapshotChange?: (snaps
         <ActivitySection snapshot={snapshot} />
       </div>
 
-      {login && (
-        <LoginDialog
-          event={login}
-          code={verificationCode}
-          setCode={setVerificationCode}
-          onSubmitCode={() =>
-            run(async () => {
-              await call("channels.loginSubmitCode", {
-                channel: "weixin",
-                sessionKey: login.sessionKey,
-                code: verificationCode,
-              });
-              setVerificationCode("");
-              setLogin({ ...login, phase: "waiting", message: "正在验证…" });
-            })
-          }
-          onClose={closeLogin}
-        />
-      )}
-      {telegramDialogOpen && (
-        <TelegramTokenDialog
-          busy={busy}
-          error={telegramError}
-          onConnect={(token) => void connectTelegram(token)}
-          onClose={() => setTelegramDialogOpen(false)}
-        />
-      )}
       {feishuDialogOpen && (
         <FeishuCredentialDialog
           busy={busy}
@@ -539,7 +367,6 @@ export function AccountCard({
   onStop,
   onRestart,
   onProbe,
-  onUpdateToken,
   onUpdateFeishuCredential,
   onTestSend,
   onDelete,
@@ -552,7 +379,6 @@ export function AccountCard({
   onStop: () => void;
   onRestart: () => void;
   onProbe: () => Promise<ChannelProbeResult>;
-  onUpdateToken: (token: string) => Promise<ChannelProbeResult>;
   onUpdateFeishuCredential: (account: ChannelAccountConfig, appSecret: string) => Promise<ChannelProbeResult>;
   onTestSend: (peerId: string, message: string) => void;
   onDelete: () => void;
@@ -562,7 +388,6 @@ export function AccountCard({
   const [testPeer, setTestPeer] = useState("");
   const [testMessage, setTestMessage] = useState(() => t("channelTestMessage", "Pi Worktable channel test"));
   const [probing, setProbing] = useState(false);
-  const [telegramToken, setTelegramToken] = useState("");
   const [feishuAppSecret, setFeishuAppSecret] = useState("");
   const [updatingToken, setUpdatingToken] = useState(false);
   const [probeFeedback, setProbeFeedback] = useState<{ ok: boolean; message: string; at: number } | null>(null);
@@ -597,22 +422,6 @@ export function AccountCard({
       });
     } finally {
       setProbing(false);
-    }
-  };
-
-  const handleTokenUpdate = async () => {
-    const token = telegramToken.trim();
-    if (!token) return;
-    setUpdatingToken(true);
-    setProbeFeedback(null);
-    try {
-      const result = await onUpdateToken(token);
-      setTelegramToken("");
-      setProbeFeedback({ ok: result.ok, message: result.message, at: Date.now() });
-    } catch (cause) {
-      setProbeFeedback({ ok: false, message: cause instanceof Error ? cause.message : String(cause), at: Date.now() });
-    } finally {
-      setUpdatingToken(false);
     }
   };
 
@@ -655,13 +464,7 @@ export function AccountCard({
               fontWeight: 800,
             }}
           >
-            {account.channel === "telegram"
-              ? "TG"
-              : account.channel === "feishu"
-                ? account.domain === "lark"
-                  ? "L"
-                  : "飞"
-                : "微"}
+            {account.domain === "lark" ? "L" : "飞"}
           </div>
           <div>
             <div style={{ color: "var(--text)", fontSize: 13, fontWeight: 700 }}>{account.name}</div>
@@ -833,41 +636,6 @@ export function AccountCard({
         </Field>
       </div>
 
-      {account.channel === "telegram" && (
-        <div style={{ marginTop: 12 }}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "minmax(220px,1fr) auto",
-              gap: 7,
-            }}
-          >
-            <input
-              type="password"
-              autoComplete="off"
-              style={inputStyle}
-              value={telegramToken}
-              onChange={(event) => setTelegramToken(event.target.value)}
-              placeholder={t("newTelegramBotToken", "New BotFather token")}
-            />
-            <button
-              type="button"
-              disabled={busy || updatingToken || !telegramToken.trim()}
-              style={buttonStyle()}
-              onClick={() => void handleTokenUpdate()}
-            >
-              {updatingToken ? t("saving", "Saving…") : t("updateTelegramToken", "Update token")}
-            </button>
-          </div>
-          <div style={{ marginTop: 6, color: "var(--text-dim)", fontSize: 10, lineHeight: 1.5 }}>
-            {t(
-              "telegramGroupSetupHint",
-              "Basic groups and supergroups are supported; topics require a forum supergroup. Send /status@bot_username first, then copy the chat ID from Recent activity into Allowed group IDs.",
-            )}
-          </div>
-        </div>
-      )}
-
       {account.channel === "feishu" && (
         <div
           data-testid="feishu-credential-settings"
@@ -1011,11 +779,9 @@ export function AccountCard({
           value={testPeer}
           onChange={(event) => setTestPeer(event.target.value)}
           placeholder={
-            account.channel === "telegram"
-              ? t("testSendTelegramChatId", "Telegram chat ID for test-send")
-              : account.channel === "feishu"
-                ? t("testSendFeishuReceiveId", "Feishu open_id or chat_id for test-send")
-                : t("testSendUserId", "User ID for test-send")
+            account.channel === "feishu"
+              ? t("testSendFeishuReceiveId", "Feishu open_id or chat_id for test-send")
+              : t("testSendUserId", "User ID for test-send")
           }
         />
         <input style={inputStyle} value={testMessage} onChange={(event) => setTestMessage(event.target.value)} />
@@ -1291,84 +1057,6 @@ function ActivitySection({ snapshot }: { snapshot: ChannelsSnapshot }) {
   );
 }
 
-export function TelegramTokenDialog({
-  busy,
-  error,
-  onConnect,
-  onClose,
-}: {
-  busy: boolean;
-  error: string;
-  onConnect: (token: string) => void;
-  onClose: () => void;
-}) {
-  const { t } = useI18n();
-  const [token, setToken] = useState("");
-  return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 1200,
-        background: "rgba(0,0,0,.45)",
-        display: "grid",
-        placeItems: "center",
-      }}
-    >
-      <div
-        style={{
-          width: 430,
-          maxWidth: "calc(100vw - 28px)",
-          border: "1px solid var(--border)",
-          borderRadius: 10,
-          background: "var(--bg)",
-          padding: 22,
-          boxShadow: "0 14px 45px rgba(0,0,0,.25)",
-        }}
-      >
-        <h3 style={{ margin: 0, color: "var(--text)", fontSize: 16 }}>{t("connectTelegram", "Connect Telegram")}</h3>
-        <p style={{ color: "var(--text-muted)", fontSize: 12, lineHeight: 1.6 }}>
-          {t(
-            "telegramTokenDescription",
-            "Create a bot with @BotFather, paste its token here, then Pi Desktop will verify it with getMe and store it using OS encryption.",
-          )}
-        </p>
-        <input
-          autoFocus
-          type="password"
-          autoComplete="off"
-          style={inputStyle}
-          value={token}
-          onChange={(event) => setToken(event.target.value)}
-          placeholder={t("telegramBotToken", "BotFather token")}
-        />
-        {error && (
-          <div
-            role="alert"
-            data-testid="telegram-connect-error"
-            style={{ marginTop: 10, color: "#ef4444", fontSize: 11, lineHeight: 1.5, overflowWrap: "anywhere" }}
-          >
-            {error}
-          </div>
-        )}
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 7, marginTop: 16 }}>
-          <button type="button" disabled={busy} style={buttonStyle()} onClick={onClose}>
-            {t("cancel", "Cancel")}
-          </button>
-          <button
-            type="button"
-            disabled={busy || !token.trim()}
-            style={buttonStyle(true)}
-            onClick={() => onConnect(token.trim())}
-          >
-            {busy ? t("testingConnection", "Testing…") : t("saveAndConnect", "Save and connect")}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function FeishuCredentialDialog({
   busy,
   error,
@@ -1557,93 +1245,6 @@ export function FeishuCredentialDialog({
             {busy ? t("testingConnection", "Testing…") : t("saveAndConnect", "Save and connect")}
           </button>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function LoginDialog({
-  event,
-  code,
-  setCode,
-  onSubmitCode,
-  onClose,
-}: {
-  event: ChannelLoginEvent;
-  code: string;
-  setCode: (value: string) => void;
-  onSubmitCode: () => void;
-  onClose: () => void;
-}) {
-  const { t } = useI18n();
-  const terminal = ["confirmed", "already_connected", "expired", "error", "cancelled"].includes(event.phase);
-  return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 1200,
-        background: "rgba(0,0,0,.45)",
-        display: "grid",
-        placeItems: "center",
-      }}
-    >
-      <div
-        style={{
-          width: 390,
-          maxWidth: "calc(100vw - 28px)",
-          border: "1px solid var(--border)",
-          borderRadius: 10,
-          background: "var(--bg)",
-          padding: 22,
-          textAlign: "center",
-          boxShadow: "0 14px 45px rgba(0,0,0,.25)",
-        }}
-      >
-        <h3 style={{ margin: 0, color: "var(--text)", fontSize: 16 }}>{t("connectWeixin", "Connect WeChat")}</h3>
-        {event.qrContent && !terminal && (
-          <div
-            style={{
-              width: 236,
-              height: 236,
-              padding: 10,
-              background: "white",
-              borderRadius: 8,
-              margin: "18px auto 12px",
-            }}
-          >
-            <QRCodeSVG
-              value={event.qrContent}
-              size={216}
-              level="M"
-              marginSize={2}
-              title={t("weixinLoginQrCode", "WeChat login QR code")}
-            />
-          </div>
-        )}
-        <p style={{ color: event.phase === "error" ? "#ef4444" : "var(--text-muted)", fontSize: 12, lineHeight: 1.6 }}>
-          {event.message}
-        </p>
-        {event.phase === "verification_required" && (
-          <div style={{ display: "flex", gap: 7, marginTop: 12 }}>
-            <input
-              autoFocus
-              style={inputStyle}
-              value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-              placeholder={t("verificationNumber", "Verification number")}
-            />
-            <button type="button" style={buttonStyle(true)} onClick={onSubmitCode}>
-              {t("submit", "Submit")}
-            </button>
-          </div>
-        )}
-        {(event.phase === "waiting" || event.phase === "scanned") && (
-          <div style={{ color: "var(--text-dim)", fontSize: 11 }}>{t("pollingSecurely", "Polling securely…")}</div>
-        )}
-        <button type="button" style={{ ...buttonStyle(), marginTop: 16 }} onClick={onClose}>
-          {terminal ? t("close", "Close") : t("cancel", "Cancel")}
-        </button>
       </div>
     </div>
   );

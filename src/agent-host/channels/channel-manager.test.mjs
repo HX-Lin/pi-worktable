@@ -28,7 +28,7 @@ await build({
 });
 const { AdapterRegistry, ChannelManager } = await import(`${pathToFileURL(output).href}?v=${Date.now()}`);
 
-function createFakeAdapter(id = "weixin") {
+function createFakeAdapter(id = "feishu") {
   let inbound;
   const sent = [];
   return {
@@ -103,8 +103,8 @@ test("fake adapter runs inbound message through binding, Pi bridge, and delivery
   const now = new Date().toISOString();
   await manager.upsertAccount({
     id: "wx-one",
-    channel: "weixin",
-    name: "Weixin",
+    channel: "feishu",
+    name: "Feishu",
     enabled: true,
     dmPolicy: "pairing",
     allowFrom: ["user-one"],
@@ -120,7 +120,7 @@ test("fake adapter runs inbound message through binding, Pi bridge, and delivery
 
   await fake.emit({
     id: "event-one",
-    channel: "weixin",
+    channel: "feishu",
     accountId: "wx-one",
     peer: { kind: "dm", id: "user-one" },
     sender: { id: "user-one" },
@@ -155,7 +155,7 @@ test("fake adapter runs inbound message through binding, Pi bridge, and delivery
 
   await fake.emit({
     id: "event-two",
-    channel: "weixin",
+    channel: "feishu",
     accountId: "wx-one",
     peer: { kind: "dm", id: "user-one" },
     sender: { id: "user-one" },
@@ -173,7 +173,7 @@ test("fake adapter runs inbound message through binding, Pi bridge, and delivery
 
 test("accepted media is staged privately and passed to the existing Pi turn", async () => {
   const dir = mkdtempSync(path.join(tmpdir(), "pi-channel-manager-media-"));
-  const fake = createFakeAdapter("telegram");
+  const fake = createFakeAdapter("feishu");
   const png = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10, 1, 2, 3]);
   fake.adapter.downloadInbound = async () => [
     { kind: "image", data: png, name: "../../photo.png", mime: "image/jpeg" },
@@ -186,7 +186,7 @@ test("accepted media is staged privately and passed to the existing Pi turn", as
     dataDirectory: dir,
     registry,
     secretAccess: {
-      get: async () => ({ token: "token", providerAccountId: "42", baseUrl: "https://telegram.example" }),
+      get: async () => ({ token: "token", providerAccountId: "42", baseUrl: "https://feishu.example" }),
       set: async () => {},
       delete: async () => {},
     },
@@ -202,9 +202,9 @@ test("accepted media is staged privately and passed to the existing Pi turn", as
   });
   const now = new Date().toISOString();
   await manager.upsertAccount({
-    id: "telegram-media",
-    channel: "telegram",
-    name: "Telegram",
+    id: "feishu-media",
+    channel: "feishu",
+    name: "Feishu",
     enabled: true,
     dmPolicy: "open",
     allowFrom: [],
@@ -218,8 +218,8 @@ test("accepted media is staged privately and passed to the existing Pi turn", as
   });
   await fake.emit({
     id: "media-one",
-    channel: "telegram",
-    accountId: "telegram-media",
+    channel: "feishu",
+    accountId: "feishu-media",
     peer: { kind: "dm", id: "7" },
     sender: { id: "7" },
     text: "",
@@ -304,7 +304,7 @@ test("Feishu generated files use the shared outbound capability and preserve the
 
 test("progressive adapters receive Agent events and own the final delivery", async () => {
   const dir = mkdtempSync(path.join(tmpdir(), "pi-channel-progressive-"));
-  const fake = createFakeAdapter("telegram");
+  const fake = createFakeAdapter("feishu");
   const progress = [];
   const finals = [];
   let turnContext;
@@ -316,7 +316,7 @@ test("progressive adapters receive Agent events and own the final delivery", asy
         finals.push(text);
         return {
           id: "progressive-receipt",
-          channel: "telegram",
+          channel: "feishu",
           accountId: context.account.id,
           peerId: context.peerId,
           messageId: "rich-final",
@@ -332,7 +332,7 @@ test("progressive adapters receive Agent events and own the final delivery", asy
     dataDirectory: dir,
     registry,
     secretAccess: {
-      get: async () => ({ token: "token", providerAccountId: "42", baseUrl: "https://telegram.example" }),
+      get: async () => ({ token: "token", providerAccountId: "42", baseUrl: "https://feishu.example" }),
       set: async () => {},
       delete: async () => {},
     },
@@ -349,8 +349,8 @@ test("progressive adapters receive Agent events and own the final delivery", asy
   });
   const now = new Date().toISOString();
   await manager.upsertAccount({
-    id: "telegram-progressive",
-    channel: "telegram",
+    id: "feishu-progressive",
+    channel: "feishu",
     name: "@pi_bot",
     enabled: true,
     providerAccountId: "42",
@@ -367,8 +367,8 @@ test("progressive adapters receive Agent events and own the final delivery", asy
 
   await fake.emit({
     id: "progressive-one",
-    channel: "telegram",
-    accountId: "telegram-progressive",
+    channel: "feishu",
+    accountId: "feishu-progressive",
     peer: { kind: "dm", id: "7" },
     sender: { id: "7" },
     text: "hello",
@@ -418,8 +418,8 @@ test("unknown sender receives pairing code without invoking Pi", async () => {
   const now = new Date().toISOString();
   await manager.upsertAccount({
     id: "wx-two",
-    channel: "weixin",
-    name: "Weixin",
+    channel: "feishu",
+    name: "Feishu",
     enabled: true,
     dmPolicy: "pairing",
     allowFrom: [],
@@ -433,7 +433,7 @@ test("unknown sender receives pairing code without invoking Pi", async () => {
   });
   await fake.emit({
     id: "event-two",
-    channel: "weixin",
+    channel: "feishu",
     accountId: "wx-two",
     peer: { kind: "dm", id: "stranger" },
     sender: { id: "stranger" },
@@ -498,8 +498,8 @@ test("opt-in IM commands execute locally while unknown and disabled commands rem
   const now = new Date().toISOString();
   const account = {
     id: "wx-commands",
-    channel: "weixin",
-    name: "Weixin commands",
+    channel: "feishu",
+    name: "Feishu commands",
     enabled: true,
     dmPolicy: "allowlist",
     allowFrom: ["user-one"],
@@ -518,7 +518,7 @@ test("opt-in IM commands execute locally while unknown and disabled commands rem
   const send = (text) =>
     fake.emit({
       id: `command-${++eventId}`,
-      channel: "weixin",
+      channel: "feishu",
       accountId: account.id,
       peer: { kind: "dm", id: "user-one" },
       sender: { id: "user-one" },
@@ -560,7 +560,7 @@ test("opt-in IM commands execute locally while unknown and disabled commands rem
 
 test("account connect probes before persisting and cleans up a rejected credential", async () => {
   const dir = mkdtempSync(path.join(tmpdir(), "pi-channel-connect-"));
-  const fake = createFakeAdapter("telegram");
+  const fake = createFakeAdapter("feishu");
   fake.adapter.probe = async (account, secret) =>
     secret.token === "bad-token"
       ? { ok: false, message: "invalid token", accountId: account.id }
@@ -575,8 +575,8 @@ test("account connect probes before persisting and cleans up a rejected credenti
   const registry = new AdapterRegistry();
   registry.register(fake.adapter);
   const secrets = new Map([
-    ["telegram-good", { token: "good-token", providerAccountId: "temporary", baseUrl: "https://telegram.example" }],
-    ["telegram-bad", { token: "bad-token", providerAccountId: "temporary", baseUrl: "https://telegram.example" }],
+    ["feishu-good", { token: "good-token", providerAccountId: "temporary", baseUrl: "https://feishu.example" }],
+    ["feishu-bad", { token: "bad-token", providerAccountId: "temporary", baseUrl: "https://feishu.example" }],
   ]);
   const manager = new ChannelManager({ handle() {}, attachPort() {}, detachPort() {}, emit() {} }, () => {}, {
     dataDirectory: dir,
@@ -595,7 +595,7 @@ test("account connect probes before persisting and cleans up a rejected credenti
   const now = new Date().toISOString();
   const account = (id) => ({
     id,
-    channel: "telegram",
+    channel: "feishu",
     name: "",
     enabled: false,
     dmPolicy: "pairing",
@@ -609,96 +609,18 @@ test("account connect probes before persisting and cleans up a rejected credenti
     updatedAt: now,
   });
 
-  const connected = await manager.connectAccount(account("telegram-good"));
+  const connected = await manager.connectAccount(account("feishu-good"));
   assert.equal(connected.accounts[0].name, "@pi_bot");
   assert.equal(connected.accounts[0].providerAccountId, "42");
   assert.equal(connected.accounts[0].configured, true);
-  assert.equal(secrets.get("telegram-good").providerAccountId, "42");
+  assert.equal(secrets.get("feishu-good").providerAccountId, "42");
 
-  await assert.rejects(manager.connectAccount(account("telegram-bad")), /invalid token/);
+  await assert.rejects(manager.connectAccount(account("feishu-bad")), /invalid token/);
   assert.equal(
-    (await manager.snapshot()).accounts.some((item) => item.id === "telegram-bad"),
+    (await manager.snapshot()).accounts.some((item) => item.id === "feishu-bad"),
     false,
   );
-  assert.equal(secrets.has("telegram-bad"), false);
-  await manager.shutdown();
-});
-
-test("Telegram DMs and forum topics resolve to isolated sessions and reply routes", async () => {
-  const dir = mkdtempSync(path.join(tmpdir(), "pi-channel-telegram-routes-"));
-  const fake = createFakeAdapter("telegram");
-  const registry = new AdapterRegistry();
-  registry.register(fake.adapter);
-  const bindingsSeen = [];
-  const manager = new ChannelManager({ handle() {}, attachPort() {}, detachPort() {}, emit() {} }, () => {}, {
-    dataDirectory: dir,
-    registry,
-    secretAccess: {
-      get: async () => ({ token: "token", providerAccountId: "42", baseUrl: "https://telegram.example" }),
-      set: async () => {},
-      delete: async () => {},
-    },
-    bridge: {
-      async runTurn(binding) {
-        bindingsSeen.push(binding);
-        return {
-          sessionId: `session-${binding.id}`,
-          finalText: `reply-${binding.threadId ?? binding.peerId}`,
-          generatedFiles: [],
-        };
-      },
-    },
-  });
-  const now = new Date().toISOString();
-  await manager.upsertAccount({
-    id: "telegram-one",
-    channel: "telegram",
-    name: "@pi_bot",
-    enabled: true,
-    providerAccountId: "42",
-    providerUsername: "@pi_bot",
-    baseUrl: "https://telegram.example",
-    dmPolicy: "open",
-    allowFrom: [],
-    groupPolicy: "open",
-    groupIds: [],
-    groupAllowFrom: [],
-    requireMention: true,
-    toolNames: [],
-    createdAt: now,
-    updatedAt: now,
-  });
-
-  const envelope = (id, peer, sender, threadId) => ({
-    id,
-    channel: "telegram",
-    accountId: "telegram-one",
-    peer,
-    ...(threadId ? { threadId } : {}),
-    sender: { id: sender },
-    text: `message-${id}`,
-    mentionsBot: peer.kind === "group",
-    attachments: [],
-    timestamp: Date.now(),
-    providerContext: { replyToMessageId: id },
-  });
-
-  await fake.emit(envelope("dm-1", { kind: "dm", id: "101" }, "101"));
-  await fake.emit(envelope("dm-2", { kind: "dm", id: "202" }, "202"));
-  await fake.emit(envelope("topic-10", { kind: "group", id: "-1001" }, "303", "10"));
-  await fake.emit(envelope("topic-11", { kind: "group", id: "-1001" }, "303", "11"));
-
-  const snapshot = await manager.snapshot();
-  assert.equal(snapshot.bindings.length, 4);
-  assert.equal(new Set(snapshot.bindings.map((binding) => binding.sessionId)).size, 4);
-  assert.equal(new Set(bindingsSeen.map((binding) => binding.id)).size, 4);
-  assert.deepEqual(
-    fake.sent.slice(-2).map((send) => [send.peerId, send.threadId, send.replyToMessageId]),
-    [
-      ["-1001", "10", "topic-10"],
-      ["-1001", "11", "topic-11"],
-    ],
-  );
+  assert.equal(secrets.has("feishu-bad"), false);
   await manager.shutdown();
 });
 

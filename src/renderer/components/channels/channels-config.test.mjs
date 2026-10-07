@@ -16,7 +16,7 @@ mkdirSync(path.dirname(output), { recursive: true });
 await build({
   stdin: {
     contents:
-      'export { AccountCard, FEISHU_PERMISSION_IMPORT_JSON, FeishuCredentialDialog, TelegramTokenDialog } from "./ChannelsConfig.tsx";',
+      'export { AccountCard, FEISHU_PERMISSION_IMPORT_JSON, FeishuCredentialDialog } from "./ChannelsConfig.tsx";',
     resolveDir: import.meta.dirname,
     sourcefile: "channels-config-test-entry.tsx",
     loader: "tsx",
@@ -30,30 +30,17 @@ await build({
   logLevel: "silent",
 });
 
-const { AccountCard, FEISHU_PERMISSION_IMPORT_JSON, FeishuCredentialDialog, TelegramTokenDialog } = await import(
+const { AccountCard, FEISHU_PERMISSION_IMPORT_JSON, FeishuCredentialDialog } = await import(
   `${pathToFileURL(output).href}?v=${Date.now()}`
 );
-
-test("Telegram token dialog renders connection failures without closing", () => {
-  const html = renderToStaticMarkup(
-    createElement(TelegramTokenDialog, {
-      busy: false,
-      error: "Telegram getMe failed",
-      onConnect() {},
-      onClose() {},
-    }),
-  );
-  assert.match(html, /data-testid="telegram-connect-error"/);
-  assert.match(html, /Telegram getMe failed/);
-});
 
 test("channel account settings expose the opt-in IM command switch", () => {
   const now = new Date().toISOString();
   const html = renderToStaticMarkup(
     createElement(AccountCard, {
       account: {
-        id: "telegram-one",
-        channel: "telegram",
+        id: "feishu-one",
+        channel: "feishu",
         name: "Pi Bot",
         enabled: true,
         dmPolicy: "pairing",
@@ -74,13 +61,10 @@ test("channel account settings expose the opt-in IM command switch", () => {
       onStop() {},
       onRestart() {},
       async onProbe() {
-        return { ok: true, message: "ok", accountId: "telegram-one" };
-      },
-      async onUpdateToken() {
-        return { ok: true, message: "ok", accountId: "telegram-one" };
+        return { ok: true, message: "ok", accountId: "feishu-one" };
       },
       async onUpdateFeishuCredential() {
-        return { ok: true, message: "ok", accountId: "telegram-one" };
+        return { ok: true, message: "ok", accountId: "feishu-one" };
       },
       onTestSend() {},
       onDelete() {},

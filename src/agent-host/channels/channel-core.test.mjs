@@ -141,7 +141,7 @@ test("channel command parser recognizes only the additive built-in command set",
   assert.equal(parseChannelCommand("/help/extra"), null);
 });
 
-test("versionless config migrates and corrupt config is quarantined", () => {
+test("a config naming a removed channel migrates to Feishu, and corrupt config is quarantined", () => {
   const dir = mkdtempSync(path.join(tmpdir(), "pi-channels-migrate-"));
   const file = path.join(dir, "channels.json");
   writeFileSync(
@@ -153,8 +153,8 @@ test("versionless config migrates and corrupt config is quarantined", () => {
   );
   const migrated = new ChannelConfigStore(file).listAccounts();
   assert.equal(migrated.length, 1);
-  assert.equal(migrated[0].channel, "telegram");
-  assert.equal(migrated[0].name, "Telegram");
+  assert.equal(migrated[0].channel, "feishu");
+  assert.equal(migrated[0].name, "飞书 / Lark");
   assert.deepEqual(migrated[0].groupIds, []);
   assert.equal(JSON.parse(readFileSync(file, "utf8")).version, 1);
 

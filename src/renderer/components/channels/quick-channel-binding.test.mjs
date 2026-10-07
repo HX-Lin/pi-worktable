@@ -31,15 +31,15 @@ await build({
 
 const { QuickChannelBinding } = await import(`${pathToFileURL(output).href}?v=${Date.now()}`);
 
-function snapshot(sessionId, connected, channel = "weixin") {
+function snapshot(sessionId, connected, channel = "feishu") {
   const now = new Date().toISOString();
-  const accountId = channel === "telegram" ? "tg-one" : channel === "feishu" ? "fs-one" : "wx-one";
+  const accountId = "fs-one";
   return {
     accounts: [
       {
         id: accountId,
         channel,
-        name: channel === "telegram" ? "@pi_bot" : channel === "feishu" ? "Pi Feishu Bot" : "My WeChat",
+        name: "Pi Feishu Bot",
         enabled: true,
         configured: true,
         dmPolicy: "pairing",
@@ -85,12 +85,7 @@ test("active session header switches from quick bind to connected status", () =>
     createElement(QuickChannelBinding, { ...props, snapshot: snapshot("session-one", true) }),
   );
   assert.match(bound, /data-testid="channel-binding-indicator"/);
-  assert.match(bound, /Connected to WeChat/);
-
-  const telegramBound = renderToStaticMarkup(
-    createElement(QuickChannelBinding, { ...props, snapshot: snapshot("session-one", true, "telegram") }),
-  );
-  assert.match(telegramBound, /Connected to Telegram/);
+  assert.match(bound, /Connected to Feishu \/ Lark/);
 
   const feishuBound = renderToStaticMarkup(
     createElement(QuickChannelBinding, { ...props, snapshot: snapshot("session-one", true, "feishu") }),

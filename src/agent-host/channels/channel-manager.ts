@@ -55,9 +55,8 @@ export type ChannelManagerOptions = {
 const PAIRING_TTL_MS = 10 * 60_000;
 
 function channelDisplayName(channel: ChannelId): string {
-  if (channel === "weixin") return "微信";
-  if (channel === "telegram") return "Telegram";
-  return "飞书 / Lark";
+  if (channel === "feishu") return "飞书 / Lark";
+  return channel;
 }
 
 function userDataPath(): string {
@@ -458,7 +457,7 @@ export class ChannelManager {
     this.config.upsertAccount(account);
     const secret = await this.getSecret(account).catch(() => null);
     const contextToken = this.state.getContextToken(account.id, pairing.peerId);
-    if (secret && (account.channel !== "weixin" || contextToken)) {
+    if (secret) {
       await this.registry
         .get(account.channel)
         .send({
@@ -498,7 +497,7 @@ export class ChannelManager {
     const secret = await this.getSecret(account);
     if (!secret) throw new Error("Channel credential is unavailable");
     const contextToken = this.state.getContextToken(accountId, peerId);
-    if (account.channel === "weixin" && !contextToken) {
+    if (!contextToken) {
       throw new Error("该用户尚未向机器人发送消息，无法建立回复上下文");
     }
     const receipt = await this.registry
@@ -1016,11 +1015,7 @@ export class ChannelManager {
           "generatedFiles" in turn && Array.isArray(turn.generatedFiles)
             ? turn.generatedFiles.filter((filePath): filePath is string => typeof filePath === "string")
             : [];
-        if (
-          !command &&
-          generatedFiles.length > 0 &&
-          (account.channel === "weixin" || account.channel === "telegram" || account.channel === "feishu")
-        ) {
+        if (!command && generatedFiles.length > 0) {
           try {
             const mediaReceipt = await adapter.send({
               account,

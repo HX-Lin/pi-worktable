@@ -43,19 +43,17 @@ function readStringArray(value: unknown): string[] {
   ];
 }
 
-function normalizeChannel(value: unknown): ChannelId {
-  if (value === "telegram" || value === "feishu") return value;
-  return "weixin";
+/** Only Feishu remains; a config written by an older build may name a removed channel. */
+function normalizeChannel(_value: unknown): ChannelId {
+  return "feishu";
 }
 
 function normalizeFeishuDomain(value: unknown): FeishuDomain {
   return value === "lark" ? "lark" : "feishu";
 }
 
-function defaultChannelName(channel: ChannelId): string {
-  if (channel === "telegram") return "Telegram";
-  if (channel === "feishu") return "飞书 / Lark";
-  return "微信";
+function defaultChannelName(_channel: ChannelId): string {
+  return "飞书 / Lark";
 }
 
 function normalizeAccount(value: ChannelAccountConfig, touchUpdatedAt = false): ChannelAccountConfig {

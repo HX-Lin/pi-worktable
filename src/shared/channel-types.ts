@@ -1,4 +1,8 @@
-export type ChannelId = "weixin" | "telegram" | "feishu";
+/**
+ * Messaging channels this app runs. WeChat and Telegram were removed: Feishu / Lark is the only
+ * adapter left, and the relay and H5 client are built around it.
+ */
+export type ChannelId = "feishu";
 export type FeishuDomain = "feishu" | "lark";
 
 export type ChannelDmPolicy = "pairing" | "allowlist" | "open";
