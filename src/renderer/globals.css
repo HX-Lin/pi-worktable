@@ -93,14 +93,14 @@ html.dark {
   --thinking-border: #4a453c;
 }
 
-/* niri (Linux) theme — dark graphite blue + orange accent.
-   Every colour here is fully opaque: the app paints its surfaces and nothing else. Translucency,
-   blur and corner radius belong to the compositor — niri's
-   `window-rule { opacity 0.8; background-effect { xray true; blur true }; geometry-corner-radius }`
-   blends the whole window over the blurred wallpaper. The app holds no opacity state. */
+/* niri (Linux) theme — dark graphite blue + orange accent, frosted glass.
+   The surfaces are translucent so the wallpaper shows through *and* text stays crisp; the
+   compositor does the rest (niri's `background-effect { xray true; blur true }` blurs the
+   wallpaper, `geometry-corner-radius` rounds the window). The alphas are plain values on purpose:
+   there is no in-app opacity setting, no stored state and no runtime injection. */
 html.niri {
-  --bg: #11131a;
-  --bg-panel: #1a1d27;
+  --bg: rgba(17, 19, 26, 0.72);
+  --bg-panel: rgba(26, 29, 39, 0.6);
   --bg-hover: rgba(255, 255, 255, 0.09);
   --bg-selected: rgba(251, 146, 60, 0.24);
   --border: rgba(255, 255, 255, 0.16);
@@ -109,10 +109,10 @@ html.niri {
   --text-dim: #c2c8d5;
   --accent: #fb923c;
   --accent-hover: #fdba74;
-  --user-bg: #2a2e3a;
+  --user-bg: rgba(42, 46, 58, 0.92);
   --user-fg: #f5f6fa;
-  --assistant-bg: #1a1d27;
-  --tool-bg: #0a0c11;
+  --assistant-bg: rgba(26, 29, 39, 0.6);
+  --tool-bg: rgba(10, 12, 17, 0.92);
   --tool-fg: #ccd0da;
   --tool-border: rgba(255, 255, 255, 0.16);
   --bg-subtle: rgba(255, 255, 255, 0.06);
@@ -124,7 +124,7 @@ html.niri {
   --danger: #f87171;
   --grid-line: rgba(255, 255, 255, 0.08);
   --selection: rgba(251, 146, 60, 0.38);
-  --thinking-bg: #14171f;
+  --thinking-bg: rgba(20, 23, 31, 0.6);
   --thinking-border: rgba(255, 255, 255, 0.14);
 }
 
@@ -202,6 +202,12 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background: var(--bg);
+}
+
+/* The app root already paints the niri theme's translucent base. Painting it here as well would
+   stack two layers and make the window nearly opaque. */
+html.niri body::before {
+  background: transparent;
 }
 
 #root {
