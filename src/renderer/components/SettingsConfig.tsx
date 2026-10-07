@@ -1,15 +1,7 @@
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useTheme, type Theme } from "@/hooks/useTheme";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useI18n, type AppLanguage } from "@/i18n";
-import {
-  loadNiriSettings,
-  saveNiriSettings,
-  applyNiriSettings,
-  NIRI_OPACITY_MIN,
-  NIRI_OPACITY_MAX,
-  type NiriSettings,
-} from "@/lib/niri-settings";
 import { ModelsConfig } from "./ModelsConfig";
 import { SkillsConfig } from "./SkillsConfig";
 import { PromptsConfig } from "./PromptsConfig";
@@ -939,29 +931,6 @@ function GeneralSettings({
     return subscribeAutoCompactSettings((next) => setAutoCompactTurns(next.autoCompactTurns));
   }, []);
   const themeControlId = useId();
-  const niriOpacityControlId = useId();
-  const niriGlowControlId = useId();
-  // niri theme tuning (opacity + glow), only meaningful on Linux.
-  const [niriSettings, setNiriSettings] = useState<NiriSettings>(() => loadNiriSettings());
-  useEffect(() => {
-    applyNiriSettings(loadNiriSettings());
-  }, []);
-  const handleNiriOpacity = useCallback((value: number) => {
-    // Functional update avoids re-reading localStorage mid-drag; the applied
-    // value always equals the slider position (no drift/jumps).
-    setNiriSettings((prev) => {
-      const next = { ...prev, opacity: value };
-      saveNiriSettings(next);
-      return next;
-    });
-  }, []);
-  const handleNiriGlow = useCallback((glow: boolean) => {
-    setNiriSettings((prev) => {
-      const next = { ...prev, glow };
-      saveNiriSettings(next);
-      return next;
-    });
-  }, []);
   useEffect(() => {
     void window.piBridge.getUiState().then((state) => setBackgroundMode(state.backgroundMode !== false));
   }, []);
@@ -1087,47 +1056,11 @@ function GeneralSettings({
             <option value="light">{t("light", "Light")}</option>
             <option value="dark">{t("dark", "Dark")}</option>
             <option value="niri" disabled={window.piBridge?.platform !== "linux"}>
-              {t("themeNiri", "niri (translucent)")}
+              {t("themeNiri", "niri")}
               {window.piBridge?.platform !== "linux" ? " — Linux only" : ""}
             </option>
           </select>
         </SettingRow>
-        {theme === "niri" && (
-          <>
-            <SettingRow label={t("niriOpacity", "Background opacity")} controlId={niriOpacityControlId}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <input
-                  id={niriOpacityControlId}
-                  type="range"
-                  min={Math.round(NIRI_OPACITY_MIN * 100)}
-                  max={Math.round(NIRI_OPACITY_MAX * 100)}
-                  step={1}
-                  value={Math.round(niriSettings.opacity * 100)}
-                  onChange={(event) => handleNiriOpacity(Number(event.target.value) / 100)}
-                  style={{ width: 160, accentColor: "var(--accent)", cursor: "pointer" }}
-                  aria-label={t("niriOpacity", "Background opacity")}
-                />
-                <span style={{ width: 34, fontSize: 12, color: "var(--text-muted)", textAlign: "right" }}>
-                  {Math.round(niriSettings.opacity * 100)}%
-                </span>
-              </div>
-            </SettingRow>
-            <SettingRow label={t("niriGlow", "Ambient glow")} controlId={niriGlowControlId}>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-                <input
-                  id={niriGlowControlId}
-                  type="checkbox"
-                  checked={niriSettings.glow}
-                  onChange={(event) => handleNiriGlow(event.target.checked)}
-                  style={{ width: 16, height: 16, margin: 0, accentColor: "var(--accent)", cursor: "pointer" }}
-                />
-                <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
-                  {t("niriGlowDescription", "Corner accent glow behind panels")}
-                </span>
-              </label>
-            </SettingRow>
-          </>
-        )}
       </section>
     </div>
   );

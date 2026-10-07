@@ -93,15 +93,15 @@ html.dark {
   --thinking-border: #4a453c;
 }
 
-/* niri (Linux) translucent theme — dark graphite blue + orange accent.
-   Opacity is user-tunable via --niri-bg-alpha / --niri-panel-alpha. Text is
-   kept bright + soft-shadowed so the wallpaper never drowns it. */
+/* niri (Linux) theme — dark graphite blue + orange accent, frosted glass.
+   The alphas below are fixed design tokens: the app paints semi-transparent surfaces and the
+   compositor supplies the rest — niri's `background-effect { xray true; blur true }` blurs the
+   wallpaper behind them, `geometry-corner-radius` rounds the window, and an optional
+   `opacity` on the window rule fades the whole thing further. There is no in-app opacity
+   setting. */
 html.niri {
-  --niri-bg-alpha: 0.7;
-  --niri-panel-alpha: 0.58;
-  --niri-solid-alpha: 0.92;
-  --bg: rgba(17, 19, 26, var(--niri-bg-alpha));
-  --bg-panel: rgba(26, 29, 39, var(--niri-panel-alpha));
+  --bg: rgba(17, 19, 26, 0.7);
+  --bg-panel: rgba(26, 29, 39, 0.58);
   --bg-hover: rgba(255, 255, 255, 0.09);
   --bg-selected: rgba(251, 146, 60, 0.24);
   --border: rgba(255, 255, 255, 0.16);
@@ -110,10 +110,10 @@ html.niri {
   --text-dim: #c2c8d5;
   --accent: #fb923c;
   --accent-hover: #fdba74;
-  --user-bg: rgba(42, 46, 58, var(--niri-solid-alpha));
+  --user-bg: rgba(42, 46, 58, 0.92);
   --user-fg: #f5f6fa;
-  --assistant-bg: rgba(26, 29, 39, var(--niri-panel-alpha));
-  --tool-bg: rgba(10, 12, 17, var(--niri-solid-alpha));
+  --assistant-bg: rgba(26, 29, 39, 0.58);
+  --tool-bg: rgba(10, 12, 17, 0.92);
   --tool-fg: #ccd0da;
   --tool-border: rgba(255, 255, 255, 0.16);
   --bg-subtle: rgba(255, 255, 255, 0.06);
@@ -125,7 +125,7 @@ html.niri {
   --danger: #f87171;
   --grid-line: rgba(255, 255, 255, 0.08);
   --selection: rgba(251, 146, 60, 0.38);
-  --thinking-bg: rgba(20, 23, 31, var(--niri-panel-alpha));
+  --thinking-bg: rgba(20, 23, 31, 0.58);
   --thinking-border: rgba(255, 255, 255, 0.14);
 }
 
@@ -194,8 +194,7 @@ body {
   height: 100dvh;
 }
 
-/* Ambient accent glow for the translucent niri theme — wallpaper glows
-   through the (Linux) transparent window while text stays high-contrast. */
+/* Ambient accent glow for the niri theme. */
 body::before {
   content: "";
   position: fixed;
@@ -209,10 +208,6 @@ html.niri body::before {
   background:
     radial-gradient(900px 620px at 82% -12%, var(--accent-soft) 0%, transparent 58%),
     radial-gradient(760px 560px at -8% 108%, var(--accent-soft) 0%, transparent 55%);
-}
-
-html.niri.niri-glow-off body::before {
-  background: transparent;
 }
 
 #root {
