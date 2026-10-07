@@ -19,7 +19,6 @@ import { MemoryMapPanel } from "./MemoryMapPanel";
 import { MessageView } from "./MessageView";
 import { SessionProfiler } from "./SessionProfiler";
 import { ChatInput, type ChatInputHandle } from "./ChatInput";
-import { ChatMinimap, useMessageRefs, type ChatMinimapMessage } from "./ChatMinimap";
 import { useAgentSession, type AgentPhase, type NoticeItem } from "@/hooks/useAgentSession";
 import { useAudio } from "@/hooks/useAudio";
 import { useDragDrop } from "@/hooks/useDragDrop";
@@ -63,31 +62,8 @@ function phaseLabel(phase: AgentPhase, t: (key: string, fallback: string) => str
   return t("thinking", "Thinking…");
 }
 
-const CHAT_MINIMAP_WIDTH = 36;
 const CHAT_COLUMN_PADDING = 16;
-const CHAT_INPUT_RIGHT_PADDING = CHAT_COLUMN_PADDING + CHAT_MINIMAP_WIDTH;
-
-function toMinimapMessage(message: AgentMessage | Partial<AgentMessage>): ChatMinimapMessage | null {
-  if (message.role !== "user" && message.role !== "assistant") return null;
-  const content = message.content;
-  if (message.role === "user") {
-    const preview =
-      typeof content === "string"
-        ? content
-        : Array.isArray(content)
-          ? content.flatMap((block) => (block.type === "text" ? [block.text] : [])).join(" ")
-          : "";
-    return { role: "user", preview: preview.slice(0, 200), hasText: true };
-  }
-  const blocks = Array.isArray(content) ? content : [];
-  const text = blocks.flatMap((block) => (block.type === "text" ? [block.text] : [])).join(" ");
-  const toolNames = blocks.flatMap((block) => (block.type === "toolCall" ? [block.toolName] : []));
-  return {
-    role: "assistant",
-    preview: (text || toolNames.join(", ")).slice(0, 200),
-    hasText: text.length > 0,
-  };
-}
+const CHAT_INPUT_RIGHT_PADDING = CHAT_COLUMN_PADDING;
 
 function hasFinalAssistantAnswer(message: AgentMessage): boolean {
   if (message.role !== "assistant") return false;
@@ -382,13 +358,6 @@ export function ChatWindow({
 
   const { isDragOver, handleDragEnter, handleDragOver, handleDragLeave, handleDrop } = useDragDrop(onDrop);
 
-  const visibleMessages = messages.filter((m) => m.role === "user" || m.role === "assistant");
-  const messageRefs = useMessageRefs(visibleMessages.length);
-  const minimapMessages = useMemo(() => messages.flatMap((message) => toMinimapMessage(message) ?? []), [messages]);
-  const minimapStreamingMessage = useMemo(
-    () => (streamState.streamingMessage ? toMinimapMessage(streamState.streamingMessage) : null),
-    [streamState.streamingMessage],
-  );
   const olderHistorySentinelRef = useRef<HTMLDivElement | null>(null);
   const automaticHistoryPagesRef = useRef(0);
 
@@ -649,7 +618,7 @@ export function ChatWindow({
                 position: "absolute",
                 top: 12,
                 left: 0,
-                right: isMobile ? 0 : CHAT_MINIMAP_WIDTH,
+                right: 0,
                 zIndex: 40,
                 padding: `0 ${CHAT_COLUMN_PADDING}px`,
                 pointerEvents: "none",
@@ -715,16 +684,7 @@ export function ChatWindow({
                       }
                     }
 
-                    const visibleRefIndexByMessage = new Map<number, number>();
-                    let refIdx = 0;
-                    messages.forEach((msg, idx) => {
-                      if (msg.role === "user" || msg.role === "assistant") {
-                        visibleRefIndexByMessage.set(idx, refIdx++);
-                      }
-                    });
-
-                    const attachVisibleRef = (idx: number, refIndex: number) => (el: HTMLDivElement | null) => {
-                      messageRefs.current[refIndex] = el;
+                    const attachVisibleRef = (idx: number) => (el: HTMLDivElement | null) => {
                       if (idx === lastUserIdx) {
                         (lastUserMsgRef as { current: HTMLDivElement | null }).current = el;
                       }
@@ -745,7 +705,6 @@ export function ChatWindow({
                           ? entryIds[idx - 1]
                           : undefined;
                       const isVisible = msg.role === "user" || msg.role === "assistant";
-                      const currentRefIdx = visibleRefIndexByMessage.get(idx);
                       const keyPrefix = options.keyPrefix ?? "message";
                       let showTimestamp = false;
                       if (msg.role === "assistant") {
@@ -782,9 +741,9 @@ export function ChatWindow({
                           />
                         </SessionProfiler>
                       );
-                      if (!isVisible || options.attachRef === false || currentRefIdx === undefined) return view;
+                      if (!isVisible || options.attachRef === false) return view;
                       return (
-                        <div key={`${keyPrefix}-${idx}`} ref={attachVisibleRef(idx, currentRefIdx)}>
+                        <div key={`${keyPrefix}-${idx}`} ref={attachVisibleRef(idx)}>
                           {view}
                         </div>
                       );
@@ -862,11 +821,6 @@ export function ChatWindow({
 
                       const processCount = visibleProcessIndices.length + (finalProcessMessage ? 1 : 0);
                       if (processCount > 0) {
-                        const processRefIdx =
-                          visibleProcessIndices
-                            .map((processIdx) => visibleRefIndexByMessage.get(processIdx))
-                            .find((value): value is number => typeof value === "number") ??
-                          (finalAnswerMessage ? undefined : visibleRefIndexByMessage.get(finalAssistantIdx));
                         const processGroup = (
                           <ProcessDetailsGroup
                             messageCount={processCount}
@@ -887,20 +841,7 @@ export function ChatWindow({
                               })}
                           </ProcessDetailsGroup>
                         );
-                        rendered.push(
-                          <div
-                            key={`process-group-${userIdx}-${finalAssistantIdx}`}
-                            ref={
-                              processRefIdx === undefined
-                                ? undefined
-                                : (el) => {
-                                    messageRefs.current[processRefIdx] = el;
-                                  }
-                            }
-                          >
-                            {processGroup}
-                          </div>,
-                        );
+                        rendered.push(<div key={`process-group-${userIdx}-${finalAssistantIdx}`}>{processGroup}</div>);
                       }
 
                       if (finalAnswerMessage) {
@@ -944,17 +885,6 @@ export function ChatWindow({
                 </div>
               </div>
             </div>
-            {isMobile ? null : (
-              <SessionProfiler id="ChatMinimap">
-                <ChatMinimap
-                  messages={minimapMessages}
-                  streamingMessage={minimapStreamingMessage}
-                  scrollContainer={scrollContainerRef}
-                  messageRefs={messageRefs}
-                  historyTruncated={hasOlder}
-                />
-              </SessionProfiler>
-            )}
           </div>
         </>
       )}
