@@ -33,6 +33,10 @@ export interface JevChannelDefinition {
   vaultKey: string;
   /** Where the key comes from, for the settings UI. */
   keyHint: string;
+  /** A free/keyless endpoint: no API key is required and none is sent. */
+  keyless?: boolean;
+  /** Extra headers sent with every request on this channel. */
+  headers?: Record<string, string>;
 }
 
 export const JEV_CHANNELS: readonly JevChannelDefinition[] = [
@@ -68,6 +72,24 @@ export const JEV_CHANNELS: readonly JevChannelDefinition[] = [
     apiKeyEnv: ["OPENROUTER_API_KEY", "JEVC_API_KEY"],
     vaultKey: "jev.openrouter",
     keyHint: "OPENROUTER_API_KEY",
+  },
+  {
+    // OpenCode Zen's System One route serves the free `jev-1.13-free` model.
+    // It is keyless: the OpenCode client headers are what authorize the free tier.
+    id: "opencode-zen",
+    label: "OpenCode Zen (Jev 免费)",
+    protocol: "decisions",
+    baseUrl: "https://opencode.ai/zen/v1/systemone",
+    model: "jev-1.13-free",
+    apiKeyEnv: [],
+    vaultKey: "jev.opencode-zen",
+    keyHint: "无需密钥",
+    keyless: true,
+    headers: {
+      "x-opencode-client": "cli",
+      "x-opencode-project": "global",
+      "User-Agent": "opencode/0.0.0-dev",
+    },
   },
   {
     // Any OpenAI-compatible chat endpoint: a gateway that bills differently, a

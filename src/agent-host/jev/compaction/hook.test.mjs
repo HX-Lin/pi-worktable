@@ -5,7 +5,7 @@ import test from "node:test";
 import { pathToFileURL } from "node:url";
 import { build } from "esbuild";
 
-const root = path.resolve(import.meta.dirname, "..", "..");
+const root = path.resolve(import.meta.dirname, "..", "..", "..", "..");
 const output = path.join(root, ".artifacts", "test-modules", `jev-compaction-${process.pid}.mjs`);
 mkdirSync(path.dirname(output), { recursive: true });
 
@@ -155,11 +155,11 @@ test("a Jev failure surfaces as a throw so the caller falls back", async () => {
   await assert.rejects(() => runJevCompaction(input(), failing, config), /Jev unavailable/);
 });
 
-test("the memory path is recognised so Jev never takes it over", () => {
-  // Our "压缩为记忆" always passes the distillation prompt...
-  assert.equal(isMemoryCompaction("这是一次「压缩为记忆」"), true);
-  // ...while pi's own context compaction has no instructions.
+test("only the memory prompt opts out of Jev context compaction", () => {
+  assert.equal(isMemoryCompaction("这是一次「压缩为记忆」，不是普通的上下文压缩。\n\n用户额外要求：聚焦安全"), true);
   assert.equal(isMemoryCompaction(undefined), false);
   assert.equal(isMemoryCompaction(""), false);
   assert.equal(isMemoryCompaction("   "), false);
+  assert.equal(isMemoryCompaction("focus on the latest changes"), false);
+  assert.equal(isMemoryCompaction("这是一次普通的上下文压缩，聚焦安全"), false);
 });

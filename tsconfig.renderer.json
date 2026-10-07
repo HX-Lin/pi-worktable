@@ -13,11 +13,10 @@
     "allowImportingTsExtensions": true,
     "noEmit": true,
     "types": ["vite/client"],
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/renderer/*"],
-      "@contract/*": ["src/contract/*"],
-      "@shared/*": ["src/shared/*"]
+      "@/*": ["./src/renderer/*"],
+      "@contract/*": ["./src/contract/*"],
+      "@shared/*": ["./src/shared/*"]
     }
   },
   "include": ["src/renderer/**/*", "src/contract/**/*", "src/shared/**/*"],

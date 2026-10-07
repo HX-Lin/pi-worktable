@@ -69,7 +69,7 @@ async function fetchArtifact(
         headers: {
           Accept: "application/octet-stream",
           "Accept-Encoding": "identity",
-          "User-Agent": "Pi-Agent-Desktop-Toolchain-Installer",
+          "User-Agent": "Pi-Worktable-Toolchain-Installer",
         },
       });
     } catch (error) {

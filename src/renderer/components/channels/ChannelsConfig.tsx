@@ -560,7 +560,7 @@ export function AccountCard({
   const { language, t } = useI18n();
   const [draft, setDraft] = useState<ChannelAccountConfig>(account);
   const [testPeer, setTestPeer] = useState("");
-  const [testMessage, setTestMessage] = useState(() => t("channelTestMessage", "Pi Agent Desktop channel test"));
+  const [testMessage, setTestMessage] = useState(() => t("channelTestMessage", "Pi Worktable channel test"));
   const [probing, setProbing] = useState(false);
   const [telegramToken, setTelegramToken] = useState("");
   const [feishuAppSecret, setFeishuAppSecret] = useState("");

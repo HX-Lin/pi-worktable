@@ -34,7 +34,10 @@ export function createMainWindow(options: CreateMainWindowOptions): BrowserWindo
     y: bounds.y,
     minWidth: 900,
     minHeight: 600,
-    title: "Pi Agent Desktop",
+    title: "Pi Worktable",
+    // Keep menu accelerators, but leave the redundant native File/Edit bar
+    // hidden; the renderer already owns the visible titlebar and navigation.
+    autoHideMenuBar: process.platform !== "darwin",
     transparent: TRANSPARENT,
     backgroundColor: TRANSPARENT ? "#00000000" : BACKGROUND,
     show: false,
@@ -50,6 +53,8 @@ export function createMainWindow(options: CreateMainWindowOptions): BrowserWindo
       backgroundThrottling: false,
     },
   });
+
+  if (process.platform !== "darwin") win.setMenuBarVisibility(false);
 
   trackWindowState(win);
   if (shouldMaximize(ui) && !win.isDestroyed()) win.maximize();

@@ -1,14 +1,14 @@
 <div align="center">
 
-<img src="./build/icon.png" width="112" alt="Pi Agent Desktop icon" />
+<img src="./build/icon.png" width="112" alt="Pi Worktable icon" />
 
-# Pi Agent Desktop
+# Pi Worktable
 
 **Turn Pi Coding Agent into a full desktop workspace.**
 
 Local-first · No local server · Cross-platform
 
-[![Desktop Build](https://github.com/DLYZZT/pi-desktop/actions/workflows/build-desktop.yml/badge.svg)](https://github.com/DLYZZT/pi-desktop/actions/workflows/build-desktop.yml)
+[![Desktop Build](https://github.com/HX-Lin/pi-worktable/actions/workflows/build-desktop.yml/badge.svg)](https://github.com/HX-Lin/pi-worktable/actions/workflows/build-desktop.yml)
 ![Electron 43](https://img.shields.io/badge/Electron-43-47848F?logo=electron&logoColor=white)
 ![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=0B1F2A)
 ![macOS, Windows & Linux](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)
@@ -16,23 +16,23 @@ Local-first · No local server · Cross-platform
 
 **English** · [简体中文](./README.md)
 
-[Download v0.1.6](https://github.com/DLYZZT/pi-desktop/releases/tag/v0.1.6) · [Screenshots](#screenshots) · [Features](#features) · [Quick start](#quick-start) · [Architecture](#architecture) · [Changelog](https://github.com/DLYZZT/pi-desktop/releases) · [Roadmap](#roadmap)
+[Download v0.1.6](https://github.com/HX-Lin/pi-worktable/releases/tag/v0.1.6) · [Screenshots](#screenshots) · [Features](#features) · [Quick start](#quick-start) · [Architecture](#architecture) · [Changelog](https://github.com/HX-Lin/pi-worktable/releases) · [Roadmap](#roadmap)
 
 </div>
 
 ## Screenshots
 
-![Pi Agent Desktop workspace with a conversation, agent response, and code preview](./images/app-workspace.jpg)
+![Pi Worktable workspace with a conversation, agent response, and code preview](./images/app-workspace.jpg)
 
 <table>
   <tr>
     <td width="50%" align="center">
-      <img src="./images/app-skills.jpg" alt="Pi Agent Desktop skill management" />
+      <img src="./images/app-skills.jpg" alt="Pi Worktable skill management" />
       <br />
       <sub>Browse, enable, and edit skills</sub>
     </td>
     <td width="50%" align="center">
-      <img src="./images/app-developer-tools.jpg" alt="Pi Agent Desktop developer tool management" />
+      <img src="./images/app-developer-tools.jpg" alt="Pi Worktable developer tool management" />
       <br />
       <sub>Discover system tools and manage private runtimes</sub>
     </td>
@@ -51,15 +51,6 @@ Local-first · No local server · Cross-platform
 - Attach images, run slash commands, and reference project files with `@`
 - Keep chat and composer content aligned to one reading width, with a mouse- and keyboard-resizable file panel that remembers its width
 
-### A built-in browser shared by the user and Agent
-
-- Run real Chromium pages in a right-side Electron `WebContentsView`, with multiple tabs, temporary or persistent profiles, signed-in state, downloads, uploads, and proxy support
-- Give the Agent separate Browser read/interact grants for navigation, structured snapshots, screenshots, clicks, typing, keys, and waits; the main window prompts on first use, and coding permissions never enable browsing implicitly
-- Let the user and Agent operate the same page, with immediate user takeover and local policy or confirmation for submissions, downloads, uploads, permissions, and external protocols
-- Manage global and per-session permanent permissions in Settings while authorization dialogs create temporary grants only for the current session; one local, launch-only switch controls Advanced Browser Mode
-- Advanced Browser Mode combines consistent UA/Client Hints identity, trusted input, full CDP network capture and confirmed write replay, the JavaScript experience library, and dedicated advanced Profiles; Agent tools neither accept nor return cookie values
-- Label private-network protection as best-effort; Strict mode fails closed until an enforcing network sandbox is deployed
-
 ### A project-focused file experience
 
 - Select project directories natively and manage Git branches and worktrees
@@ -69,11 +60,12 @@ Local-first · No local server · Cross-platform
 
 ### Unified model and extension management
 
-- Bundle Pi Coding Agent 0.84.0 and manage model providers and model configurations
+- Bundle Pi Coding Agent 1.0.1 and manage model providers and model configurations
 - Prefer the local model directory when sessions start; explicitly refresh the remote directory when needed while preserving cached models across offline, timeout, or partial-provider failures
 - Sign in through browser-based OAuth flows
 - Search for, install, and configure Skills; normal installs keep npm's default concurrency, with one isolated-cache retry for network, timeout, or cache-lock failures
 - Manage Plugins while continuing to use the Pi Agent extension ecosystem
+- Manage MCP servers under Settings → MCP (global `mcp.json` and the project's `.pi/mcp.json`, enable/exposure, OAuth sign-in) and run codemode sandbox scripts, with every tool call passing the permission gate
 
 ### Cross-platform developer tool management
 
@@ -105,9 +97,9 @@ Local-first · No local server · Cross-platform
 
 ### Use a desktop build
 
-The latest stable version is [v0.1.6](https://github.com/DLYZZT/pi-desktop/releases/tag/v0.1.6), with builds for macOS Apple Silicon and Intel, Windows x64, and Linux x64.
+The latest stable version is [v0.1.6](https://github.com/HX-Lin/pi-worktable/releases/tag/v0.1.6), with builds for macOS Apple Silicon and Intel, Windows x64, and Linux x64.
 
-Pi Agent Desktop v0.1.6 bundles the Pi Coding Agent 0.84.0 runtime. Regular users do not need to install the Pi CLI, Pi Coding Agent, Node.js, or npm just to use the Agent. When a Skill, Plugin, or Agent script needs additional developer tools, the application first reuses healthy system installations and can install private runtimes after explicit user confirmation.
+Pi Worktable bundles the Pi Coding Agent 1.0.1 runtime. Regular users do not need to install the Pi CLI, Pi Coding Agent, Node.js, or npm just to use the Agent. When a Skill, Plugin, or Agent script needs additional developer tools, the application first reuses healthy system installations and can install private runtimes after explicit user confirmation.
 
 The application reads sessions and configuration from `~/.pi/agent/`. If you already use the Pi CLI, your existing data is available without migration. The desktop application also works if you have never used the CLI.
 
@@ -129,7 +121,7 @@ Pi Desktop first discovers and verifies the user's existing Node.js/npm, Python,
 ### Run locally
 
 ```bash
-git clone https://github.com/DLYZZT/pi-desktop.git
+git clone https://github.com/HX-Lin/pi-worktable.git
 cd pi-desktop
 npm ci
 npm run dev
@@ -144,20 +136,17 @@ npm run dev
 
 ## Architecture
 
-Pi Agent Desktop uses a three-process Electron architecture to isolate privileged desktop capabilities, the Agent runtime, and the UI.
+Pi Worktable uses a three-process Electron architecture to isolate privileged desktop capabilities, the Agent runtime, and the UI.
 
 ```mermaid
 flowchart LR
     Main["Electron Main<br/>Window · tray · protocol · Host supervision"]
     Host["Agent Host / utilityProcess<br/>Pi Agent · sessions · files · configuration"]
     UI["Renderer<br/>React 19 · Vite"]
-    Browser["Main-owned WebContentsView<br/>Remote pages · profiles · network policy"]
     Data["~/.pi/agent/<br/>Sessions · models · configuration"]
 
     Main --> Host
     Main --> UI
-    Main --> Browser
-    Host -->|"Revisioned Browser RPC"| Main
     UI <-->|"Typed MessagePort IPC"| Host
     Host <--> Data
 ```
@@ -165,7 +154,6 @@ flowchart LR
 - **Main** manages the window lifecycle, menus, tray, notifications, software updates, custom protocols, and Agent Host supervision
 - **Agent Host** runs Pi Coding Agent in an isolated `utilityProcess` and handles sessions, files, configuration, and extensions
 - **Renderer** hosts the React UI and communicates only through controlled preload bridges
-- **Browser View** loads remote pages only in sandboxed `WebContentsView` instances created by Main, without the app preload, Node.js, or the main Renderer bridge
 - **No local service** means production does not listen on TCP ports or bundle a web server
 
 ## Data, security, and privacy
@@ -174,7 +162,6 @@ flowchart LR
 - The application does not open an additional local network port for UI communication
 - The Renderer runs in the Electron sandbox with a strict Content Security Policy
 - Preload exposes only controlled bridge APIs, and TypeScript contracts constrain Host RPC
-- Agent Browser tools and Advanced Browser Mode are off by default; Main validates the persistent policy, temporary session grant, lease, and policy revision before any target-tool side effect
 - The update client uses only the public GitHub Release configuration embedded in production builds; it accepts neither update URLs nor release credentials from the Renderer
 - WeChat and Telegram use outbound-only long polling, while Feishu/Lark uses an outbound WebSocket; none opens a webhook or local listener
 - Model providers determine how model request data is processed; review the privacy policy of every provider you configure
@@ -183,20 +170,31 @@ flowchart LR
 
 ### Common commands
 
-| Command                         | Description                                                          |
-| ------------------------------- | -------------------------------------------------------------------- |
-| `npm run dev`                   | Start Vite, Main process build watch, and Electron                   |
-| `npm run typecheck`             | Run TypeScript type checking                                         |
-| `npm run test`                  | Run the automated test suite                                         |
-| `npm run check:contract`        | Verify coverage between API methods and Host handlers                |
-| `npm run smoke`                 | Run Electron smoke tests                                             |
-| `npm run test:browser-electron` | Run the local Browser Electron integration suite                     |
-| `npm run verify`                | Run the complete pre-commit quality gate                             |
-| `npm run build`                 | Build Main, preload, and Renderer                                    |
-| `npm run pack`                  | Generate the unpacked application directory                          |
-| `npm run dist`                  | Build every configured architecture for this platform                |
-| `npm run dist:mac:signed`       | Build a Developer ID-signed package for the current Mac architecture |
-| `npm run dist:mac:notarized`    | Build a signed and Apple-notarized macOS package                     |
+| Command                      | Description                                                          |
+| ---------------------------- | -------------------------------------------------------------------- |
+| `npm run dev`                | Start Vite, Main process build watch, and Electron                   |
+| `npm run typecheck`          | Run TypeScript type checking                                         |
+| `npm run test`               | Run the automated test suite                                         |
+| `npm run check:contract`     | Verify coverage between API methods and Host handlers                |
+| `npm run smoke`              | Run Electron smoke tests                                             |
+| `npm run build:runtime`      | Build the self-contained hot-update runtime overlay                  |
+| `npm run hot`                | Build and install the hot-update runtime (no repackage)              |
+| `npm run verify`             | Run the complete pre-commit quality gate                             |
+| `npm run build`              | Build Main, preload, and Renderer                                    |
+| `npm run pack`               | Generate the unpacked application directory                          |
+| `npm run dist`               | Build every configured architecture for this platform                |
+| `npm run dist:mac:signed`    | Build a Developer ID-signed package for the current Mac architecture |
+| `npm run dist:mac:notarized` | Build a signed and Apple-notarized macOS package                     |
+
+Type checking runs the TypeScript 7 native compiler (`typescript-native`). Lint and the contract
+checks keep using the TypeScript 5.9 compiler API, because `typescript-eslint` still supports only
+TypeScript < 6.1.
+
+Packaging and hot updates: `npm run build:runtime` produces the hot-update runtime overlay and
+`npm run hot` installs it into the app's data directory, where a running app restarts the Agent Host
+and reloads the UI by itself. Changes to the main process cannot be hot-updated and need one
+repackage: build into a separate directory with
+`electron-builder -c.directories.output=dist-next`, then quit the app, replace `dist/linux-unpacked`, and start it again.
 
 ### Project structure
 
@@ -210,7 +208,7 @@ src/
 └── shared/        # Testable pure functions and shared modules
 ```
 
-Use [Issues](https://github.com/DLYZZT/pi-desktop/issues) for bug reports and suggestions. Pull requests are also welcome. Before submitting code, run at least:
+Use [Issues](https://github.com/HX-Lin/pi-worktable/issues) for bug reports and suggestions. Pull requests are also welcome. Before submitting code, run at least:
 
 ```bash
 npm run verify
@@ -228,16 +226,20 @@ npm run verify
 - [x] Production Windows x64 Release asset pipeline (currently without code signing)
 - [x] Validate the first Release containing both macOS and Windows production assets (v0.1.1)
 - [x] Implement Main-process stable-release checks, user-approved downloads, restart installation, and update settings
-- [x] Implement the Main-owned WebContentsView browser, demand-driven Agent session authorization, and unified Advanced Browser Mode
 - [x] Validate updater-enabled baseline-to-target upgrades end to end on macOS and Windows
 - [x] Production-startup E2E and pre-release checks for macOS arm64/x64, Windows x64, and Linux x64 packages
 
 ## Relationship to the Pi ecosystem
 
-Pi Agent Desktop is a desktop workspace for Pi Coding Agent. It continues to use sessions and configuration from `~/.pi/agent/`, so it can be used alongside the CLI.
+Pi Worktable is a desktop workspace for Pi Coding Agent. It continues to use sessions and configuration from `~/.pi/agent/`, so it can be used alongside the CLI.
 
 Plugins continue to load through Pi's package manager and runtime. Extension APIs that only make sense in the terminal TUI, such as custom terminal components or raw key listeners, cannot be represented equivalently in the desktop Renderer. The application reports an explicit compatibility message instead of silently ignoring them.
 
 ## License
 
 [Apache License 2.0](./LICENSE)
+
+This project is a derivative work of [Pi Agent Desktop](https://github.com/DLYZZT/pi-desktop)
+(Copyright © DLYZZT, Apache-2.0) with extensive modifications; see [NOTICE](./NOTICE).
+Sessions and configuration continue to live in `~/.pi/agent/`, so the app can be used
+alongside the pi CLI.

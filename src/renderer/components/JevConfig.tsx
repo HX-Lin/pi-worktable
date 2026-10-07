@@ -86,6 +86,7 @@ export function JevConfig() {
 
   const settings = config.settings;
   const channel = config.channel;
+  const activeClassifier = config.classifiers.find((entry) => entry.active);
 
   return (
     <div style={{ width: "100%", overflowY: "auto", padding: "28px clamp(18px, 5vw, 52px)" }}>
@@ -99,6 +100,46 @@ export function JevConfig() {
         <Row label={t("jevEnabled", "Enable Jev")}>
           <Checkbox checked={settings.enabled} disabled={busy} onChange={(value) => void update({ enabled: value })} />
         </Row>
+      </Section>
+
+      <Divider />
+
+      <Section
+        title={t("jevClassifier", "Classifier")}
+        description={t(
+          "jevClassifierDescription",
+          "Jev judgments run through pi's classifier API. The app ships a keyless Jev model; a provider you are already signed in to (TypeSafe, OpenRouter, Vercel AI Gateway, OpenCode Zen) can be used instead.",
+        )}
+      >
+        <Row label={t("jevClassifierModel", "Model")}>
+          <select
+            value={settings.classifier ?? ""}
+            disabled={busy}
+            onChange={(event) => void update({ classifier: event.target.value || null })}
+            style={selectStyle}
+          >
+            <option value="">{t("jevClassifierDefault", "自动（内置免密钥 Jev）")}</option>
+            {config.classifiers.map((entry) => (
+              <option key={`${entry.provider}/${entry.id}`} value={`${entry.provider}/${entry.id}`}>
+                {entry.name} — {entry.provider}/{entry.id}
+                {entry.keyless ? ` (${t("jevKeyless", "免密钥（免费通道）")})` : ""}
+              </option>
+            ))}
+          </select>
+        </Row>
+        <Row label={t("jevClassifierActive", "In use")}>
+          <span style={valueStyle}>
+            {activeClassifier
+              ? `${activeClassifier.name} — ${activeClassifier.provider}/${activeClassifier.id}`
+              : t("jevClassifierDefaultActive", "内置免密钥 Jev（jev/jev-1.13-free）")}
+          </span>
+        </Row>
+        <p style={{ fontSize: 11, color: "var(--text-dim)", margin: "2px 0 0" }}>
+          {t(
+            "jevClassifierHint",
+            "下方 Channel 与 API key 仅在所选分类器不在目录中时作为回退；内置 Jev 通道无需密钥。",
+          )}
+        </p>
       </Section>
 
       <Divider />
@@ -178,28 +219,32 @@ export function JevConfig() {
       >
         <Row label={t("jevKeySource", "In use")}>
           <span style={valueStyle}>
-            {channel.keySource === "env"
-              ? t("jevKeyFromEnv", "environment: {name}").replace("{name}", channel.keyVariable ?? "")
-              : channel.keySource === "vault"
-                ? t("jevKeyFromVault", "stored in the vault")
-                : t("jevKeyMissing", "no key configured")}
+            {channel.keyless
+              ? t("jevKeyless", "免密钥（免费通道）")
+              : channel.keySource === "env"
+                ? t("jevKeyFromEnv", "environment: {name}").replace("{name}", channel.keyVariable ?? "")
+                : channel.keySource === "vault"
+                  ? t("jevKeyFromVault", "stored in the vault")
+                  : t("jevKeyMissing", "no key configured")}
           </span>
         </Row>
-        <Row label={t("jevKeyNew", "Set key")}>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <input
-              type="password"
-              value={keyDraft}
-              placeholder={channel.keyHint}
-              onChange={(event) => setKeyDraft(event.target.value)}
-              style={inputStyle}
-              spellCheck={false}
-            />
-            <button type="button" onClick={() => void saveKey()} disabled={busy} style={buttonStyle}>
-              {keyDraft.trim() ? t("save", "Save") : t("jevKeyClear", "Clear")}
-            </button>
-          </div>
-        </Row>
+        {!channel.keyless && (
+          <Row label={t("jevKeyNew", "Set key")}>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <input
+                type="password"
+                value={keyDraft}
+                placeholder={channel.keyHint}
+                onChange={(event) => setKeyDraft(event.target.value)}
+                style={inputStyle}
+                spellCheck={false}
+              />
+              <button type="button" onClick={() => void saveKey()} disabled={busy} style={buttonStyle}>
+                {keyDraft.trim() ? t("save", "Save") : t("jevKeyClear", "Clear")}
+              </button>
+            </div>
+          </Row>
+        )}
         <Row label={t("jevTest", "Connection")}>
           <div style={{ display: "flex", gap: 10, alignItems: "center", minWidth: 0 }}>
             <button type="button" onClick={() => void runTest()} disabled={busy || !channel.hasKey} style={buttonStyle}>
@@ -491,7 +536,7 @@ function RoutingSection({
       title={t("jevRouting", "Model routing")}
       description={t(
         "jevRoutingDescription",
-        "An independent mode: when it is on, Jev rates each request and a confidently easy or hard one switches model before the turn. Everything else — including any failure — keeps the model you picked.",
+        "Pick the `jev/auto` model in the model picker to turn this on: Jev rates the latest message and the router hands an easy turn to the cheap model and a hard one to the strong model. The middle band, a low-confidence answer and every failure fall back without guessing.",
       )}
     >
       <Row label={t("jevRoutingMode", "Mode")}>
@@ -507,6 +552,7 @@ function RoutingSection({
       </Row>
       {textField(t("jevRoutingCheap", "Easy requests"), "cheap")}
       {textField(t("jevRoutingStrong", "Hard requests"), "strong")}
+      {textField(t("jevRoutingDefault", "Middle band / fallback"), "default")}
       {textField(t("jevRoutingCheapThinking", "Easy thinking level"), "cheapThinking")}
       {textField(t("jevRoutingStrongThinking", "Hard thinking level"), "strongThinking")}
       <Row label={t("jevRoutingEasyMax", "Easy at or below")}>

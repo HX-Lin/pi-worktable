@@ -48,6 +48,9 @@ export interface PruneContext {
 /**
  * Keep the latest compaction memory plus the entries it still covers.
  *
+ * The latest `session_info` entry (a manual rename) from the dropped prefix is
+ * carried forward: pruning must never reset a user-set session name.
+ *
  * `updateMemory` may rewrite the memory text (for example after it was capped);
  * the compaction entry keeps everything else untouched.
  */
@@ -87,6 +90,17 @@ export function pruneSummarizedEntries(
   };
 
   const kept = [keptMemory, ...entries.slice(tailStart, compactionIndex), ...entries.slice(compactionIndex + 1)];
+
+  // A manual rename lives in a `session_info` entry that pi reads as "the latest
+  // one wins". Without this the rewrite would drop the rename and the UI would
+  // fall back to the first message, so the title changed after every memory
+  // compaction. Re-append the newest dropped rename to make it permanent.
+  for (let index = Math.min(tailStart, entries.length) - 1; index >= 0; index -= 1) {
+    if (entries[index].type === "session_info") {
+      kept.push(entries[index]);
+      break;
+    }
+  }
 
   // Re-chain so the memory entry becomes the root of the retained path.
   const rechained: PrunableEntry[] = [];

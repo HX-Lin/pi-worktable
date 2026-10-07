@@ -98,6 +98,7 @@ interface ApiKeyProvider {
   displayName: string;
   configured: boolean;
   source?: string;
+  environmentSource?: string;
   modelCount: number;
 }
 
@@ -1238,6 +1239,25 @@ function ApiKeyDetail({ provider, onRefresh }: { provider: ApiKeyProvider; onRef
           ? `API key is stored. Enter a new key below to replace it, or disconnect to remove it.`
           : `Enter your ${provider.displayName} API key to enable ${provider.modelCount} model${provider.modelCount !== 1 ? "s" : ""}.`}
       </p>
+
+      {!provider.configured && provider.environmentSource && (
+        <p
+          style={{
+            margin: 0,
+            fontSize: 12,
+            color: "var(--text-muted)",
+            lineHeight: 1.5,
+            padding: "7px 9px",
+            background: "var(--bg-panel)",
+            border: "1px solid var(--border)",
+            borderRadius: 6,
+          }}
+        >
+          A credential is supplied by the environment variable {provider.environmentSource}. Pi uses it at request time,
+          but it is not an app-managed connection, so it is not counted as configured here. A key saved below takes
+          precedence.
+        </p>
+      )}
 
       <Field label="API Key">
         <div style={{ display: "flex", gap: 6 }}>

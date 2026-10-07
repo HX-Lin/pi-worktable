@@ -72,6 +72,10 @@ export interface JevClientOptions {
   baseUrl: string;
   model: string;
   apiKey: string;
+  /** Free/keyless channel: no key is required and Authorization is omitted. */
+  keyless?: boolean;
+  /** Extra headers sent with every request on this channel. */
+  headers?: Record<string, string>;
   /** Per-attempt timeout. */
   timeoutMs?: number;
   /** Retries after the first attempt, for transient failures only. */
@@ -118,7 +122,9 @@ export function createJevClient(options: JevClientOptions): JevClient {
     questions: Record<string, JevQuestionShape>,
     askOptions: JevAskOptions = {},
   ): Promise<JevOutcome> => {
-    if (!options.apiKey.trim()) return { ok: false, reason: "http", message: "Jev API key is not configured" };
+    if (!options.keyless && !options.apiKey.trim()) {
+      return { ok: false, reason: "http", message: "Jev API key is not configured" };
+    }
     const started = Date.now();
     let lastFailure: Extract<JevOutcome, { ok: false }> = { ok: false, reason: "unknown" };
 
@@ -178,9 +184,13 @@ async function requestDecisions(
     state as never,
     questions as never,
   );
+  const headers: Record<string, string> = { ...request.headers };
+  // Keyless channels send no Authorization; extra channel headers ride along.
+  if (options.keyless) delete headers.authorization;
+  if (options.headers) Object.assign(headers, options.headers);
   const response = await fetcher(request.url, {
     method: request.method,
-    headers: request.headers,
+    headers,
     body: request.body,
     signal,
   });

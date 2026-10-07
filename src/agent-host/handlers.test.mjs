@@ -56,12 +56,18 @@ async function captureHandlers() {
 
 test("registerHandlers exposes every contract method exactly once", async () => {
   const { handlers } = await captureHandlers();
-  assert.equal(Object.keys(handlers).length, 82);
+  assert.equal(Object.keys(handlers).length, 88);
   for (const method of [
     "jev.getConfig",
     "jev.updateConfig",
     "jev.setKey",
     "jev.test",
+    "mcp.getConfig",
+    "mcp.setServer",
+    "mcp.patchServer",
+    "mcp.removeServer",
+    "mcp.setAutoEnableCodemode",
+    "mcp.runCommand",
     "context.map",
     "context.fold",
     "memory.overview",
@@ -157,6 +163,21 @@ test("credential mutation failures distinguish committed state from an unverifie
     ),
     (error) => error?.code === "INTERNAL" && !String(error?.message).includes("secret"),
   );
+});
+
+test("environment credentials are never reported as app-managed provider connections", async () => {
+  const { describeApiKeyProviderAuth } = await loadHandlersModule();
+
+  assert.deepEqual(describeApiKeyProviderAuth({ configured: true, source: "environment", label: "OPENAI_API_KEY" }), {
+    configured: false,
+    environmentSource: "OPENAI_API_KEY",
+  });
+  assert.deepEqual(describeApiKeyProviderAuth({ configured: false, source: "environment" }), {
+    configured: false,
+    environmentSource: "environment",
+  });
+  assert.deepEqual(describeApiKeyProviderAuth({ configured: true, source: "stored" }), { configured: true });
+  assert.deepEqual(describeApiKeyProviderAuth({ configured: true, source: "runtime" }), { configured: true });
 });
 
 test("file, git, worktree, skill, plugin, and system handlers return contract-shaped results", async (t) => {

@@ -43,10 +43,12 @@ export interface JevCompactionSettings {
 }
 
 export interface JevRoutingSettings {
-  /** `off` keeps the model the user picked; `jev` lets Jev switch it per turn. */
+  /** `off` keeps the model the user picked; `jev` lets the `jev/auto` router classify each turn. */
   mode: "off" | "jev";
   cheap: string | null;
   strong: string | null;
+  /** Model for the middle band and the fallback; `null` falls back to the session's own model. */
+  default: string | null;
   cheapThinking: string | null;
   strongThinking: string | null;
   easyMax: number;
@@ -57,6 +59,11 @@ export interface JevRoutingSettings {
 export interface JevSettings {
   /** Master switch: off means no Jev call of any kind. */
   enabled: boolean;
+  /**
+   * Classifier as `provider/id`. Empty uses the app's own keyless Jev provider; a provider the user
+   * has credentials for (TypeSafe, OpenRouter, Vercel AI Gateway, OpenCode Zen) also works.
+   */
+  classifier: string | null;
   channel: string;
   /** Overrides the channel default when set. */
   model: string | null;
@@ -69,6 +76,7 @@ export interface JevSettings {
 export function defaultJevSettings(): JevSettings {
   return {
     enabled: false,
+    classifier: null,
     channel: DEFAULT_JEV_CHANNEL,
     model: null,
     baseUrl: null,
@@ -98,6 +106,7 @@ export function defaultJevSettings(): JevSettings {
       mode: "off",
       cheap: null,
       strong: null,
+      default: null,
       cheapThinking: null,
       strongThinking: null,
       easyMax: 0.5,
@@ -163,6 +172,7 @@ export function normalizeJevSettings(raw: unknown): JevSettings {
 
   return {
     enabled: boolean(source.enabled, defaults.enabled),
+    classifier: optionalString(source.classifier),
     channel: findJevChannel(typeof source.channel === "string" ? source.channel : undefined).id,
     model: optionalString(source.model),
     baseUrl: optionalString(source.baseUrl),
@@ -192,6 +202,7 @@ export function normalizeJevSettings(raw: unknown): JevSettings {
       mode: oneOf(routing.mode, ["off", "jev"] as const, defaults.routing.mode),
       cheap: optionalString(routing.cheap),
       strong: optionalString(routing.strong),
+      default: optionalString(routing.default),
       cheapThinking: optionalString(routing.cheapThinking),
       strongThinking: optionalString(routing.strongThinking),
       easyMax: number(routing.easyMax, defaults.routing.easyMax, 0, 2),

@@ -11,7 +11,7 @@ import {
 import type { SessionInfo } from "@/lib/types";
 import type { OpenProject } from "@/lib/projects";
 import { getProjectDisplayName } from "@/lib/projects";
-import { APP_VERSION, PI_VERSION } from "@/lib/app-version";
+import { APP_DISPLAY_NAME, APP_VERSION, PI_VERSION } from "@/lib/app-version";
 import { useI18n } from "@/i18n";
 import {
   loadUnreadSessionIds as loadStoredUnreadSessionIds,
@@ -289,7 +289,7 @@ function PiAgentTitle() {
   const [scrambling, setScrambling] = useState(false);
   const revertTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const target = showVersion ? `${APP_VERSION}p${PI_VERSION}` : "Pi Agent Desktop";
+  const target = showVersion ? `${APP_VERSION}p${PI_VERSION}` : APP_DISPLAY_NAME;
   const display = useScramble(target, scrambling);
 
   const triggerScramble = useCallback((toVersion: boolean) => {

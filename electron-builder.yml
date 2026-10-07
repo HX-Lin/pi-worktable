@@ -1,7 +1,7 @@
-# Pi Agent Desktop v2 — pure Electron (no Next sidecar, no bundled Node)
-appId: app.dlyzzt.pi-agent-desktop
-productName: Pi Agent Desktop
-copyright: Copyright © DLYZZT
+# Pi Worktable — pure Electron (no Next sidecar, no bundled Node)
+appId: app.hxlin.pi-worktable
+productName: Pi Worktable
+copyright: Copyright © HX-Lin
 
 directories:
   output: dist
@@ -9,6 +9,9 @@ directories:
 
 files:
   - out/**/*
+  # The hot-update runtime overlay is built on demand by `npm run hot`; it must
+  # not ship inside app.asar (the host there is the bundled one).
+  - "!out/runtime/**"
   - package.json
   - LICENSE
   - build/icon.png
@@ -129,24 +132,24 @@ mac:
       arch:
         - arm64
         - x64
-  artifactName: Pi-Agent-Desktop-${version}-${arch}.${ext}
+  artifactName: Pi-Worktable-${version}-${arch}.${ext}
 
 win:
   target:
     - target: nsis
       arch:
         - x64
-  artifactName: Pi-Agent-Desktop-Setup-${version}.${ext}
+  artifactName: Pi-Worktable-Setup-${version}.${ext}
 
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
-  shortcutName: Pi Agent Desktop
+  shortcutName: Pi Worktable
 
 linux:
-  executableName: pi-agent-desktop
+  executableName: pi-worktable
   # Override electron-builder's unsafe default AppImage argument. Keep Chromium
   # sandboxing enabled and use an app-owned inert launch marker instead.
   executableArgs:
@@ -156,16 +159,16 @@ linux:
       arch:
         - x64
   category: Development
-  artifactName: Pi-Agent-Desktop-${version}-${arch}.${ext}
+  artifactName: Pi-Worktable-${version}-${arch}.${ext}
   synopsis: Local desktop UI for the pi coding agent
 
 protocols:
-  - name: Pi Agent Desktop
+  - name: Pi Worktable
     schemes:
-      - pi-agent-desktop
+      - pi-worktable
 
 publish:
   provider: github
   owner: HX-Lin
-  repo: pi-desktop
+  repo: pi-worktable
   releaseType: draft

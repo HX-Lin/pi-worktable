@@ -157,7 +157,7 @@ export function installAppMenu(getWindow: () => BrowserWindow | null, onCheckFor
         {
           label: "Learn More",
           click: () => {
-            void shell.openExternal("https://github.com/DLYZZT/pi-desktop");
+            void shell.openExternal("https://github.com/HX-Lin/pi-worktable");
           },
         },
       ],

@@ -5,7 +5,7 @@ import test from "node:test";
 import { pathToFileURL } from "node:url";
 import { build } from "esbuild";
 
-const root = path.resolve(import.meta.dirname, "..", "..");
+const root = path.resolve(import.meta.dirname, "..", "..", "..");
 const output = path.join(root, ".artifacts", "test-modules", `jev-transport-${process.pid}.mjs`);
 mkdirSync(path.dirname(output), { recursive: true });
 
@@ -389,4 +389,50 @@ test("an unfamiliar envelope is reported with the body, not as a missing answer"
   // enough to correct the reader instead of guessing twice.
   assert.match(outcome.message, /verdicts/);
   assert.match(outcome.message, /0\.9/);
+});
+
+test("a keyless channel sends no Authorization and merges its headers", async () => {
+  let seen;
+  const c = createJevClient({
+    protocol: "decisions",
+    baseUrl: "https://opencode.ai/zen/v1/systemone",
+    model: "jev-1.13-free",
+    apiKey: "",
+    keyless: true,
+    headers: {
+      "x-opencode-client": "cli",
+      "x-opencode-project": "global",
+      "User-Agent": "opencode/0.0.0-dev",
+    },
+    timeoutMs: 500,
+    maxRetries: 0,
+    fetch: async (url, init) => {
+      seen = { url, init };
+      return jsonResponse({ answers: { "t1.keep": { noul: 0.5 } } });
+    },
+  });
+
+  const outcome = await c.ask("state", questions);
+  assert.equal(outcome.ok, true);
+  const headers = seen.init.headers;
+  assert.equal(headers.authorization, undefined);
+  assert.equal(headers["x-opencode-client"], "cli");
+  assert.equal(headers["x-opencode-project"], "global");
+  assert.equal(headers["User-Agent"], "opencode/0.0.0-dev");
+  assert.equal(seen.url, "https://opencode.ai/zen/v1/systemone");
+});
+
+test("a keyless channel is usable without any API key", async () => {
+  const c = createJevClient({
+    protocol: "decisions",
+    baseUrl: "https://opencode.ai/zen/v1/systemone",
+    model: "jev-1.13-free",
+    apiKey: "",
+    keyless: true,
+    timeoutMs: 500,
+    maxRetries: 0,
+    fetch: async () => jsonResponse({ answers: { "t1.keep": { noul: 0.9 } } }),
+  });
+  const outcome = await c.ask("state", { "t1.keep": { type: "noul", instructions: "ok?" } });
+  assert.equal(outcome.ok, true);
 });

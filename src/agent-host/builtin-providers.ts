@@ -4,19 +4,45 @@
  * in the model picker without installing anything, plus the memory-script index
  * that tells the model which executables it already has.
  */
-import type { InlineExtension, ModelRuntime } from "@earendil-works/pi-coding-agent";
+import {
+  createCodemodeExtension,
+  createMcpExtension,
+  createToolSearchExtension,
+  type InlineExtension,
+  type ModelRuntime,
+} from "@earendil-works/pi-coding-agent";
 import qoderProviderFactory from "./vendor/qoder";
+import { JEV_PROVIDER_EXTENSION, registerJevProvider } from "./jev/classifier-provider";
 import { CONTEXT_FOLD_EXTENSION } from "./context-fold-extension";
 import { JEV_COMPACTION_EXTENSION } from "./jev/compaction/hook";
 import { JEV_GATE_EXTENSION } from "./jev/gate/extension";
 import { JEV_ROUTING_EXTENSION } from "./jev/routing/extension";
 import { MEMORY_SCRIPTS_EXTENSION } from "./memory-scripts-extension";
 
-export const BUILTIN_PROVIDER_EXTENSIONS: InlineExtension[] = [{ name: "Qoder", factory: qoderProviderFactory }];
+export const BUILTIN_PROVIDER_EXTENSIONS: InlineExtension[] = [
+  { name: "Qoder", factory: qoderProviderFactory },
+  JEV_PROVIDER_EXTENSION,
+];
+
+/**
+ * Upstream built-in extensions the desktop opts into.
+ *
+ * The SDK never loads pi's built-ins on its own: they are inline extensions the host supplies.
+ * We take `codemode`, `tool_search`, and `mcp`, and deliberately leave `llama.cpp` out (no local
+ * models). `codemode` and `tool_search` load inactive and are enabled by `setActiveToolsByName`,
+ * the MCP extension, or the tool presets; MCP registers tools as `mcp__<server>__<tool>`.
+ * `replaceable` keeps a user extension that registers the same tool or `/mcp` command working.
+ */
+export const PI_BUILTIN_EXTENSIONS: InlineExtension[] = [
+  { name: "codemode", builtin: true, replaceable: true, factory: createCodemodeExtension() },
+  { name: "tool-search", builtin: true, replaceable: true, factory: createToolSearchExtension() },
+  { name: "mcp", builtin: true, replaceable: true, factory: createMcpExtension() },
+];
 
 /** Every inline extension the app injects into agent sessions. */
 export const BUILTIN_SESSION_EXTENSIONS: InlineExtension[] = [
   ...BUILTIN_PROVIDER_EXTENSIONS,
+  ...PI_BUILTIN_EXTENSIONS,
   MEMORY_SCRIPTS_EXTENSION,
   CONTEXT_FOLD_EXTENSION,
   JEV_COMPACTION_EXTENSION,
@@ -29,5 +55,6 @@ export async function registerBuiltinProviders(modelRuntime: ModelRuntime): Prom
   await qoderProviderFactory({
     registerProvider: (providerId, config) => modelRuntime.registerProvider(providerId, config),
   } as Parameters<typeof qoderProviderFactory>[0]);
+  registerJevProvider(modelRuntime);
   await modelRuntime.refresh({ allowNetwork: false });
 }

@@ -19,7 +19,12 @@ export interface ModelLike {
 export interface ToolInfo {
   name: string;
   description: string;
+  /** How the tool reaches the model. Absent on older hosts, which behaved as `direct`. */
+  exposure?: ToolExposure;
 }
+
+/** Mirrors pi's `ToolExposure`: only `direct` (and `model-only`) tools are declared to the model. */
+export type ToolExposure = "direct" | "model-only" | "codemode" | "deferred" | "hidden";
 
 export interface NavigateTreeResult {
   editorText?: string;
@@ -128,6 +133,7 @@ export interface AgentSessionLike {
   readonly sessionManager: SessionManager;
   readonly settingsManager: SettingsManager;
   readonly agent: { state?: { systemPrompt?: string; thinkingLevel?: string; messages?: unknown[] } };
+  refreshContext(): void;
   readonly extensionRunner: ExtensionRunnerLike;
   readonly promptTemplates: readonly PromptTemplateLike[];
   readonly resourceLoader: ResourceLoaderLike;
@@ -163,8 +169,11 @@ export interface AgentSessionLike {
   getLastAssistantText(): string | undefined;
   setAutoCompactionEnabled(enabled: boolean): void;
   setAutoRetryEnabled(enabled: boolean): void;
-  steer(text: string, images?: Array<{ type: "image"; data: string; mimeType: string }>): Promise<void>;
-  followUp(text: string, images?: Array<{ type: "image"; data: string; mimeType: string }>): Promise<void>;
+  steer(text: string, images?: Array<{ type: "image"; data: string; mimeType: string }>): Promise<"handled" | "queued">;
+  followUp(
+    text: string,
+    images?: Array<{ type: "image"; data: string; mimeType: string }>,
+  ): Promise<"handled" | "queued">;
   readonly pendingMessageCount: number;
   getSteeringMessages(): readonly string[];
   getFollowUpMessages(): readonly string[];

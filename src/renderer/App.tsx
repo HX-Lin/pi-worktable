@@ -1,4 +1,4 @@
-import { Component, type CSSProperties, type ErrorInfo, type ReactNode, useEffect, useState } from "react";
+import { Component, type CSSProperties, type ErrorInfo, type ReactNode, useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { ensureRpc, resetRpc } from "@/lib/api-client";
 
@@ -49,6 +49,10 @@ export function App() {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState("Connecting…");
+  /** Set while the error screen is up because the host died, cleared once it answers again. */
+  const crashPending = useRef(false);
+  /** A runtime update is waiting for running sessions, so the wait is visible instead of silent. */
+  const [hotUpdatePending, setHotUpdatePending] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -88,7 +92,26 @@ export function App() {
     const offCrash = window.piBridge?.onHostCrashed?.((payload) => {
       resetRpc();
       setReady(false);
+      crashPending.current = true;
       setError(payload.detail || "Agent Host crashed and could not recover");
+    });
+
+    // A crashed host is restarted by the supervisor, and a hot update restarts it too. Either way the
+    // UI has to come back from the error screen by itself instead of waiting for a manual reload.
+    const offStatus = window.piBridge?.onHostStatus?.((payload) => {
+      if (payload.status !== "ready" || !crashPending.current) return;
+      crashPending.current = false;
+      resetRpc();
+      setError(null);
+      setStatus("Agent Host restarted — reconnecting…");
+      connect();
+    });
+
+    const offHotUpdate = window.piBridge?.onHostHotUpdate?.((payload) => {
+      setHotUpdatePending(payload.pending);
+      if (payload.pending) {
+        console.warn("[pi-desktop] hot update ready; waiting for running sessions");
+      }
     });
 
     const offMenuDiag = window.piBridge?.onMenu?.("export-diagnostics", () => {
@@ -103,6 +126,8 @@ export function App() {
       cancelled = true;
       offRestart?.();
       offCrash?.();
+      offStatus?.();
+      offHotUpdate?.();
       offMenuDiag?.();
       window.removeEventListener("focus", onFocus);
     };
@@ -133,7 +158,7 @@ export function App() {
       <div style={centerStyle}>
         <div style={{ ...cardStyle, textAlign: "center" }}>
           <div style={{ fontSize: 13, color: "#57534a", marginBottom: 8 }}>{status}</div>
-          <div style={{ fontSize: 12, color: "#a19d92" }}>Pi Agent Desktop</div>
+          <div style={{ fontSize: 12, color: "#a19d92" }}>Pi Worktable</div>
         </div>
       </div>
     );
@@ -142,6 +167,11 @@ export function App() {
   return (
     <ErrorBoundary>
       <AppShell />
+      {hotUpdatePending && (
+        <div style={hotUpdateBannerStyle} role="status">
+          Hot update ready — it applies once the running tasks finish.
+        </div>
+      )}
     </ErrorBoundary>
   );
 }
@@ -171,12 +201,7 @@ const titleStyle: CSSProperties = {
   color: "var(--text)",
 };
 
-const bodyStyle: CSSProperties = {
-  fontSize: 13.5,
-  lineHeight: 1.55,
-  color: "var(--text-muted)",
-  margin: "0 0 8px",
-};
+const bodyStyle: CSSProperties = { fontSize: 13.5, lineHeight: 1.55, color: "var(--text-muted)", margin: "0 0 8px" };
 
 const preStyle: CSSProperties = {
   fontSize: 11,
@@ -196,6 +221,24 @@ const btnPrimary: CSSProperties = {
   background: "var(--text)",
   color: "var(--bg)",
   cursor: "pointer",
+};
+
+/** Sits above the app so a waiting runtime update is visible without taking space. */
+const hotUpdateBannerStyle: CSSProperties = {
+  position: "fixed",
+  left: "50%",
+  bottom: 18,
+  transform: "translateX(-50%)",
+  zIndex: 60,
+  maxWidth: "calc(100vw - 36px)",
+  padding: "7px 14px",
+  borderRadius: 999,
+  border: "1px solid var(--border)",
+  background: "var(--bg-panel)",
+  boxShadow: "0 6px 20px rgba(0,0,0,0.18)",
+  color: "var(--text-muted)",
+  fontSize: 12,
+  pointerEvents: "none",
 };
 
 const btnSecondary: CSSProperties = {

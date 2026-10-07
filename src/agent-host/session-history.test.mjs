@@ -49,6 +49,35 @@ function toolResult(toolCallId, text) {
   };
 }
 
+test("turn diffs stay after their answer and survive session history paging", () => {
+  const files = [{ path: "src/app.ts", added: 1, removed: 1, patch: "Index: src/app.ts\n@@ -1 +1 @@\n-old\n+new\n" }];
+  const entries = chain([
+    user("edit"),
+    assistant([{ type: "text", text: "done" }]),
+    { type: "custom", customType: "pi-desktop-turn-changes", data: { files } },
+    user("next"),
+    assistant([{ type: "text", text: "next answer" }]),
+  ]);
+  const page = buildSessionHistoryPage({
+    entries,
+    historyWindow: { maxTurns: 1, maxBytes: 128 * 1024 },
+    historyRevision: "changes-revision",
+    cursor: decodeHistoryCursor(
+      buildSessionHistoryPage({
+        entries,
+        historyWindow: { maxTurns: 1, maxBytes: 128 * 1024 },
+        historyRevision: "changes-revision",
+      }).previousCursor,
+    ),
+  });
+  assert.deepEqual(
+    page.messages.map((message) => message.role),
+    ["user", "assistant", "custom"],
+  );
+  assert.equal(page.messages[2].customType, "pi-desktop-turn-changes");
+  assert.deepEqual(page.messages[2].details, { files });
+});
+
 test("history pages preserve complete turns and reconstruct the full display history", () => {
   const entries = chain([
     user("first"),

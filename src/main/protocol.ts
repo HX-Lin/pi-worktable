@@ -1,12 +1,14 @@
 /**
  * protocol.handle("app") — serve static UI with strict CSP.
  */
-import { protocol } from "electron";
+import { app, protocol } from "electron";
 import { randomUUID } from "crypto";
 import fs from "fs";
 import path from "path";
 import { pathToFileURL } from "url";
 import { appendMainLog } from "./logger";
+import { runtimeRootDir } from "./host-manager";
+import { overlayMatchesApp } from "./runtime-overlay";
 
 const CSP =
   "default-src 'self' app:; " +
@@ -110,7 +112,7 @@ export function registerAppProtocol(): void {
   ]);
 }
 
-export function handleAppProtocol(rendererRoot: string): void {
+export function handleAppProtocol(rendererRootOverride?: string): void {
   protocol.handle("app", async (request) => {
     try {
       const url = new URL(request.url);
@@ -149,6 +151,8 @@ export function handleAppProtocol(rendererRoot: string): void {
           },
         });
       }
+      // Resolve per request so a hot-swapped renderer takes effect on reload.
+      const rendererRoot = rendererRootOverride ?? rendererRootPath();
       let pathname = decodeURIComponent(url.pathname);
       if (pathname.startsWith("/bundle")) {
         pathname = pathname.slice("/bundle".length) || "/";
@@ -195,8 +199,20 @@ export function handleAppProtocol(rendererRoot: string): void {
 }
 
 /** Dev convenience: load via file:// is avoided; keep helper for diagnostics. */
-export function rendererRootPath(mainDirectory = __dirname): string {
-  return path.join(mainDirectory, "..", "renderer");
+export function rendererRootPath(mainDirectory = __dirname, appVersion = app.getVersion()): string {
+  const bundled = path.join(mainDirectory, "..", "renderer");
+  // A writable runtime renderer dir lets the UI be hot-reloaded without repackaging. It is only
+  // trusted when its manifest names this app version, so a stale overlay cannot shadow a fresh
+  // install. Resolved per request, so `npm run hot` applies on the next reload.
+  try {
+    const override = path.join(app.getPath("userData"), "runtime", "renderer");
+    if (fs.existsSync(path.join(override, "index.html")) && overlayMatchesApp(runtimeRootDir(), appVersion)) {
+      return override;
+    }
+  } catch {
+    // No override: fall back to the bundle.
+  }
+  return bundled;
 }
 
 export function fileUrl(p: string): string {

@@ -12,10 +12,9 @@
     "allowImportingTsExtensions": true,
     "noEmit": true,
     "types": ["node"],
-    "baseUrl": ".",
     "paths": {
-      "@contract/*": ["src/contract/*"],
-      "@shared/*": ["src/shared/*"]
+      "@contract/*": ["./src/contract/*"],
+      "@shared/*": ["./src/shared/*"]
     }
   },
   "include": [

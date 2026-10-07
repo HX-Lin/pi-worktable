@@ -3,7 +3,7 @@ import type {
   Api,
   AssistantMessage,
   AssistantMessageEventStream,
-  Context,
+  TranscriptContext,
   Model,
   SimpleStreamOptions,
   TextContent,
@@ -24,7 +24,7 @@ import { getCachedModelConfig } from "./models.js";
 import { resolveQoderIdentity } from "./oauth.js";
 import { qoderEncodeBody } from "./qoder-encoding.js";
 import { stripThinkingTags, ThinkingTagParser } from "./thinking-parser.js";
-import { transformMessagesForQoder, transformTools } from "./transform.js";
+import { prepareQoderContext } from "./transform.js";
 
 interface ToolCallState {
   arguments: string;
@@ -244,23 +244,9 @@ async function fetchWithQueueRetry(url: string, init: RequestInit, signal?: Abor
   }
 }
 
-function contentToText(content: unknown): string {
-  if (typeof content === "string") return content;
-  if (Array.isArray(content)) {
-    return content
-      .map((part) => {
-        if (typeof part === "string") return part;
-        if (part && typeof part === "object" && "text" in part) return (part as { text: string }).text;
-        return "";
-      })
-      .join("\n");
-  }
-  return "";
-}
-
 export function streamQoder(
   model: Model<Api>,
-  context: Context,
+  context: TranscriptContext,
   options?: SimpleStreamOptions,
 ): AssistantMessageEventStream {
   const StreamCtor = (PiAi as unknown as { AssistantMessageEventStream: new () => AssistantMessageEventStream })
@@ -323,11 +309,9 @@ export function streamQoder(
       const isReasoning = !!modelConfig.is_reasoning;
       const maxOutputTokens = modelConfig.max_output_tokens || 32768;
 
-      const normalizedMessages = transformMessagesForQoder(context.messages);
-      // OMP may supply the system prompt as a single-element content array;
-      // Qoder MessagesInputDto#content is a String and rejects an array with
-      // "Execution failed: set property ... MessagesInputDto#content". Normalize.
-      const systemText = contentToText(context.systemPrompt || "");
+      const { normalizedMessages, systemText, toolsRaw } = prepareQoderContext(context);
+      // Qoder MessagesInputDto#content requires a String; Pi's transcript
+      // helpers render system sections as text before we add the leading message.
 
       let lastUserText = "";
       for (let i = normalizedMessages.length - 1; i >= 0; i--) {
@@ -359,7 +343,6 @@ export function streamQoder(
         maxTokens = options.maxTokens;
       }
 
-      const toolsRaw = context.tools && context.tools.length > 0 ? transformTools(context.tools) : undefined;
       const recordID = stableChatRecordID(qoderModel, normalizedMessages, toolsRaw, maxTokens);
 
       const reqBody: Record<string, unknown> = {

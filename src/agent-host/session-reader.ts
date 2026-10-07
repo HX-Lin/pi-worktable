@@ -3,7 +3,7 @@ import {
   buildSessionContext as piBuildSessionContext,
   getAgentDir,
 } from "@earendil-works/pi-coding-agent";
-import { existsSync } from "node:fs";
+import { closeSync, existsSync, openSync, readSync, statSync } from "node:fs";
 import type { AgentMessage, SessionEntry, SessionInfo, SessionContext, UserMessage } from "../shared/types";
 import type { SessionEntry as PiSessionEntry, SessionInfo as PiSessionInfo } from "@earendil-works/pi-coding-agent";
 import { isMemoryCompactionEntry } from "../shared/auto-compact";
@@ -208,6 +208,58 @@ export async function buildSessionInfoFromManager(
   };
 }
 
+/**
+ * Read only the tail of a session transcript.
+ *
+ * Session files are append-only JSONL, and a long one is tens of megabytes. The relay only needs the
+ * newest messages, so parsing the whole file to throw nearly all of it away costs seconds on every
+ * history request. This reads the last chunk, drops a possibly torn first line, and parses what is
+ * left.
+ */
+export function readSessionTailEntries(
+  filePath: string,
+  maxLines: number,
+  options: { maxBytes?: number } = {},
+): SessionEntry[] {
+  const maxBytes = options.maxBytes ?? 8 * 1024 * 1024;
+  let size: number;
+  try {
+    size = statSync(filePath).size;
+  } catch {
+    return [];
+  }
+  if (size === 0) return [];
+  const readSize = Math.min(size, maxBytes);
+  const fd = openSync(filePath, "r");
+  try {
+    const buffer = Buffer.alloc(readSize);
+    readSync(fd, buffer, 0, readSize, size - readSize);
+    let text = buffer.toString("utf8");
+    if (readSize < size) {
+      // The chunk starts mid-line (and possibly mid-character): drop that partial line.
+      const firstBreak = text.indexOf("\n");
+      text = firstBreak >= 0 ? text.slice(firstBreak + 1) : "";
+    }
+    const lines = text.split("\n");
+    const entries: SessionEntry[] = [];
+    for (const line of lines.slice(-maxLines)) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      try {
+        const parsed: unknown = JSON.parse(trimmed);
+        if (parsed && typeof parsed === "object" && (parsed as { type?: unknown }).type !== "session") {
+          entries.push(parsed as SessionEntry);
+        }
+      } catch {
+        // A torn final line is normal while a turn is being written.
+      }
+    }
+    return entries;
+  } finally {
+    closeSync(fd);
+  }
+}
+
 export function getSessionEntries(filePath: string): SessionEntry[] {
   const entries = SessionManager.open(filePath).getEntries();
   return entries as unknown as SessionEntry[];
@@ -403,6 +455,16 @@ export function entryToUiMessage(entry: SessionEntry): AgentMessage | null {
     case "custom": {
       // Only entries the app itself surfaces are rendered: other extensions use
       // `custom` for bookkeeping (diagnostics, tags) that must stay out of the chat.
+      if (entry.customType === "pi-desktop-turn-changes") {
+        return {
+          role: "custom",
+          customType: entry.customType,
+          content: "",
+          display: true,
+          details: entry.data,
+          timestamp: parseEntryTimestamp(entry.timestamp),
+        };
+      }
       if (entry.customType !== JEV_DECISION_ENTRY_TYPE) return null;
       const record = (entry.data ?? {}) as {
         tool?: unknown;

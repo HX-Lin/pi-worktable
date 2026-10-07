@@ -64,22 +64,23 @@ export function getSessionContentSnapshot(filePath: string): SessionContentSnaps
   }
   removeRecord(filePath);
 
-  for (let attempt = 0; attempt < 2; attempt += 1) {
+  // A session with a running turn is appended to while we read it, so the fingerprint never settles.
+  // pi's reader skips a torn final line, and a later read sees a different fingerprint (the file grew)
+  // and re-reads, so the last attempt is served instead of failing the whole request.
+  let record: CacheRecord | null = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
     const before = fingerprint(filePath);
     const manager = SessionManager.open(filePath);
     const entries = manager.getEntries() as unknown as SessionEntry[];
     const after = fingerprint(filePath);
-    if (!fingerprintsEqual(before, after)) {
-      if (attempt === 0) continue;
-      throw new Error("Session changed while it was being read");
-    }
-    const record: CacheRecord = { filePath, manager, entries, fingerprint: after };
-    cache.set(filePath, record);
-    cachedFileBytes += after.size;
-    evictIfNeeded();
-    return record;
+    record = { filePath, manager, entries, fingerprint: after };
+    if (fingerprintsEqual(before, after)) break;
   }
-  throw new Error("Unable to read a stable session snapshot");
+  if (!record) throw new Error("Unable to read a session snapshot");
+  cache.set(filePath, record);
+  cachedFileBytes += record.fingerprint.size;
+  evictIfNeeded();
+  return record;
 }
 
 export function invalidateSessionContent(filePath: string): void {

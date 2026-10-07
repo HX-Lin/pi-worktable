@@ -5,7 +5,7 @@ import test from "node:test";
 import { pathToFileURL } from "node:url";
 import { build } from "esbuild";
 
-const root = path.resolve(import.meta.dirname, "..", "..");
+const root = path.resolve(import.meta.dirname, "..", "..", "..", "..");
 const output = path.join(root, ".artifacts", "test-modules", `jev-routing-${process.pid}.mjs`);
 mkdirSync(path.dirname(output), { recursive: true });
 

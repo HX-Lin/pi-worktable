@@ -12,6 +12,6 @@ export const PI_VERSION =
     (import.meta as ImportMeta & { env?: { VITE_PI_VERSION?: string } }).env?.VITE_PI_VERSION) ||
   "unknown";
 
-export const APP_DISPLAY_NAME = "Pi Agent Desktop";
-export const APP_AUTHOR = "DLYZZT";
-export const APP_GITHUB_URL = "https://github.com/DLYZZT/pi-desktop";
+export const APP_DISPLAY_NAME = "Pi Worktable";
+export const APP_AUTHOR = "HX-Lin";
+export const APP_GITHUB_URL = "https://github.com/HX-Lin/pi-worktable";

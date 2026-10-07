@@ -5,7 +5,8 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const sourceRoot = path.join(root, "src");
+// The Feishu H5 lives under web/ and is part of the app, so its tests run with the rest.
+const sourceRoots = [path.join(root, "src"), path.join(root, "web", "src")];
 
 function collectTests(directory) {
   const files = [];
@@ -17,9 +18,9 @@ function collectTests(directory) {
   return files;
 }
 
-const tests = collectTests(sourceRoot).sort();
+const tests = sourceRoots.flatMap((sourceRoot) => collectTests(sourceRoot)).sort();
 if (tests.length === 0) {
-  console.error("No test files found under src/");
+  console.error("No test files found under src/ or web/src/");
   process.exit(1);
 }
 

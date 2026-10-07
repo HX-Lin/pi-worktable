@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect, useReducer } from "react";
+import { useState, useCallback, useRef, useEffect, useLayoutEffect, useReducer } from "react";
 import type {
   AgentMessage,
   AssistantContentBlock,
@@ -91,6 +91,27 @@ export interface QueuedMessages {
 
 function normalizeQueuedMessages(q?: { steering?: string[]; followUp?: string[] } | null): QueuedMessages {
   return { steering: q?.steering ?? [], followUp: q?.followUp ?? [] };
+}
+
+/**
+ * Raise a system notification when the window is not focused.
+ *
+ * The gate can block a call for up to ten minutes waiting for an answer, so an approval that only
+ * exists inside an unfocused window is a stalled turn nobody notices. Clicking the notification
+ * brings the app forward.
+ */
+function notifyIfUnfocused(title: string, body: string): void {
+  try {
+    if (typeof document !== "undefined" && document.hasFocus()) return;
+    if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    const notification = new Notification(title, { body });
+    notification.onclick = () => {
+      window.focus();
+      notification.close();
+    };
+  } catch {
+    // Notifications are a convenience; never let them break the turn.
+  }
 }
 
 type ExtensionUiDialogRequest = Extract<ExtensionUiRequest, { method: "select" | "confirm" | "input" | "editor" }>;
@@ -415,6 +436,8 @@ export function useAgentSession(opts: UseAgentSessionOptions) {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const liveContentEndRef = useRef<HTMLDivElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const pendingOlderScrollRef = useRef<{ element: HTMLDivElement; top: number; height: number } | null>(null);
+  const skipNextBottomScrollRef = useRef(false);
   const lastScrollTopRef = useRef(0);
   const externalTurnAutoFollowRef = useRef(false);
   const ensuringNewSessionRef = useRef<Promise<string | null> | null>(null);
@@ -623,6 +646,8 @@ export function useAgentSession(opts: UseAgentSessionOptions) {
     const cursor = previousCursorRef.current;
     const revision = historyRevisionRef.current;
     if (!sid || !cursor || !revision || olderRequestRef.current === cursor) return;
+    completionScrollAllowedRef.current = false;
+    externalTurnAutoFollowRef.current = false;
     const generation = historyGenerationRef.current;
     const startedAt = performance.now();
     let outcome = "ok";
@@ -660,13 +685,15 @@ export function useAgentSession(opts: UseAgentSessionOptions) {
         await loadSession(sid, false, false, true);
         return;
       }
+      if (scrollElement && prepended.messages.length > loadedMessagesRef.current.length) {
+        pendingOlderScrollRef.current = {
+          element: scrollElement,
+          top: previousScrollTop,
+          height: previousScrollHeight,
+        };
+      }
       commitHistory(prepended.messages, prepended.entryIds);
       updatePagingState(revision, prepended.previousCursor ?? undefined);
-      requestAnimationFrame(() => {
-        const current = scrollContainerRef.current;
-        if (!current || current !== scrollElement) return;
-        current.scrollTop = previousScrollTop + (current.scrollHeight - previousScrollHeight);
-      });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       if (message.includes("STALE_CURSOR")) {
@@ -914,6 +941,14 @@ export function useAgentSession(opts: UseAgentSessionOptions) {
         case "input":
         case "editor":
           setExtensionDialog(request);
+          // An unanswered gate approval blocks the turn until it times out, so make it visible when
+          // nobody is looking at the window. Clicking the notification focuses the app.
+          notifyIfUnfocused(
+            request.title ?? "需要确认",
+            typeof (request as { message?: unknown }).message === "string"
+              ? ((request as { message?: string }).message as string)
+              : "Agent 正在等待你的确认",
+          );
           break;
         case "notify": {
           addNotice({
@@ -1124,12 +1159,23 @@ export function useAgentSession(opts: UseAgentSessionOptions) {
           }
           onAgentEnd?.();
           break;
+        case "turn_changes":
+          if (sessionIdRef.current) void loadSession(sessionIdRef.current);
+          break;
         case "prompt_done":
           if (!agentRunningRef.current) break;
           void finishPromptWithoutStream(sessionIdRef.current);
           break;
         case "prompt_error":
           addNotice({ type: "error", message: (event.errorMessage as string | undefined) ?? "Command failed" });
+          break;
+        case "notice":
+          // Host-side notice: something the session wrapper noticed and the user
+          // needs to see (a compaction that failed, say).
+          addNotice({
+            type: (event.level as NoticeType | undefined) ?? "info",
+            message: String(event.message ?? ""),
+          });
           break;
         case "extension_error":
           addNotice({
@@ -1827,6 +1873,8 @@ export function useAgentSession(opts: UseAgentSessionOptions) {
     let disposed = false;
     let unsubscribeLiveSync: (() => void) | undefined;
     historyGenerationRef.current += 1;
+    pendingOlderScrollRef.current = null;
+    skipNextBottomScrollRef.current = false;
     historyRevisionRef.current = null;
     previousCursorRef.current = null;
     loadedMessagesRef.current = [];
@@ -1950,7 +1998,22 @@ export function useAgentSession(opts: UseAgentSessionOptions) {
     };
   }, [messages.length, loading, handleScrollPositionChange, markUserScrollIntent]);
 
+  useLayoutEffect(() => {
+    const pending = pendingOlderScrollRef.current;
+    if (!pending) return;
+    pendingOlderScrollRef.current = null;
+    if (scrollContainerRef.current !== pending.element) return;
+    skipNextBottomScrollRef.current = true;
+    ignoreProgrammaticScrollUntilRef.current = Date.now() + PROGRAMMATIC_SCROLL_IGNORE_MS;
+    pending.element.scrollTop = pending.top + (pending.element.scrollHeight - pending.height);
+    lastScrollTopRef.current = pending.element.scrollTop;
+  }, [messages]);
+
   useEffect(() => {
+    if (skipNextBottomScrollRef.current) {
+      skipNextBottomScrollRef.current = false;
+      return;
+    }
     if (messages.length > 0) {
       if (pendingScrollToUserRef.current) {
         pendingScrollToUserRef.current = false;

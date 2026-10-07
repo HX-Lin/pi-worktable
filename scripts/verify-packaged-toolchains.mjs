@@ -48,10 +48,10 @@ function findPackagedLayout(directory, toolTarget) {
     let executable;
     if (expectedPlatform === "darwin" && normalized.endsWith(".app/Contents")) {
       resources = path.join(current, "Resources");
-      executable = path.join(current, "MacOS", "Pi Agent Desktop");
+      executable = path.join(current, "MacOS", "Pi Worktable");
     } else if (/-unpacked$/i.test(path.basename(current))) {
       resources = path.join(current, "resources");
-      if (expectedPlatform === "win32") executable = path.join(current, "Pi Agent Desktop.exe");
+      if (expectedPlatform === "win32") executable = path.join(current, "Pi Worktable.exe");
       else if (expectedPlatform === "linux") executable = path.join(current, "pi-agent-desktop");
     }
     if (
@@ -119,45 +119,41 @@ function verifyPiRuntimeAssets(resources, platform, arch) {
   const asarPath = path.join(resources, "app.asar");
   const entries = new Set(listPackage(asarPath).map((entry) => entry.replace(/^[/\\]+/u, "").replaceAll("\\", "/")));
   const codingAgentRoot = "node_modules/@earendil-works/pi-coding-agent";
-  const nested = `${codingAgentRoot}/node_modules`;
+  // Pi 1.0 hoists its runtime packages to the app's root node_modules; nothing @earendil-works
+  // stays nested under pi-coding-agent any more. The packages the desktop opts into (codemode, MCP,
+  // and chord behind them) are part of the required set, and codemode needs its QuickJS VM on disk.
   const required = [
     `${codingAgentRoot}/package.json`,
     `${codingAgentRoot}/dist/index.js`,
     `${codingAgentRoot}/dist/index.d.ts`,
-    "node_modules/@earendil-works/pi-ai/package.json",
-    "node_modules/@earendil-works/pi-ai/dist/index.js",
+    ...["pi-ai", "pi-agent-core", "pi-codemode", "pi-mcp", "pi-telemetry", "pi-tui", "chord"].flatMap((name) => [
+      `node_modules/@earendil-works/${name}/package.json`,
+      `node_modules/@earendil-works/${name}/dist/index.js`,
+    ]),
     "node_modules/@earendil-works/pi-ai/dist/index.d.ts",
-    "node_modules/@earendil-works/pi-telemetry/package.json",
-    "node_modules/@earendil-works/pi-telemetry/dist/index.js",
     "node_modules/@earendil-works/pi-telemetry/dist/index.d.ts",
-    "node_modules/@earendil-works/pi-agent-core/package.json",
-    "node_modules/@earendil-works/pi-agent-core/dist/index.js",
-    `${nested}/@earendil-works/pi-ai/package.json`,
-    `${nested}/@earendil-works/pi-ai/dist/index.js`,
-    `${nested}/@earendil-works/pi-ai/dist/index.d.ts`,
-    `${nested}/@earendil-works/pi-ai/dist/providers/data/amazon-bedrock.json`,
-    `${nested}/@earendil-works/pi-client/package.json`,
-    `${nested}/@earendil-works/pi-client/dist/index.js`,
-    `${nested}/@earendil-works/pi-client/dist/index.d.ts`,
-    `${nested}/@earendil-works/pi-protocol/package.json`,
-    `${nested}/@earendil-works/pi-protocol/dist/index.js`,
-    `${nested}/@earendil-works/pi-protocol/dist/index.d.ts`,
-    `${nested}/@earendil-works/pi-telemetry/package.json`,
-    `${nested}/@earendil-works/pi-telemetry/dist/index.js`,
-    `${nested}/@earendil-works/pi-telemetry/dist/index.d.ts`,
-    `${nested}/@earendil-works/pi-tui/package.json`,
-    `${nested}/@earendil-works/pi-tui/dist/index.js`,
-    `${nested}/@earendil-works/pi-tui/dist/index.d.ts`,
+    "node_modules/quickjs-wasi/package.json",
+    "node_modules/quickjs-wasi/quickjs.wasm",
     "node_modules/grok-mermaid/package.json",
     "node_modules/grok-mermaid/dist/index.js",
   ];
-  if (platform === "darwin") {
-    required.push(`${nested}/@earendil-works/pi-tui/native/darwin/prebuilds/darwin-${arch}/darwin-modifiers.node`);
-  } else if (platform === "win32") {
-    required.push(`${nested}/@earendil-works/pi-tui/native/win32/prebuilds/win32-${arch}/win32-console-mode.node`);
-  }
+  const nativePrebuild = {
+    darwin: `node_modules/@earendil-works/pi-tui/native/darwin/prebuilds/darwin-${arch}/darwin-platform.node`,
+    win32: `node_modules/@earendil-works/pi-tui/native/win32/prebuilds/win32-${arch}/win32-platform.node`,
+    linux: `node_modules/@earendil-works/pi-tui/native/linux/prebuilds/linux-${arch}/linux-platform-x11.node`,
+  }[platform];
+  if (nativePrebuild) required.push(nativePrebuild);
+
   const missing = required.filter((entry) => !entries.has(entry));
   if (missing.length > 0) throw new Error(`Packaged Pi runtime/authoring assets are missing: ${missing.join(", ")}`);
+
+  // The provider catalog ships as data files, so assert the set instead of one filename.
+  const providerData = [...entries].filter((entry) =>
+    /^node_modules\/@earendil-works\/pi-ai\/dist\/providers\/data\/.+\.json$/u.test(entry),
+  );
+  if (providerData.length < 40) {
+    throw new Error(`Packaged Pi provider catalog is incomplete: ${providerData.length} data files`);
+  }
 
   const codingAgentPackage = JSON.parse(extractAsarFile(asarPath, `${codingAgentRoot}/package.json`).toString("utf8"));
   if (codingAgentPackage.version !== expectedPiVersion) {
@@ -166,20 +162,20 @@ function verifyPiRuntimeAssets(resources, platform, arch) {
     );
   }
 
-  for (const [packageRoot, lockRoot = packageRoot] of [
-    [codingAgentRoot],
-    ["node_modules/@earendil-works/pi-ai"],
-    ["node_modules/@earendil-works/pi-telemetry"],
-    ["node_modules/@earendil-works/pi-agent-core", `${nested}/@earendil-works/pi-agent-core`],
-    [`${nested}/@earendil-works/pi-ai`],
-    [`${nested}/@earendil-works/pi-client`],
-    [`${nested}/@earendil-works/pi-protocol`],
-    [`${nested}/@earendil-works/pi-telemetry`],
-    [`${nested}/@earendil-works/pi-tui`],
-    ["node_modules/grok-mermaid", `${nested}/grok-mermaid`],
+  for (const packageRoot of [
+    codingAgentRoot,
+    "node_modules/@earendil-works/pi-ai",
+    "node_modules/@earendil-works/pi-agent-core",
+    "node_modules/@earendil-works/pi-codemode",
+    "node_modules/@earendil-works/pi-mcp",
+    "node_modules/@earendil-works/pi-telemetry",
+    "node_modules/@earendil-works/pi-tui",
+    "node_modules/@earendil-works/chord",
+    "node_modules/quickjs-wasi",
+    "node_modules/grok-mermaid",
   ]) {
     const packaged = JSON.parse(extractAsarFile(asarPath, `${packageRoot}/package.json`).toString("utf8"));
-    const locked = lockfile.packages?.[lockRoot]?.version;
+    const locked = lockfile.packages?.[packageRoot]?.version;
     if (!locked || packaged.version !== locked) {
       throw new Error(
         `Packaged ${packaged.name ?? packageRoot} version ${packaged.version ?? "unknown"} does not match lockfile ${locked ?? "missing"}`,

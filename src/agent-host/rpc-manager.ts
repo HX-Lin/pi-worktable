@@ -17,14 +17,6 @@ import { toolchainRuntime } from "./toolchain-runtime";
 import { BUILTIN_SESSION_EXTENSIONS } from "./builtin-providers";
 import { createToolchainBashOptions } from "./toolchain-bash";
 import { createDesktopSearchToolDefinitions } from "./toolchain-search";
-import {
-  browserToolNamesForSnapshot,
-  createBrowserToolDefinitions,
-  isBrowserToolName,
-  setBrowserSessionSource,
-} from "./browser-tools";
-import { browserCapabilityRuntime } from "./browser-capability-runtime";
-import { browserAgentRuntime } from "./browser-agent-runtime";
 import { projectExtensionDiagnostics } from "./extension-diagnostics";
 import {
   AUTO_COMPACT_CONTEXT_PERCENT,
@@ -32,10 +24,12 @@ import {
   countBranchConversationMessages,
   countBranchConversationTurns,
 } from "../shared/auto-compact";
+import { createDesktopSystemPromptExtension, type DesktopPromptSettings } from "./system-prompt-extension";
 import { readHostSettings } from "./host-settings";
 import { getFoldSession } from "./context-fold";
 import { MEMORY_DISTILLATION_PROMPT } from "./memory-prompt";
 import { planMemoryCompaction, type MemoryCompactionPlan } from "./memory-compaction";
+import { captureTurnStart, collectTurnChanges, type TurnStartSnapshot } from "./turn-changes";
 import { pruneSummarizedEntries, readSessionFileEntries, writeSessionFileEntries } from "./session-prune";
 
 export { countBranchConversationMessages };
@@ -43,21 +37,10 @@ export { countBranchConversationMessages };
 /** Grow the message count by this much before retrying a compaction that could not reduce context. */
 const AUTO_COMPACT_RETRY_TURN_GROWTH = 10;
 
-/**
- * Rebuild the in-memory conversation from the session file.
- *
- * pi only refreshes `agent.state.messages` on its own compaction/tree operations,
- * so without this the model would keep the pre-prune summary after a memory
- * compaction — the capped memory (and the pruned tail) would only take effect at
- * the next rebuild. The rewrite therefore has to be mirrored into the live
- * context, otherwise the memory file is not really "loaded" into the session.
- */
+/** Rebuild the live transcript from the rewritten session after memory pruning. */
 function reloadAgentMessagesFromSession(session: AgentSessionLike): void {
   try {
-    const state = session.agent?.state;
-    const manager = session.sessionManager;
-    if (!state || typeof manager?.buildSessionContext !== "function") return;
-    state.messages = manager.buildSessionContext().messages as unknown[];
+    session.refreshContext();
   } catch (error) {
     console.error(
       "[pi-desktop] failed to reload session context after pruning:",
@@ -163,14 +146,21 @@ function stripLegacyChannelPrompts(messages: unknown[]): unknown[] {
   });
 }
 
+/** Tools with these exposures are callable from scripts without being declared to the model. */
+const NON_DIRECT_EXPOSURES = new Set(["codemode", "deferred", "hidden"]);
+
 function withExtensionTools(session: AgentSessionLike, toolNames: string[]): string[] {
   if (toolNames.length === 0) return [];
 
   const codingToolNames = new Set(CODING_TOOL_NAMES);
   const extensionToolNames = session
     .getAllTools()
-    .map((t) => t.name)
-    .filter((name) => !codingToolNames.has(name) && !isBrowserToolName(name));
+    .filter((tool) => !codingToolNames.has(tool.name))
+    // `codemode`/`deferred` tools (MCP tools, by default) are reached through codemode scripts and
+    // `tool_search`; activating them would declare every MCP tool to every request. `hidden` tools
+    // stay unreachable. Only `direct` extension tools join the active set.
+    .filter((tool) => !NON_DIRECT_EXPOSURES.has(tool.exposure ?? "direct"))
+    .map((tool) => tool.name);
 
   return [...new Set([...toolNames, ...extensionToolNames])];
 }
@@ -203,8 +193,7 @@ export class AgentSessionWrapper {
   private extensionsBound = false;
   private extensionBindingPromise: Promise<void> | null = null;
   private extensionBindingError: unknown = null;
-  private forceEmptySystemPrompt = false;
-  private toolchainPrompt = "";
+  private promptSettings: DesktopPromptSettings;
   private unsubscribe: (() => void) | null = null;
   private idleTimer: ReturnType<typeof setTimeout> | null = null;
   private onDestroyCallback: (() => void) | null = null;
@@ -214,9 +203,15 @@ export class AgentSessionWrapper {
   private autoCompactSkipUntilPercent = 0;
   /** True while this wrapper is running a "压缩为记忆" compaction. */
   private memoryCompactionActive = false;
+  private turnStart: Promise<TurnStartSnapshot | null> | null = null;
+  private turnChangesWrite: Promise<void> = Promise.resolve();
 
-  constructor(inner: AgentSessionLike) {
+  constructor(
+    inner: AgentSessionLike,
+    promptSettings: DesktopPromptSettings = { forceEmpty: false, toolchainPrompt: "" },
+  ) {
     this.inner = inner;
+    this.promptSettings = promptSettings;
     const messages = this.inner.agent.state?.messages;
     if (Array.isArray(messages)) this.inner.agent.state!.messages = stripLegacyChannelPrompts(messages);
   }
@@ -263,6 +258,20 @@ export class AgentSessionWrapper {
       // summarized turns belongs to a memory compaction, which happens on its own
       // threshold or when the user asks for it.
       const displayEvent = this.withExternalChannelSource(this.withCompactionScope(event));
+      if (event.type === "agent_start") {
+        this.turnStart ??= captureTurnStart(this.cwd);
+      } else if (event.type === "agent_end" && this.turnStart) {
+        const start = this.turnStart;
+        this.turnStart = null;
+        this.turnChangesWrite = start
+          .then((snapshot) => (snapshot ? collectTurnChanges(snapshot) : { files: [], omitted: 0 }))
+          .then(({ files, omitted }) => {
+            if (!files.length && !omitted) return;
+            this.inner.sessionManager.appendCustomEntry("pi-desktop-turn-changes", { files, omitted });
+            this.emit({ type: "turn_changes" });
+          })
+          .catch((error) => console.error("[pi-desktop] turn changes unavailable:", error));
+      }
       this.emit(displayEvent);
       try {
         this.externalTurnProgress?.(displayEvent);
@@ -275,12 +284,6 @@ export class AgentSessionWrapper {
     });
     this.resetIdleTimer();
     notifyRunningChange();
-  }
-
-  syncBrowserToolActivation(): void {
-    const current = this.inner.getActiveToolNames().filter((name) => !isBrowserToolName(name));
-    const browserTools = browserToolNamesForSnapshot(browserCapabilityRuntime.getSnapshot());
-    this.inner.setActiveToolsByName([...new Set([...current, ...browserTools])]);
   }
 
   /**
@@ -306,17 +309,15 @@ export class AgentSessionWrapper {
   }
 
   setForceEmptySystemPrompt(force: boolean): void {
-    this.forceEmptySystemPrompt = force;
-    this.applyForcedEmptySystemPrompt();
+    this.promptSettings.forceEmpty = force;
   }
 
   setToolchainSummary(revision: number, summary: readonly string[]): void {
-    this.toolchainPrompt = [
+    this.promptSettings.toolchainPrompt = [
       `<pi-desktop-toolchain revision="${revision}">`,
       ...summary,
       "</pi-desktop-toolchain>",
     ].join("\n");
-    this.applyToolchainSummary();
   }
 
   setRuntimeDiagnostics(diagnostics: readonly AgentSessionRuntimeDiagnostic[]): void {
@@ -335,11 +336,8 @@ export class AgentSessionWrapper {
   }
 
   private ensureExtensionsBound(options: ExtensionBindingOptions = {}): Promise<void> {
-    if (options.forceEmptySystemPrompt) this.forceEmptySystemPrompt = true;
-    if (this.extensionsBound) {
-      this.applyForcedEmptySystemPrompt();
-      return Promise.resolve();
-    }
+    if (options.forceEmptySystemPrompt) this.setForceEmptySystemPrompt(true);
+    if (this.extensionsBound) return Promise.resolve();
     if (this.extensionBindingPromise) return this.extensionBindingPromise;
 
     this.extensionBindingError = null;
@@ -378,7 +376,6 @@ export class AgentSessionWrapper {
         this.inner.extensionRunner.setUIContext?.(uiContext, "rpc");
       }
       this.extensionsBound = true;
-      this.applyForcedEmptySystemPrompt();
       console.log(`[pi-desktop] session_start dispatched to extensions for session ${this.inner.sessionId}`);
     })().catch((err) => {
       this.extensionBindingError = err;
@@ -411,21 +408,6 @@ export class AgentSessionWrapper {
     } finally {
       notifyRunningChange();
     }
-  }
-
-  private applyForcedEmptySystemPrompt(): void {
-    if (this.forceEmptySystemPrompt && this.inner.agent.state) {
-      this.inner.agent.state.systemPrompt = "";
-    }
-  }
-
-  private applyToolchainSummary(): void {
-    if (this.forceEmptySystemPrompt || !this.toolchainPrompt || !this.inner.agent.state) return;
-    const marker = /\n*<pi-desktop-toolchain revision="\d+">[\s\S]*?<\/pi-desktop-toolchain>\n*/g;
-    const base = String(this.inner.agent.state.systemPrompt ?? "")
-      .replace(marker, "")
-      .trimEnd();
-    this.inner.agent.state.systemPrompt = `${base}\n\n${this.toolchainPrompt}`.trim();
   }
 
   private emit(event: AgentEvent): void {
@@ -470,16 +452,13 @@ export class AgentSessionWrapper {
     setImmediate(() => void this.maybeAutoCompact());
   }
 
-  /**
-   * Re-arm the automatic compaction gates.
-   *
-   * When the session really shrank on both axes the gates open again; otherwise
-   * the next attempt waits for meaningful growth instead of retrying every turn
-   * against a context that cannot be reduced.
-   */
-  private rescheduleAfterAutoCompact(turns: number, percent: number, removed: boolean): void {
+  /** Retry the two compaction triggers independently after an attempt that could not shrink them. */
+  private rescheduleAfterMemoryCompact(turns: number, removed: boolean): void {
     this.autoCompactSkipUntilCount = removed ? 0 : turns + AUTO_COMPACT_RETRY_TURN_GROWTH;
-    this.autoCompactSkipUntilPercent = removed ? 0 : percent + AUTO_COMPACT_RETRY_PERCENT_GROWTH;
+  }
+
+  private rescheduleAfterContextCompact(percent: number, reduced: boolean): void {
+    this.autoCompactSkipUntilPercent = reduced ? 0 : percent + AUTO_COMPACT_RETRY_PERCENT_GROWTH;
   }
 
   /**
@@ -513,41 +492,54 @@ export class AgentSessionWrapper {
   private async maybeAutoCompact(): Promise<void> {
     if (!this._alive || this.autoCompactInFlight) return;
     if (this.queuedTurnCount > 0 || this.promptRunning || this.inner.isStreaming || this.inner.isCompacting) return;
-    // Honour the user's pi auto-compaction switch as the master toggle.
-    if (this.inner.autoCompactionEnabled === false) return;
-
-    // Counted since the last memory compaction, so a context compaction pi ran on
-    // its own never postpones this threshold.
+    // Context compactions never reset the turns since the last memory pass.
+    // Pi's auto-context switch does not control memory distillation.
     const turns = countBranchConversationTurns(this.inner.sessionManager.getBranch());
     const { autoCompactTurns } = readHostSettings();
     const percent = this.inner.getContextUsage()?.percent ?? 0;
     const overTurns = turns >= autoCompactTurns && turns >= this.autoCompactSkipUntilCount;
-    const overPercent = percent >= AUTO_COMPACT_CONTEXT_PERCENT && percent >= this.autoCompactSkipUntilPercent;
+    const overPercent =
+      this.inner.autoCompactionEnabled !== false &&
+      percent >= AUTO_COMPACT_CONTEXT_PERCENT &&
+      percent >= this.autoCompactSkipUntilPercent;
     if (!overTurns && !overPercent) return;
 
     this.autoCompactInFlight = true;
     try {
-      if (overTurns) {
-        await this.enqueueTurn(async () => {
-          await this.compactToMemory(`自动触发：已达到 ${turns} 条对话。`);
-        });
-        const after = countBranchConversationTurns(this.inner.sessionManager.getBranch());
-        const afterPercent = this.inner.getContextUsage()?.percent ?? 0;
-        // Nothing was removed — wait for meaningful growth before retrying.
-        this.rescheduleAfterAutoCompact(after, afterPercent, after < turns);
-      } else {
-        // Context only: pi's own prompt, no distillation, no history prune.
+      if (overPercent) {
+        // Free a full context window first, without deleting or distilling history.
         await this.enqueueTurn(async () => {
           await this.inner.compact(undefined);
         });
         const afterPercent = this.inner.getContextUsage()?.percent ?? 0;
-        this.rescheduleAfterAutoCompact(turns, afterPercent, afterPercent < percent - 1);
+        this.rescheduleAfterContextCompact(percent, afterPercent < percent - 1);
+      } else {
+        await this.enqueueTurn(async () => {
+          await this.compactToMemory(`自动触发：已达到 ${turns} 条对话。`);
+        });
+        const after = countBranchConversationTurns(this.inner.sessionManager.getBranch());
+        this.rescheduleAfterMemoryCompact(after, after < turns);
       }
     } catch (error) {
-      this.rescheduleAfterAutoCompact(turns, percent, false);
-      console.error("[pi-desktop] automatic compaction failed:", error instanceof Error ? error.message : error);
+      const message = error instanceof Error ? error.message : String(error);
+      if (overPercent) this.rescheduleAfterContextCompact(percent, false);
+      else this.rescheduleAfterMemoryCompact(turns, false);
+      console.error("[pi-desktop] automatic compaction failed:", message);
+      // Also tell the UI. A compaction that keeps failing is otherwise invisible:
+      // the context grows until the model itself refuses the request, and the only
+      // trace is this log line. A summarization failure is usually quota or auth on
+      // the *session* model, which is worth saying, because Jev compaction does not
+      // call that model at all.
+      this.emit({
+        type: "notice",
+        level: "error",
+        message: `自动压缩失败：${message}（上下文仍在增长；若这是会话模型的额度或鉴权问题，开启 Jev 上下文压缩可绕开它）`,
+      });
     } finally {
       this.autoCompactInFlight = false;
+      // enqueueTurn's idle check ran while this flag was still set. Give the
+      // other trigger a chance without waiting for another user turn.
+      this.scheduleAutoCompactCheck();
     }
   }
 
@@ -614,9 +606,9 @@ export class AgentSessionWrapper {
       this.emit({ type: "channel_turn_start", runId: params.runId });
       this.externalTurnActive = true;
       this.externalTurnChannel = params.channel;
-      setBrowserSessionSource(this.inner.sessionManager, "channel");
-      browserAgentRuntime.beginTurn(this.sessionId, "channel");
       this.externalTurnProgress = params.onProgress ?? null;
+      this.turnStart = captureTurnStart(this.cwd);
+      await this.turnStart;
       try {
         this.inner.sessionManager.appendCustomEntry("pi-desktop-channel-source", {
           runId: params.runId,
@@ -637,6 +629,7 @@ export class AgentSessionWrapper {
           expandPromptTemplates: false,
           source: "rpc",
         });
+        await this.turnChangesWrite;
         const finalText = this.inner.getLastAssistantText()?.trim() ?? "";
         this.emit({ type: "channel_turn_end", runId: params.runId, finalText });
         return { runId: params.runId, finalText };
@@ -653,10 +646,10 @@ export class AgentSessionWrapper {
         });
         throw error;
       } finally {
+        this.turnStart = null;
         this.externalTurnProgress = null;
         this.externalTurnActive = false;
         this.externalTurnChannel = null;
-        setBrowserSessionSource(this.inner.sessionManager, "local");
       }
     });
   }
@@ -669,8 +662,6 @@ export class AgentSessionWrapper {
     if (typeof this.inner.bindExtensions !== "function") {
       this.inner.extensionRunner.setUIContext?.(this.createExtensionUiContext(), "rpc");
     }
-    this.applyForcedEmptySystemPrompt();
-    this.applyToolchainSummary();
   }
 
   async runExternalCommand(params: { command: ExternalSessionCommand; customInstructions?: string }): Promise<void> {
@@ -703,6 +694,24 @@ export class AgentSessionWrapper {
     );
   }
 
+  /**
+   * The transcript as this live session holds it.
+   *
+   * Reading the session file while a turn is running means reading a file that is being appended to;
+   * the in-memory entries are both consistent and fresher, so `sessions.get` prefers them.
+   */
+  liveSnapshot(): { manager: SessionManager; entries: unknown[] } | null {
+    if (!this._alive) return null;
+    try {
+      return {
+        manager: this.inner.sessionManager,
+        entries: this.inner.sessionManager.getEntries() as unknown[],
+      };
+    } catch {
+      return null;
+    }
+  }
+
   onEvent(listener: EventListener): () => void {
     this.listeners.push(listener);
     for (const event of this.pendingUiRequests.values()) listener(event);
@@ -726,13 +735,22 @@ export class AgentSessionWrapper {
         // Fire and forget — events come via subscribe
         const promptImages = command.images as Array<{ type: "image"; data: string; mimeType: string }> | undefined;
         const streamingBehavior = command.streamingBehavior as "steer" | "followUp" | undefined;
-        if (!streamingBehavior) browserAgentRuntime.beginTurn(this.sessionId, "local");
-        const invokePrompt = () =>
-          this.inner.prompt(command.message as string, {
-            ...(promptImages?.length ? { images: promptImages } : {}),
-            ...(streamingBehavior ? { streamingBehavior } : {}),
-            source: "rpc",
-          });
+        const invokePrompt = async () => {
+          if (!streamingBehavior) {
+            this.turnStart = captureTurnStart(this.cwd);
+            await this.turnStart;
+          }
+          try {
+            await this.inner.prompt(command.message as string, {
+              ...(promptImages?.length ? { images: promptImages } : {}),
+              ...(streamingBehavior ? { streamingBehavior } : {}),
+              source: "rpc",
+            });
+            if (!streamingBehavior) await this.turnChangesWrite;
+          } finally {
+            if (!streamingBehavior) this.turnStart = null;
+          }
+        };
         const operation = streamingBehavior ? invokePrompt() : this.enqueueTurn(invokePrompt);
         operation
           .then(() => {
@@ -943,14 +961,11 @@ export class AgentSessionWrapper {
         const toolNames = command.toolNames as string[];
         this.setForceEmptySystemPrompt(toolNames.length === 0);
         this.inner.setActiveToolsByName(withExtensionTools(this.inner, toolNames));
-        this.syncBrowserToolActivation();
-        this.applyForcedEmptySystemPrompt();
         return null;
       }
 
       case "reload": {
         await this.enqueueTurn(() => this.reloadSessionResources());
-        this.syncBrowserToolActivation();
         return { success: true };
       }
 
@@ -1003,7 +1018,6 @@ export class AgentSessionWrapper {
   destroy(): void {
     if (!this._alive) return;
     this._alive = false;
-    browserAgentRuntime.clearSession(this.sessionId);
     if (this.idleTimer) clearTimeout(this.idleTimer);
     this.unsubscribe?.();
     this.unsubscribe = null;
@@ -1413,7 +1427,6 @@ export class AgentSessionWrapper {
             this.inner.extensionRunner.setUIContext?.(this.createExtensionUiContext(), "rpc");
           },
         });
-        this.applyForcedEmptySystemPrompt();
       },
     };
   }
@@ -1445,10 +1458,6 @@ function getLocks(): Map<string, Promise<{ session: AgentSessionWrapper; realSes
 
 export function getRpcSession(sessionId: string): AgentSessionWrapper | undefined {
   return getRegistry().get(sessionId);
-}
-
-export function syncBrowserToolsForAllSessions(): void {
-  for (const session of getRegistry().values()) session.syncBrowserToolActivation();
 }
 
 /**
@@ -1553,10 +1562,13 @@ export async function startRpcSession(
 
     // Build services first so extension-registered providers are available
     // before the SDK restores the saved model from the session file.
+    const promptSettings: DesktopPromptSettings = { forceEmpty: false, toolchainPrompt: "" };
     const services = await createAgentSessionServices({
       cwd,
       agentDir,
-      resourceLoaderOptions: { extensionFactories: BUILTIN_SESSION_EXTENSIONS },
+      resourceLoaderOptions: {
+        extensionFactories: [...BUILTIN_SESSION_EXTENSIONS, createDesktopSystemPromptExtension(promptSettings)],
+      },
     });
     const executionContext = await toolchainRuntime.createExecutionContext({
       cwd,
@@ -1567,12 +1579,10 @@ export async function startRpcSession(
       executionContext,
       toolchainRuntime,
       services.settingsManager.getShellCommandPrefix(),
-      (command) => browserAgentRuntime.guardBash(sessionManager.getSessionId(), command),
     );
     const customTools = [
       createBashToolDefinition(cwd, bashOptions),
       ...createDesktopSearchToolDefinitions(cwd, executionContext, toolchainRuntime),
-      ...createBrowserToolDefinitions(),
     ] as unknown as NonNullable<CreateAgentSessionFromServicesOptions["customTools"]>;
     const { session: inner } = await createAgentSessionFromServices({
       services,
@@ -1588,7 +1598,7 @@ export async function startRpcSession(
       inner.setActiveToolsByName(withExtensionTools(inner, toolNames));
     }
 
-    const wrapper = new AgentSessionWrapper(inner);
+    const wrapper = new AgentSessionWrapper(inner, promptSettings);
     wrapper.setRuntimeDiagnostics(services.diagnostics);
     wrapper.setToolchainSummary(executionContext.inventoryRevision, executionContext.summary);
     // When all tools are disabled, clear the system prompt entirely.
@@ -1598,7 +1608,6 @@ export async function startRpcSession(
       wrapper.setForceEmptySystemPrompt(true);
     }
     wrapper.start();
-    wrapper.syncBrowserToolActivation();
 
     const realSessionId = inner.sessionId as string;
     const realSessionFile = inner.sessionFile as string | undefined;

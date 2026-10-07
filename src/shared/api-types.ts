@@ -38,6 +38,8 @@ export interface JevChannelStatus {
   keySource: "env" | "vault" | null;
   keyVariable: string | null;
   hasKey: boolean;
+  /** Free/keyless channel: no key is needed and none is sent. */
+  keyless: boolean;
 }
 
 /** One gate condition, as the Settings page lists it for threshold tuning. */
@@ -54,13 +56,33 @@ export interface JevRuleInfo {
 export interface JevConfigPayload {
   settings: JevSettingsPayload;
   channel: JevChannelStatus;
-  channels: Array<{ id: string; label: string; protocol: "decisions" | "chat" | "evaluate"; keyHint: string }>;
+  channels: Array<{
+    id: string;
+    label: string;
+    protocol: "decisions" | "chat" | "evaluate";
+    keyHint: string;
+    keyless?: boolean;
+  }>;
   rules: JevRuleInfo[];
+  /** Classifier models the app can reach, cheapest first; the app's own Jev entry is keyless. */
+  classifiers: JevClassifierInfo[];
+}
+
+export interface JevClassifierInfo {
+  provider: string;
+  id: string;
+  name: string;
+  /** Registered by the app and served without a key. */
+  keyless: boolean;
+  /** The one the current settings resolve to. */
+  active: boolean;
 }
 
 /** Mirrors the host's JevSettings shape (kept structural, no host import). */
 export interface JevSettingsPayload {
   enabled: boolean;
+  /** `provider/id` of the classifier; empty uses the app's keyless Jev provider. */
+  classifier: string | null;
   channel: string;
   model: string | null;
   baseUrl: string | null;
@@ -90,6 +112,7 @@ export interface JevSettingsPayload {
     mode: "off" | "jev";
     cheap: string | null;
     strong: string | null;
+    default: string | null;
     cheapThinking: string | null;
     strongThinking: string | null;
     easyMax: number;
@@ -105,6 +128,42 @@ export interface JevTestResult {
   model?: string;
   probability?: number;
   latencyMs?: number;
+  /** `provider/id` of the classifier that answered. */
+  classifier?: string;
+}
+
+export type McpExposurePayload = "codemode" | "deferred" | "direct" | "hidden";
+export type McpScopePayload = "global" | "project";
+
+export interface McpServerPayload {
+  name: string;
+  scope: McpScopePayload;
+  transport: "stdio" | "http";
+  /** Endpoint for HTTP servers, command line for stdio ones. */
+  target: string;
+  enabled: boolean;
+  exposure: McpExposurePayload;
+  description: string | null;
+  /** The raw `mcpServers` entry, so the UI can round-trip fields it does not show. */
+  config: Record<string, unknown>;
+  overridesGlobal: boolean;
+}
+
+export interface McpConfigPayload {
+  servers: McpServerPayload[];
+  globalPath: string;
+  projectPath: string;
+  projectExists: boolean;
+  autoEnableCodemode: boolean;
+  errors: string[];
+  /** Whether pi's `pi mcp` command is available for live checks and sign-in. */
+  cliAvailable: boolean;
+}
+
+export interface McpCommandResultPayload {
+  code: number;
+  stdout: string;
+  stderr: string;
 }
 
 /** Kinds the fold engine distinguishes in the context window. */

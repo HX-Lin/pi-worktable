@@ -8,10 +8,12 @@ import { startSessionWatcher } from "./session-watcher";
 import { toolchainRuntime } from "./toolchain-runtime";
 import type { ToolchainSnapshot } from "../shared/toolchains/types";
 import { installToolchainGitRunner } from "./toolchain-git";
-import type { BrowserCapabilitySnapshot } from "../contract/browser";
-import { browserCapabilityRuntime } from "./browser-capability-runtime";
-import { syncBrowserToolsForAllSessions } from "./rpc-manager";
 import { readPiRuntimeVersion } from "./runtime-version";
+import { startRelayBridge, stopRelayBridge } from "./relay-bridge";
+import { startRpcSession } from "./rpc-manager";
+import { resolveSessionPath } from "./session-reader";
+import { CONTINUE_AFTER_RESTART_PROMPT, takeInterruptedSnapshot } from "./resume-interrupted";
+import { SessionManager } from "@earendil-works/pi-coding-agent";
 
 const piRuntimeVersion = readPiRuntimeVersion();
 
@@ -28,11 +30,35 @@ function log(message: string): void {
   }
 }
 
+/**
+ * Continue the turns a restart cut short.
+ *
+ * The previous host kept its running set in the user-data root, and the set empties itself when the
+ * last turn ends — so an idle quit leaves nothing behind, while quitting mid-turn or dying keeps the
+ * marker. Each session gets one continuation prompt, and the snapshot is cleared first so a resume
+ * can never loop.
+ */
+async function resumeInterruptedSessions(): Promise<void> {
+  const ids = takeInterruptedSnapshot(process.env.PI_DESKTOP_USER_DATA);
+  for (const id of ids) {
+    try {
+      const file = await resolveSessionPath(id);
+      if (!file) continue;
+      const cwd = SessionManager.open(file).getHeader()?.cwd ?? process.cwd();
+      const started = await startRpcSession(id, file, cwd);
+      await started.session.send({ type: "prompt", message: CONTINUE_AFTER_RESTART_PROMPT });
+      log(`resumed interrupted session ${id}`);
+    } catch (error) {
+      log(`resume failed for ${id}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+}
+
 // Electron utilityProcess parent messaging
 const parentPort = process.parentPort;
 if (parentPort) {
   parentPort.on("message", (event) => {
-    const msg = event.data as { type?: string; snapshot?: ToolchainSnapshot | BrowserCapabilitySnapshot };
+    const msg = event.data as { type?: string; snapshot?: ToolchainSnapshot };
     if (msg?.type === "ping") {
       parentPort.postMessage({ type: "pong", ts: Date.now() });
       return;
@@ -62,19 +88,11 @@ if (parentPort) {
       }
       return;
     }
-    if (msg?.type === "browser:init" || msg?.type === "browser:changed") {
-      try {
-        if (!msg.snapshot) throw new Error("missing snapshot");
-        browserCapabilityRuntime.apply(msg.snapshot as BrowserCapabilitySnapshot);
-        syncBrowserToolsForAllSessions();
-        parentPort.postMessage({ type: "browser:ack", revision: msg.snapshot.revision });
-        log(`browser ${msg.type === "browser:init" ? "initialized" : "updated"} revision=${msg.snapshot.revision}`);
-      } catch (error) {
-        log(`browser capability snapshot rejected: ${error instanceof Error ? error.message : String(error)}`);
-      }
-      return;
-    }
     if (msg?.type === "shutdown") {
+      // The running-set snapshot is the marker of unfinished work, and the set empties itself when the
+      // last turn ends — so an idle quit already removed the file. Quitting mid-turn keeps it, which
+      // is what lets the next launch continue a conversation the quit interrupted.
+      stopRelayBridge();
       stopWatcher();
       restoreGitRunner();
       void stopHandlers().finally(() => process.exit(0));
@@ -82,7 +100,9 @@ if (parentPort) {
   });
 
   parentPort.postMessage({ type: "ready", ts: Date.now(), piVersion: piRuntimeVersion });
+  startRelayBridge(log);
   log("agent-host ready");
+  void resumeInterruptedSessions();
 } else {
   // Fallback for non-electron (smoke / unit)
   console.log("[agent-host] no parentPort — standalone mode");

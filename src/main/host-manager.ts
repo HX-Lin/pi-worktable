@@ -6,9 +6,8 @@ import { app, utilityProcess, MessageChannelMain, type UtilityProcess, type Mess
 import fs from "fs";
 import path from "path";
 import { appendMainLog } from "./logger";
+import { overlayMatchesApp } from "./runtime-overlay";
 import type { ToolchainSnapshot } from "../shared/toolchains/types";
-import type { BrowserCapabilitySnapshot } from "../contract/browser";
-import { BrowserError } from "./browser/browser-error";
 
 const CRASH_WINDOW_MS = 30_000;
 const MAX_RESTARTS = 2;
@@ -24,7 +23,6 @@ export type HostMessage =
   | { type: "running-sessions"; sessionIds: string[] }
   | { type: "agent-end"; sessionId: string; eventType?: string }
   | { type: "toolchain:ack"; revision: number }
-  | { type: "browser:ack"; revision: number }
   | { type: string; [key: string]: unknown };
 
 export class HostManager {
@@ -37,14 +35,19 @@ export class HostManager {
   private onHostMessage: ((msg: HostMessage) => void) | null = null;
   private pendingPorts: MessagePortMain[] = [];
   private wasReadyBeforeExit = false;
+  /** Set while a hot update restarts the host, so it is not counted as a crash. */
+  private restartingIntentionally = false;
   private requestHandler: ((method: string, params: unknown) => Promise<unknown>) | null = null;
   private toolchainSnapshot: ToolchainSnapshot | null = null;
   private toolchainAckRevision = -1;
-  private browserCapabilitySnapshot: BrowserCapabilitySnapshot | null = null;
-  private browserAckRevision = -1;
   private piVersion: string | null = null;
 
-  constructor(private readonly hostEntry: string) {}
+  /** Resolved again on every spawn, so a hot update installed while running is picked up. */
+  private hostEntry: string;
+
+  constructor(private readonly resolveEntry: () => string) {
+    this.hostEntry = resolveEntry();
+  }
 
   setStatusListener(cb: (s: HostStatus, detail?: string) => void): void {
     this.onStatusChange = cb;
@@ -75,15 +78,6 @@ export class HostManager {
 
   getToolchainAckRevision(): number {
     return this.toolchainAckRevision;
-  }
-
-  setBrowserCapabilitySnapshot(snapshot: BrowserCapabilitySnapshot): void {
-    this.browserCapabilitySnapshot = structuredClone(snapshot);
-    if (this.child && this.status === "ready") this.postBrowserSnapshot("browser:changed");
-  }
-
-  getBrowserAckRevision(): number {
-    return this.browserAckRevision;
   }
 
   start(): void {
@@ -186,12 +180,31 @@ export class HostManager {
     this.onStatusChange?.(s, detail);
   }
 
+  /**
+   * Restart the host in place so a hot-updated host file takes effect. Unlike a
+   * crash this does not consume the restart budget, so repeated updates are safe.
+   */
+  restart(reason = "hot-update"): void {
+    if (!this.child) {
+      this.spawn();
+      return;
+    }
+    this.restartingIntentionally = true;
+    appendMainLog(`restarting agent-host (${reason})`);
+    this.setStatus("starting", reason);
+    try {
+      this.child.kill();
+    } catch {
+      this.restartingIntentionally = false;
+    }
+  }
+
   private spawn(): void {
+    this.hostEntry = this.resolveEntry();
     appendMainLog(`spawning agent-host: ${this.hostEntry}`);
-    // A replacement utility process must acknowledge both policy snapshots
+    // A replacement utility process must acknowledge the policy snapshot
     // itself; an acknowledgement from the previous Host is not transferable.
     this.toolchainAckRevision = -1;
-    this.browserAckRevision = -1;
     this.setStatus("starting");
 
     // utilityProcess.fork rejects undefined env values
@@ -234,7 +247,6 @@ export class HostManager {
         const restarted = this.wasReadyBeforeExit;
         this.wasReadyBeforeExit = false;
         this.postToolchainSnapshot("toolchain:init");
-        this.postBrowserSnapshot("browser:init");
         this.setStatus("ready");
         this.startPing();
         if (restarted) {
@@ -249,12 +261,6 @@ export class HostManager {
         if (Number.isSafeInteger(revision) && revision >= 0) {
           this.toolchainAckRevision = Math.max(this.toolchainAckRevision, revision);
           appendMainLog(`agent-host toolchain ack revision=${revision}`);
-        }
-      } else if (m?.type === "browser:ack") {
-        const revision = Number(m.revision);
-        if (Number.isSafeInteger(revision) && revision >= 0) {
-          this.browserAckRevision = Math.max(this.browserAckRevision, revision);
-          appendMainLog(`agent-host browser ack revision=${revision}`);
         }
       } else if (m?.type === "host-rpc") {
         const request = m as HostMessage & { id?: string; method?: string; params?: unknown };
@@ -276,10 +282,7 @@ export class HostManager {
                   type: "host-rpc-result",
                   id,
                   ok: false,
-                  error:
-                    error instanceof BrowserError
-                      ? error.toJSON()
-                      : { message: error instanceof Error ? error.message : String(error) },
+                  error: { message: error instanceof Error ? error.message : String(error) },
                 });
               } catch {
                 /* child exited while the request was running */
@@ -296,6 +299,13 @@ export class HostManager {
       this.clearPing();
       this.child = null;
       if (this.status === "stopped") return;
+
+      if (this.restartingIntentionally) {
+        this.restartingIntentionally = false;
+        appendMainLog("agent-host restarting for hot update");
+        setTimeout(() => this.spawn(), 150);
+        return;
+      }
 
       this.wasReadyBeforeExit = this.status === "ready" || this.status === "starting";
       const now = Date.now();
@@ -350,15 +360,6 @@ export class HostManager {
     }
   }
 
-  private postBrowserSnapshot(type: "browser:init" | "browser:changed"): void {
-    if (!this.child || !this.browserCapabilitySnapshot) return;
-    try {
-      this.child.postMessage({ type, snapshot: this.browserCapabilitySnapshot });
-    } catch (error) {
-      appendMainLog(`browser snapshot delivery failed: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
-
   private clearPing(): void {
     if (this.pingTimer) {
       clearInterval(this.pingTimer);
@@ -367,9 +368,18 @@ export class HostManager {
   }
 }
 
-export function resolveHostEntry(mainDirectory = __dirname): string {
+export function resolveHostEntry(mainDirectory = __dirname, appVersion = app.getVersion()): string {
+  const bundled = path.join(mainDirectory, "agent-host.mjs");
+  // A writable runtime dir lets the host be hot-updated without repackaging. It is only trusted
+  // when its manifest names this app version, so a stale overlay cannot shadow a fresh install.
+  try {
+    const override = path.join(runtimeHostDir(), "agent-host.mjs");
+    if (fs.existsSync(override) && overlayMatchesApp(runtimeRootDir(), appVersion)) return override;
+  } catch {
+    // No override (or app not ready): fall back to the bundle.
+  }
   // ESM agent-host (pi packages are import-only)
-  return path.join(mainDirectory, "agent-host.mjs");
+  return bundled;
 }
 
 export function resolvePreloadPath(mainDirectory = __dirname): string {
@@ -395,4 +405,19 @@ export function resolveRendererEntry(isDev: boolean, mainDirectory = __dirname):
 
 export function getUserDataPath(...parts: string[]): string {
   return path.join(app.getPath("userData"), ...parts);
+}
+
+/** Writable root of the hot-update overlay (manifest, host and renderer live here). */
+export function runtimeRootDir(): string {
+  return getUserDataPath("runtime");
+}
+
+/** Writable directory that overrides the bundled agent host when present. */
+export function runtimeHostDir(): string {
+  return getUserDataPath("runtime", "host");
+}
+
+/** Writable directory that overrides the bundled renderer when present. */
+export function runtimeRendererDir(): string {
+  return getUserDataPath("runtime", "renderer");
 }

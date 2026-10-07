@@ -14,12 +14,12 @@ import { ModelsConfig } from "./ModelsConfig";
 import { SkillsConfig } from "./SkillsConfig";
 import { PromptsConfig } from "./PromptsConfig";
 import { JevConfig } from "./JevConfig";
+import { CapabilitiesPanel } from "./CapabilitiesPanel";
+import { McpConfig } from "./McpConfig";
 import { PluginsConfig } from "./PluginsConfig";
 import { ToolchainsConfig } from "./ToolchainsConfig";
-import { BrowserSettings } from "./browser/BrowserSettings";
 import { ChannelsConfig } from "./channels/ChannelsConfig";
 import type { ChannelsSnapshot } from "@shared/channel-types";
-import { APP_WEBSITE_URL } from "@shared/app-links";
 import type { DesktopUpdateState } from "../../contract/desktop";
 import { APP_AUTHOR, APP_DISPLAY_NAME, APP_GITHUB_URL, APP_VERSION, PI_VERSION } from "@/lib/app-version";
 import { AUTO_COMPACT_TURNS_MAX, AUTO_COMPACT_TURNS_MIN } from "@shared/auto-compact";
@@ -32,7 +32,17 @@ import {
 import appIconUrl from "../../../build/icon.png";
 
 export type SettingsTab =
-  "general" | "browser" | "channels" | "models" | "tools" | "skills" | "prompts" | "plugins" | "jev" | "about";
+  | "general"
+  | "capabilities"
+  | "channels"
+  | "models"
+  | "tools"
+  | "skills"
+  | "prompts"
+  | "plugins"
+  | "mcp"
+  | "jev"
+  | "about";
 
 interface SettingsConfigProps {
   cwd: string | null;
@@ -90,8 +100,9 @@ export function SettingsConfig({
     { id: "skills", label: t("skills", "Skills") },
     { id: "prompts", label: t("prompts", "Prompts") },
     { id: "plugins", label: t("plugins", "Plugins") },
+    { id: "capabilities", label: t("capabilitiesTitle", "Capabilities") },
+    { id: "mcp", label: t("mcpTitle", "MCP") },
     { id: "jev", label: t("jevTitle", "Jev") },
-    { id: "browser", label: t("browser", "Browser") },
     { id: "channels", label: t("channels", "Channels") },
     { id: "tools", label: t("developerTools", "Developer Tools") },
     { id: "about", label: t("about", "About") },
@@ -287,7 +298,6 @@ export function SettingsConfig({
                 onThemeChange={setTheme}
               />
             )}
-            {activeTab === "browser" && <BrowserSettings sessionId={sessionId} />}
             {activeTab === "models" && <ModelsConfig embedded onClose={() => undefined} onChanged={onModelsChanged} />}
             {activeTab === "tools" && <ToolchainsConfig cwd={cwd} />}
             {activeTab === "channels" && <ChannelsConfig onSnapshotChange={onChannelsChanged} />}
@@ -307,6 +317,8 @@ export function SettingsConfig({
               ) : (
                 <ProjectRequired />
               ))}
+            {activeTab === "capabilities" && <CapabilitiesPanel sessionId={sessionId} cwd={cwd} />}
+            {activeTab === "mcp" && <McpConfig cwd={cwd} />}
             {activeTab === "jev" && <JevConfig />}
             {activeTab === "about" && <AboutSettings onClose={onClose} />}
           </div>
@@ -373,30 +385,6 @@ function AboutSettings({ onClose }: { onClose: () => void }) {
             <AboutRow label={t("piVersion", "Pi version")} value={`v${PI_VERSION}`} />
             <AboutRow label={t("author", "Author")} value={APP_AUTHOR} />
             <AboutRow
-              label={t("officialWebsite", "Official website")}
-              value={
-                <button
-                  type="button"
-                  title={t("openOfficialWebsite", "Open official website")}
-                  onClick={() => void window.piBridge.openExternal(APP_WEBSITE_URL)}
-                  style={{
-                    maxWidth: "100%",
-                    padding: 0,
-                    border: 0,
-                    background: "none",
-                    color: "var(--accent)",
-                    fontFamily: "var(--font-mono)",
-                    fontSize: 12,
-                    cursor: "pointer",
-                    overflowWrap: "anywhere",
-                    textAlign: "right",
-                  }}
-                >
-                  pi-desktop.app ↗
-                </button>
-              }
-            />
-            <AboutRow
               label={t("githubRepository", "GitHub repository")}
               value={
                 <button
@@ -416,7 +404,7 @@ function AboutSettings({ onClose }: { onClose: () => void }) {
                     textAlign: "right",
                   }}
                 >
-                  github.com/DLYZZT/pi-desktop ↗
+                  github.com/HX-Lin/pi-worktable ↗
                 </button>
               }
               last

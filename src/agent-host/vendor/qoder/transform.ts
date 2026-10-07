@@ -7,7 +7,9 @@ import type {
   Tool,
   ToolCall,
   ToolResultMessage,
+  TranscriptContext,
 } from "@earendil-works/pi-ai";
+import { getCurrentSystemPrompt, getCurrentTools } from "@earendil-works/pi-ai";
 
 /** OpenAI-style tool definition sent to the Qoder API. */
 interface QoderTool {
@@ -67,6 +69,15 @@ export function transformTools(tools: Tool[]): QoderTool[] {
       parameters: t.parameters,
     },
   }));
+}
+
+export function prepareQoderContext(context: TranscriptContext) {
+  const tools = getCurrentTools(context.messages);
+  return {
+    normalizedMessages: transformMessagesForQoder(context.messages),
+    systemText: getCurrentSystemPrompt(context.messages),
+    toolsRaw: tools.length > 0 ? transformTools(tools) : undefined,
+  };
 }
 
 export function transformMessagesForQoder(messages: Message[]): QoderMessage[] {

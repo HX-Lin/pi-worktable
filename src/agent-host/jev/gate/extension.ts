@@ -40,12 +40,12 @@ export const JEV_GATE_EXTENSION: InlineExtension = {
     let engineCache: { key: string; engine: DecisionEngine } | null = null;
     let statusText: string | null = null;
 
-    const engineFor = async (): Promise<DecisionEngine> => {
+    const engineFor = async (ctx: ExtensionContext): Promise<DecisionEngine> => {
       const settings = readJevSettings();
       const key = `${settings.enabled}|${settings.channel}|${settings.gate.enabled}|${settings.model ?? ""}|${settings.baseUrl ?? ""}`;
       if (engineCache?.key === key) return engineCache.engine;
-      const runtime = settings.gate.enabled ? await getJevRuntime() : null;
-      if (!runtime || runtime.channel.id === undefined) {
+      const runtime = settings.gate.enabled ? await getJevRuntime(ctx.modelRegistry) : null;
+      if (!runtime) {
         // No key: the gate keeps running its deterministic layer and blocks what
         // nothing vouches for, rather than silently allowing everything.
         const engine = createManualEngine();
@@ -90,10 +90,13 @@ export const JEV_GATE_EXTENSION: InlineExtension = {
         ...(ctx.signal ? { signal: ctx.signal } : {}),
         branch: (ctx.sessionManager?.getBranch?.() ?? []) as readonly unknown[],
         confirm: async (dialog) => {
-          // Reuse the app's extension dialog: `select` renders as a confirmation
-          // in the desktop renderer and as a prompt in the TUI.
-          const answer = await ctx.ui.select(dialog.title, ["No", "Yes"]);
-          return answer === "Yes";
+          // Reuse the app's extension dialog. `confirm` carries both the title and
+          // the call summary/rationale, so a remote client (the Feishu H5) can show
+          // exactly what is being approved instead of a bare Yes/No.
+          //
+          // Fail closed on timeout: an unanswered approval must not stall the turn
+          // forever. Ten minutes is enough to answer from the phone.
+          return await ctx.ui.confirm(dialog.title, dialog.message, { timeout: 10 * 60 * 1000 });
         },
       };
 
@@ -115,7 +118,7 @@ export const JEV_GATE_EXTENSION: InlineExtension = {
           { toolName: event.toolName, input: (event.input ?? {}) as Record<string, unknown> },
           gateContext,
           gateSettingsToSettings(settings.gate, settings.gate.policyNotes ?? ""),
-          { engine: await engineFor(), record, now: () => Date.now() },
+          { engine: await engineFor(ctx), record, now: () => Date.now() },
         );
       } catch (error) {
         // The gate never lets its own failure become an approval.

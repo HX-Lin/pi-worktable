@@ -96,7 +96,7 @@ async function git(cwd: string, args: string[]): Promise<string> {
   return stdout.trim();
 }
 
-async function gitRaw(cwd: string, args: string[]): Promise<string> {
+export async function gitRaw(cwd: string, args: string[]): Promise<string> {
   const { stdout } = await gitCommandRunner.run(cwd, args, {
     timeout: 10_000,
     maxBuffer: 20 * 1024 * 1024,

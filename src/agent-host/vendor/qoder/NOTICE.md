@@ -6,7 +6,7 @@ This directory contains adapted source code from `@jischeng/pi-provider-qoder` v
 - Package: https://www.npmjs.com/package/@jischeng/pi-provider-qoder
 - License: MIT
 
-Local adaptations integrate the provider into Pi Agent Desktop, remove its dependency on the legacy `AuthStorage` export, and register it independently for each desktop model runtime.
+Local adaptations integrate the provider into Pi Worktable, remove its dependency on the legacy `AuthStorage` export, and register it independently for each desktop model runtime.
 
 ## MIT License
 

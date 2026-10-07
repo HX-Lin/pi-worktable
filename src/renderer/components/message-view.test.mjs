@@ -80,6 +80,39 @@ test("continues to hide a completed empty non-error assistant message", () => {
   assert.equal(renderToStaticMarkup(createElement(MessageView, { message: assistant() })), "");
 });
 
+test("turn changes show a compact file list with expandable diffs", () => {
+  const html = renderToStaticMarkup(
+    createElement(MessageView, {
+      message: {
+        role: "custom",
+        customType: "pi-desktop-turn-changes",
+        content: "",
+        display: true,
+        details: {
+          omitted: 2,
+          files: [
+            {
+              path: "src/example.ts",
+              added: 1,
+              removed: 1,
+              patch:
+                "Index: src/example.ts\n--- src/example.ts\tbefore\n+++ src/example.ts\tafter\n@@ -1,1 +1,1 @@\n-old\n+new\n",
+            },
+          ],
+        },
+      },
+    }),
+  );
+  assert.match(html, /Changed files/);
+  assert.match(html, /<details/);
+  assert.match(html, /<summary/);
+  assert.match(html, /src\/example.ts/);
+  assert.match(html, /2 more paths were not inspected/);
+  assert.match(html, /\+1/);
+  assert.match(html, /-1/);
+  assert.match(html, /new/);
+});
+
 test("renders compaction summaries collapsed by default", () => {
   const html = renderToStaticMarkup(
     createElement(MessageView, {

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import { pathToFileURL } from "node:url";
@@ -22,6 +22,12 @@ await build({
 });
 const { readPiRuntimeVersion } = await import(`${pathToFileURL(outputFile).href}?v=${Date.now()}`);
 
+// Read the expected version from the installed package instead of hardcoding it,
+// so a Pi upgrade does not have to touch this test.
+const expectedPiVersion = JSON.parse(
+  readFileSync(path.join(root, "node_modules", "@earendil-works", "pi-coding-agent", "package.json"), "utf8"),
+).version;
+
 test("runtime version resolves through the public ESM entry despite package export restrictions", () => {
-  assert.equal(readPiRuntimeVersion(), "0.84.0");
+  assert.equal(readPiRuntimeVersion(), expectedPiVersion);
 });

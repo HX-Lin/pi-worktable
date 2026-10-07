@@ -1122,3 +1122,13 @@ span.linenumber {
     display: none !important;
   }
 }
+
+/*
+ * A long conversation must not lay out and paint every tool card on every scroll frame. Off-screen
+ * cards keep their last measured height, so the scrollbar, the minimap and "jump to" stay correct.
+ * Only the card body is skipped: the message rows themselves keep their own margins untouched.
+ */
+.tool-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 180px;
+}

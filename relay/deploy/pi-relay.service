@@ -1,0 +1,34 @@
+[Unit]
+Description=Pi Agent relay (Feishu web app bridge)
+Documentation=https://github.com/HX-Lin/pi-worktable/relay
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Secrets live here, readable only by root and the service user.
+EnvironmentFile=/etc/pi-relay.env
+Environment=PI_RELAY_ADDR=127.0.0.1:8787
+ExecStart=/usr/local/bin/pi-relay
+Restart=always
+RestartSec=3
+
+# The relay is a pipe with no session storage; it should stay around 10 MB.
+# The cap only exists so a leak can never take down the whole server.
+MemoryMax=96M
+MemoryHigh=64M
+
+# Minimal privileges.
+User=pi-relay
+Group=pi-relay
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6
+CapabilityBoundingSet=
+
+[Install]
+WantedBy=multi-user.target

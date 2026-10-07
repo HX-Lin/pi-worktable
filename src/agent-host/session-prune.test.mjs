@@ -70,6 +70,31 @@ test("pruning keeps the memory plus the turns it still covers", () => {
   assert.equal(kept[0].details.piDesktopMemoryCompaction, true);
 });
 
+test("pruning keeps a manual session name across the rewrite", () => {
+  const entries = [
+    { type: "session_info", id: "n1", parentId: null, timestamp: "2026-07-15T12:00:00.000Z", name: "我的重要会话" },
+    message("u1", "n1", "summarized question"),
+    message("a1", "u1", "summarized answer"),
+    message("u2", "a1", "kept question"),
+    {
+      type: "compaction",
+      id: "c1",
+      parentId: "u2",
+      timestamp: "2026-07-15T12:00:01.000Z",
+      summary: "memory",
+      firstKeptEntryId: "u2",
+      tokensBefore: 100,
+    },
+  ];
+
+  const { entries: kept } = pruneSummarizedEntries(entries);
+  const nameEntry = [...kept].reverse().find((entry) => entry.type === "session_info");
+  assert.ok(nameEntry, "the rename entry must survive the prune");
+  assert.equal(nameEntry.name, "我的重要会话");
+  // It must remain the last session_info so `getSessionName()` still returns it.
+  assert.equal(kept[kept.length - 1].type, "session_info");
+});
+
 test("pruning rewrites the memory through the supplied transform", () => {
   const entries = [
     message("u1", null, "old"),

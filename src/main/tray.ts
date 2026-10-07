@@ -30,7 +30,7 @@ export function createTray(getMainWindow: () => BrowserWindow | null, onRestoreW
     }
 
     tray = new Tray(image);
-    tray.setToolTip("Pi Agent Desktop");
+    tray.setToolTip("Pi Worktable");
     updateTrayMenu(getMainWindow, onRestoreWindow);
 
     tray.on("click", () => {
@@ -55,7 +55,7 @@ export function createTray(getMainWindow: () => BrowserWindow | null, onRestoreW
 export function setTrayRunningCount(count: number, getMainWindow: () => BrowserWindow | null): void {
   runningCount = Math.max(0, count);
   if (!tray) return;
-  tray.setToolTip(runningCount > 0 ? `Pi Agent Desktop — ${runningCount} running` : "Pi Agent Desktop");
+  tray.setToolTip(runningCount > 0 ? `Pi Worktable — ${runningCount} running` : "Pi Worktable");
   updateTrayMenu(getMainWindow);
 }
 

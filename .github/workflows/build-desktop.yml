@@ -298,19 +298,19 @@ jobs:
             local expected_arch="$1"
             local app binary
             while IFS= read -r -d '' app; do
-              binary="$app/Contents/MacOS/Pi Agent Desktop"
+              binary="$app/Contents/MacOS/Pi Worktable"
               if [ -f "$binary" ] && lipo -archs "$binary" | grep -qw "$expected_arch"; then
                 printf '%s\n' "$app"
                 return 0
               fi
-            done < <(find dist -maxdepth 3 -type d -name 'Pi Agent Desktop.app' -print0)
+            done < <(find dist -maxdepth 3 -type d -name 'Pi Worktable.app' -print0)
             return 1
           }
 
           verify_app() {
             local app="$1"
             local expected_arch="$2"
-            local renderer="$app/Contents/Frameworks/Pi Agent Desktop Helper (Renderer).app"
+            local renderer="$app/Contents/Frameworks/Pi Worktable Helper (Renderer).app"
             local entitlements
 
             echo "Verifying $expected_arch app: $app"
@@ -439,10 +439,10 @@ jobs:
           version="$(node -p "require('./package.json').version")"
 
           for file in \
-            "dist/Pi-Agent-Desktop-${version}-arm64.dmg" \
-            "dist/Pi-Agent-Desktop-${version}-arm64.zip" \
-            "dist/Pi-Agent-Desktop-${version}-x64.dmg" \
-            "dist/Pi-Agent-Desktop-${version}-x64.zip" \
+            "dist/Pi-Worktable-${version}-arm64.dmg" \
+            "dist/Pi-Worktable-${version}-arm64.zip" \
+            "dist/Pi-Worktable-${version}-x64.dmg" \
+            "dist/Pi-Worktable-${version}-x64.zip" \
             "dist/latest-mac.yml"; do
             test -s "$file"
           done
@@ -450,10 +450,10 @@ jobs:
           node scripts/verify-update-metadata.mjs \
             dist/latest-mac.yml \
             "$version" \
-            "dist/Pi-Agent-Desktop-${version}-arm64.dmg" \
-            "dist/Pi-Agent-Desktop-${version}-arm64.zip" \
-            "dist/Pi-Agent-Desktop-${version}-x64.dmg" \
-            "dist/Pi-Agent-Desktop-${version}-x64.zip"
+            "dist/Pi-Worktable-${version}-arm64.dmg" \
+            "dist/Pi-Worktable-${version}-arm64.zip" \
+            "dist/Pi-Worktable-${version}-x64.dmg" \
+            "dist/Pi-Worktable-${version}-x64.zip"
 
       - name: Run packaged toolchain E2E for macOS arm64
         run: npm run check:packaged-toolchains -- darwin-arm64
@@ -500,7 +500,7 @@ jobs:
         run: |
           set -euo pipefail
           version="$(node -p "require('./package.json').version")"
-          archive="dist/Pi-Agent-Desktop-${version}-x64.zip"
+          archive="dist/Pi-Worktable-${version}-x64.zip"
           test -s "$archive"
           mkdir -p dist/mac-x64
           ditto -x -k "$archive" dist/mac-x64
@@ -509,8 +509,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          app="dist/mac-x64/Pi Agent Desktop.app"
-          binary="$app/Contents/MacOS/Pi Agent Desktop"
+          app="dist/mac-x64/Pi Worktable.app"
+          binary="$app/Contents/MacOS/Pi Worktable"
           test -f "$binary"
           lipo -archs "$binary" | grep -qw x86_64
           codesign --verify --deep --strict --verbose=2 "$app"
@@ -666,7 +666,7 @@ jobs:
         run: |
           set -euo pipefail
           version="$(node -p "require('./package.json').version")"
-          installer="dist/Pi-Agent-Desktop-Setup-${version}.exe"
+          installer="dist/Pi-Worktable-Setup-${version}.exe"
           test -s "$installer"
           test "$(find dist -maxdepth 1 -type f -name '*.exe' | wc -l | tr -d ' ')" -eq 1
           test -s dist/latest.yml
@@ -729,7 +729,7 @@ jobs:
         run: |
           set -euo pipefail
           version="$(node -p "require('./package.json').version")"
-          appimage="dist/Pi-Agent-Desktop-${version}-x86_64.AppImage"
+          appimage="dist/Pi-Worktable-${version}-x86_64.AppImage"
           test -s "$appimage"
           test "$(find dist -maxdepth 1 -type f -name '*.AppImage' | wc -l | tr -d ' ')" -eq 1
           test -s dist/latest-linux.yml

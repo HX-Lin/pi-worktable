@@ -16,7 +16,7 @@ import { isExecutionIntent } from "../shared/toolchains/types";
 
 registerAppProtocol();
 crashReporter.start({
-  productName: "Pi Agent Desktop Smoke",
+  productName: "Pi Worktable Smoke",
   uploadToServer: false,
   compress: false,
 });
@@ -60,7 +60,7 @@ void app.whenReady().then(async () => {
   });
   await toolchainManager.initialize();
 
-  hostManager = new HostManager(resolveHostEntry(runtimeMainDirectory));
+  hostManager = new HostManager(() => resolveHostEntry(runtimeMainDirectory));
   const smokeVaultPath = path.join(app.getPath("userData"), "smoke-channel-secrets.json");
   const credentialVault = new CredentialVault(smokeVaultPath);
   hostManager.setToolchainSnapshot(toolchainManager.getSnapshot());
@@ -113,7 +113,6 @@ void app.whenReady().then(async () => {
     chooseCustomTool: (capability, executable) => toolchainManager.registerCustomTool(capability, executable),
     setChannelCredential: (payload) =>
       credentialVault.set(`channel:${payload.channel}:${payload.accountId}`, payload.credential),
-    getBrowserService: () => null,
     updateManager,
   });
 

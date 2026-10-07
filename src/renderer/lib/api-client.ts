@@ -248,6 +248,41 @@ export async function jevTest() {
   return call("jev.test");
 }
 
+/** MCP servers: the two `mcp.json` files, plus pi's own `pi mcp` command for live work. */
+export async function mcpGetConfig(cwd?: string | null) {
+  return call("mcp.getConfig", cwd ? { cwd } : undefined);
+}
+
+export async function mcpSetServer(
+  name: string,
+  config: Record<string, unknown>,
+  scope: "global" | "project",
+  cwd?: string | null,
+) {
+  return call("mcp.setServer", { ...(cwd ? { cwd } : {}), name, config, scope });
+}
+
+export async function mcpPatchServer(
+  name: string,
+  patch: { enabled?: boolean; exposure?: "codemode" | "deferred" | "direct" | "hidden"; description?: string | null },
+  scope: "global" | "project",
+  cwd?: string | null,
+) {
+  return call("mcp.patchServer", { ...(cwd ? { cwd } : {}), name, patch, scope });
+}
+
+export async function mcpRemoveServer(name: string, scope: "global" | "project", cwd?: string | null) {
+  return call("mcp.removeServer", { ...(cwd ? { cwd } : {}), name, scope });
+}
+
+export async function mcpSetAutoEnableCodemode(value: boolean, scope: "global" | "project", cwd?: string | null) {
+  return call("mcp.setAutoEnableCodemode", { ...(cwd ? { cwd } : {}), value, scope });
+}
+
+export async function mcpRunCommand(args: string[], cwd?: string | null) {
+  return call("mcp.runCommand", { ...(cwd ? { cwd } : {}), args });
+}
+
 /** The context window as the fold engine sees it. */
 export async function contextMap(sessionId: string) {
   return call("context.map", { sessionId });

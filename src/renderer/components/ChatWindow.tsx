@@ -412,27 +412,10 @@ export function ChatWindow({
     return () => observer.disconnect();
   }, [hasOlder, loadOlder, loadingOlder, messages.length, scrollContainerRef]);
 
-  // Progressive message mounting: mounting every MessageView at once stalls
-  // the UI when switching to a big session. Mount the most recent slice first
-  // and fill the rest over the next frames (the user perceives an instant
-  // first paint).
-  const [visibleMessageCount, setVisibleMessageCount] = useState(Number.MAX_SAFE_INTEGER);
   const [memoryPanelOpen, setMemoryPanelOpen] = useState(false);
   // The map reads host state on demand; re-reading after each turn keeps the tiles
   // honest without polling while the panel is closed.
   const memoryPanelRefreshKey = useMemo(() => messages.length + entryIds.length, [messages.length, entryIds.length]);
-  useEffect(() => {
-    setVisibleMessageCount(24);
-    let raf2 = 0;
-    const raf1 = requestAnimationFrame(() => {
-      setVisibleMessageCount(80);
-      raf2 = requestAnimationFrame(() => setVisibleMessageCount(Number.MAX_SAFE_INTEGER));
-    });
-    return () => {
-      cancelAnimationFrame(raf1);
-      cancelAnimationFrame(raf2);
-    };
-  }, [messages.length]);
 
   const isEmptyNew = isNew && messages.length === 0 && !streamState.isStreaming && !agentRunning;
   const messageCwd = session?.cwd ?? newSessionCwd ?? undefined;
@@ -651,7 +634,7 @@ export function ChatWindow({
                     whiteSpace: "nowrap",
                   }}
                 >
-                  Pi Agent Desktop
+                  Pi Worktable
                 </span>
               </div>
             </div>
@@ -928,26 +911,7 @@ export function ChatWindow({
                       }
                       idx = endIdx;
                     }
-                    // Progressive mount: only the most recent slice is attached
-                    // now; the rest is filled in over the next frames so
-                    // switching to a big session paints instantly.
-                    if (visibleMessageCount >= rendered.length) return [...memoryNodes, ...rendered];
-                    const visible = rendered.slice(-visibleMessageCount);
-                    return [
-                      ...memoryNodes,
-                      ...visible,
-                      <div
-                        key="progressive-fill"
-                        style={{
-                          padding: "6px 0",
-                          fontSize: 11,
-                          color: "var(--text-dim)",
-                          textAlign: "center",
-                        }}
-                      >
-                        {t("renderingMessages", "Rendering messages…")}
-                      </div>,
-                    ];
+                    return [...memoryNodes, ...rendered];
                   })()}
 
                   {streamState.isStreaming && streamState.streamingMessage && (

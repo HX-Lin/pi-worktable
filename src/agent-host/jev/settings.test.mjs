@@ -6,7 +6,7 @@ import test from "node:test";
 import { pathToFileURL } from "node:url";
 import { build } from "esbuild";
 
-const root = path.resolve(import.meta.dirname, "..", "..");
+const root = path.resolve(import.meta.dirname, "..", "..", "..");
 const agentDir = mkdtempSync(path.join(tmpdir(), "pi-jev-settings-"));
 process.env.PI_CODING_AGENT_DIR = agentDir;
 process.once("exit", () => rmSync(agentDir, { recursive: true, force: true }));

@@ -89,7 +89,7 @@ async function downloadFixedFile(definition, destination) {
     const response = await globalThis.fetch(definition.url, {
       redirect: "follow",
       signal: controller.signal,
-      headers: { "User-Agent": "Pi-Agent-Desktop-Bundled-Tools-Build" },
+      headers: { "User-Agent": "Pi-Worktable-Bundled-Tools-Build" },
     });
     if (!response.ok) fail(`${definition.url} returned HTTP ${response.status}`);
     const content = Buffer.from(await response.arrayBuffer());

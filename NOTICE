@@ -1,0 +1,22 @@
+Pi Worktable
+Copyright © HX-Lin
+
+This product is a derivative work of "Pi Agent Desktop"
+(https://github.com/DLYZZT/pi-desktop), Copyright © DLYZZT,
+licensed under the Apache License, Version 2.0.
+
+Modifications (Apache License 2.0, section 4(b)): this repository is an
+extensive rework of the original project. Changed files carry no per-file
+notice; the modifications are:
+
+  * product identity — application name, application id, executable name,
+    deep-link scheme, release artifact names, update feed, and copyright holder;
+  * removal of components that are not part of this product;
+  * new features and behaviour that the original project does not provide;
+  * carried-over files that were edited for the changes above.
+
+The full text of the Apache License, Version 2.0 is in LICENSE. Third-party
+components and their licenses are listed in THIRD_PARTY_NOTICES.md.
+
+Pi Coding Agent, pi-ai, and pi-telemetry are separate works by their own
+authors and are consumed as unmodified npm dependencies.

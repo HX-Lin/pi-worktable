@@ -11,7 +11,7 @@ import { build } from "esbuild";
  * exercises the fallback AES-256-GCM path, which is what Linux desktops without
  * a keyring (niri included) actually run — so this covers the real code path.
  */
-const root = path.resolve(import.meta.dirname, "..");
+const root = path.resolve(import.meta.dirname, "..", "..");
 const dir = path.join(root, ".artifacts", "test-modules", `credential-vault-${process.pid}`);
 const stub = path.join(dir, "electron-stub.mjs");
 const entry = path.join(dir, "vault.mjs");

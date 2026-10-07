@@ -1,5 +1,5 @@
 /**
- * Pi Agent Desktop v2 — Electron main process
+ * Pi Worktable — Electron main process
  * Responsibilities: window lifecycle, menus, tray/badge, deep link,
  * Host supervision, system IPC. No business logic.
  */
@@ -9,11 +9,12 @@ import path from "path";
 import { HostManager, getUserDataPath, resolveHostEntry } from "./host-manager";
 import { appendMainLog } from "./logger";
 import { installAppMenu } from "./menu";
-import { handleAppProtocol, registerAppProtocol, rendererRootPath } from "./protocol";
+import { handleAppProtocol, registerAppProtocol } from "./protocol";
 import { acquireSingleInstanceLock } from "./single-instance";
 import { loadUiState } from "./window-state";
 import { createTray, destroyTray, setTrayRunningCount } from "./tray";
 import { createMainWindow } from "./window";
+import { startRuntimeWatcher } from "./runtime-watch";
 import { installDesktopIpc, disposeDesktopTerminals, warmupDesktopTerminals } from "./ipc";
 import { createCredentialRequestHandler, CredentialVault } from "./credential-vault";
 import { createProductionUpdateAdapter, isProductionUpdatePlatformEnabled } from "./update-adapter";
@@ -24,7 +25,6 @@ import { resolveBundledCorePaths } from "./toolchains/bundled-core";
 import { isExecutionIntent, type ToolchainSnapshot } from "../shared/toolchains/types";
 import { readLegacyNpmCommand } from "./toolchains/legacy-npm-command";
 import { createElectronRuntimeFetch } from "./toolchains/electron-runtime-fetch";
-import { BrowserService } from "./browser/browser-service";
 
 // Must run before app ready
 registerAppProtocol();
@@ -39,10 +39,59 @@ if (process.platform === "linux") {
 }
 
 crashReporter.start({
-  productName: "Pi Agent Desktop",
+  productName: "Pi Worktable",
   uploadToServer: false,
   compress: false,
 });
+
+/**
+ * One-time migration from the pre-rename userData directory.
+ *
+ * Renaming the product changed `app.getPath("userData")`, so the app-owned
+ * state would otherwise start empty. Carry over the small, portable files
+ * (window layout, channel pairing, credential vault, interrupted-session
+ * snapshot) and leave Chromium caches, the hot-update overlay, and managed
+ * toolchains behind — those rebuild themselves.
+ */
+const LEGACY_PRODUCT_NAME = "Pi Agent Desktop";
+const LEGACY_MIGRATION_MARKER = "migrated-from-pi-agent-desktop.json";
+const LEGACY_MIGRATION_ENTRIES = [
+  "ui-state.json",
+  "interrupted-sessions.json",
+  "channels.json",
+  "channels.secrets.json",
+  "channels.secrets.json.key",
+  "channels.state.json",
+  "channel-media",
+  "channel-workspaces",
+];
+
+function migrateLegacyUserData(): void {
+  try {
+    const target = app.getPath("userData");
+    if (fs.existsSync(path.join(target, LEGACY_MIGRATION_MARKER))) return;
+    const legacy = path.join(path.dirname(target), LEGACY_PRODUCT_NAME);
+    if (legacy === target || !fs.existsSync(legacy)) return;
+    fs.mkdirSync(target, { recursive: true, mode: 0o700 });
+    const copied: string[] = [];
+    for (const entry of LEGACY_MIGRATION_ENTRIES) {
+      const from = path.join(legacy, entry);
+      const to = path.join(target, entry);
+      if (!fs.existsSync(from) || fs.existsSync(to)) continue;
+      fs.cpSync(from, to, { recursive: true });
+      copied.push(entry);
+    }
+    fs.writeFileSync(
+      path.join(target, LEGACY_MIGRATION_MARKER),
+      `${JSON.stringify({ from: legacy, copied, migratedAt: new Date().toISOString() }, null, 2)}\n`,
+      { mode: 0o600 },
+    );
+  } catch (error) {
+    console.error("[pi-desktop] userData migration failed:", error);
+  }
+}
+
+migrateLegacyUserData();
 
 const isDev = !app.isPackaged;
 const packagedStartupValidation = app.isPackaged && process.argv.includes("--validate-packaged-startup");
@@ -53,13 +102,19 @@ let mainWindow: BrowserWindow | null = null;
 let hostManager: HostManager | null = null;
 let updateManager: UpdateManager | null = null;
 let toolchainManager: ToolchainManager | null = null;
-let browserService: BrowserService | null = null;
 let isQuitting = false;
 let unreadBadge = 0;
 let pendingDeepLink: string | null = null;
 let lastNotifiedUpdateVersion: string | null = null;
 let lastToolchainFocusScanAt = 0;
 let runningAgentSessionCount = 0;
+/**
+ * A hot update that could not be applied yet because sessions are mid-turn.
+ *
+ * Restarting the host kills every agent session it owns, so a runtime update waits for the running
+ * set to drain instead of cutting a turn short. The renderer is told, so the wait is not silent.
+ */
+let pendingHotUpdate = false;
 let startupRendererReady = false;
 let startupHostReady = false;
 let startupToolchainSnapshot: ToolchainSnapshot | null = null;
@@ -138,8 +193,8 @@ function applyBadgeCount(count: number): void {
 function parseDeepLink(url: string): { sessionId?: string } | null {
   try {
     const u = new URL(url);
-    if (u.protocol !== "pi-agent-desktop:") return null;
-    // pi-agent-desktop://session/<id>
+    if (u.protocol !== "pi-worktable:") return null;
+    // pi-worktable://session/<id>
     if (u.hostname === "session" || u.pathname.startsWith("/session/")) {
       const id = u.hostname === "session" ? u.pathname.replace(/^\//, "") : u.pathname.replace(/^\/session\//, "");
       return id ? { sessionId: id } : null;
@@ -166,7 +221,7 @@ function handleDeepLink(url: string): void {
 
 if (
   !acquireSingleInstanceLock(getMainWindow, (argv) => {
-    const url = argv.find((a) => a.startsWith("pi-agent-desktop://"));
+    const url = argv.find((a) => a.startsWith("pi-worktable://"));
     if (url) handleDeepLink(url);
   })
 ) {
@@ -176,13 +231,6 @@ if (
 app.on("open-url", (event, url) => {
   event.preventDefault();
   handleDeepLink(url);
-});
-
-app.on("login", (event, webContents, _details, authInfo, callback) => {
-  const credentials = browserService?.getProxyCredentialsForWebContents(webContents.id, authInfo.isProxy);
-  if (!credentials) return;
-  event.preventDefault();
-  callback(credentials.username, credentials.password);
 });
 
 function createWindow(): BrowserWindow {
@@ -195,18 +243,10 @@ function createWindow(): BrowserWindow {
     },
     shouldHideOnClose: () => !isQuitting && loadUiState().backgroundMode !== false,
     onClosed: (closedWindow) => {
-      if (mainWindow === closedWindow) {
-        mainWindow = null;
-        browserService?.handleWindowClosed();
-      }
+      if (mainWindow === closedWindow) mainWindow = null;
     },
-    onRendererUnavailable: () => browserService?.handleRendererUnavailable(),
   });
   mainWindow = win;
-  win.on("hide", () => browserService?.handleWindowVisibility(false));
-  win.on("minimize", () => browserService?.handleWindowVisibility(false));
-  win.on("show", () => browserService?.handleWindowVisibility(true));
-  win.on("restore", () => browserService?.handleWindowVisibility(true));
   win.on("focus", () => {
     const manager = toolchainManager;
     const now = Date.now();
@@ -226,7 +266,6 @@ function createWindow(): BrowserWindow {
     });
   }
   if (unreadBadge > 0) applyBadgeCount(unreadBadge);
-  void browserService?.restoreTabs();
   return win;
 }
 
@@ -256,15 +295,6 @@ void app.whenReady().then(async () => {
   }
 
   const credentialVault = new CredentialVault(getUserDataPath("channels.secrets.json"));
-  browserService = new BrowserService({
-    userDataDir: app.getPath("userData"),
-    getWindow: getMainWindow,
-    emit: (event) => {
-      const win = getMainWindow();
-      if (win && !win.isDestroyed()) win.webContents.send("browser:event", event);
-    },
-    onCapabilitySnapshot: (snapshot) => hostManager?.setBrowserCapabilitySnapshot(snapshot),
-  });
   const ui = loadUiState();
   const updaterTestMode = !app.isPackaged && process.env.PI_DESKTOP_TEST_UPDATER === "1";
   const updaterSupported =
@@ -358,7 +388,7 @@ void app.whenReady().then(async () => {
         const shouldNotify = !win || !win.isVisible() || !win.isFocused();
         if (shouldNotify && Notification.isSupported()) {
           const notification = new Notification({
-            title: "Pi Agent Desktop update available",
+            title: "Pi Worktable update available",
             body: state.availableVersion
               ? `Version ${state.availableVersion} is ready to download.`
               : "A new version is ready to download.",
@@ -374,7 +404,7 @@ void app.whenReady().then(async () => {
 
   // Always register app:// so we can load the built renderer without Vite
   // (npm start after build, or dev fallback when VITE_DEV_SERVER_URL is unset).
-  handleAppProtocol(rendererRootPath());
+  handleAppProtocol();
 
   // Preload node-pty so the first in-app terminal opens instantly.
   warmupDesktopTerminals();
@@ -394,7 +424,6 @@ void app.whenReady().then(async () => {
     chooseCustomTool: (capability, executable) => toolchainManager!.registerCustomTool(capability, executable),
     setChannelCredential: (payload) =>
       credentialVault.set(`channel:${payload.channel}:${payload.accountId}`, payload.credential),
-    getBrowserService: () => browserService,
     updateManager,
   });
   installAppMenu(getMainWindow, () => openUpdateSettings(true));
@@ -406,9 +435,41 @@ void app.whenReady().then(async () => {
     nativeTheme.themeSource = ui.theme;
   }
 
-  hostManager = new HostManager(resolveHostEntry());
+  // Resolved per spawn, so a hot update installed while the app runs is used on the next restart.
+  hostManager = new HostManager(() => resolveHostEntry());
+
+  // Hot-update overlay: when the writable runtime dir changes, restart the host
+  // or reload the UI in place, without quitting the app. A host restart drops
+  // every in-flight turn, so it waits for the running sessions to finish.
+  const notifyHotUpdate = (pending: boolean) => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      win.webContents.send("host:hot-update", { pending });
+    }
+  };
+  const applyHotUpdate = () => {
+    pendingHotUpdate = false;
+    hostManager?.restart("hot-update");
+  };
+  const requestHotUpdate = () => {
+    if (!hostManager) return;
+    if (runningAgentSessionCount === 0) {
+      applyHotUpdate();
+      return;
+    }
+    if (!pendingHotUpdate) {
+      pendingHotUpdate = true;
+      appendMainLog(`hot update pending: ${runningAgentSessionCount} session(s) still running`);
+      notifyHotUpdate(true);
+    }
+  };
+  startRuntimeWatcher({
+    restartHost: () => requestHotUpdate(),
+    reloadRenderer: () => {
+      const win = getMainWindow();
+      if (win && !win.isDestroyed()) win.webContents.reload();
+    },
+  });
   hostManager.setToolchainSnapshot(toolchainManager.getSnapshot());
-  hostManager.setBrowserCapabilitySnapshot(browserService.getCapabilitySnapshot());
   const credentialRequestHandler = createCredentialRequestHandler(credentialVault);
   hostManager.setRequestHandler(async (method, params) => {
     if (method.startsWith("channelSecrets.")) return credentialRequestHandler(method, params);
@@ -427,9 +488,6 @@ void app.whenReady().then(async () => {
       }
       return toolchainManager!.resolveForProject(body.cwd, { intent: body.intent, trusted: body.trusted });
     }
-    if (method.startsWith("browser.")) {
-      return browserService!.handleHostRequest(method, params);
-    }
     throw new Error(`Unsupported Host request: ${method}`);
   });
   hostManager.setStatusListener((status, detail) => {
@@ -443,7 +501,6 @@ void app.whenReady().then(async () => {
       runningAgentSessionCount = 0;
       setTrayRunningCount(0, getMainWindow);
       updateManager?.setRunningSessionCount(0);
-      browserService?.onHostStopped();
     }
     for (const win of BrowserWindow.getAllWindows()) {
       win.webContents.send("host:status", { status, detail });
@@ -463,6 +520,12 @@ void app.whenReady().then(async () => {
       runningAgentSessionCount = ids.length;
       setTrayRunningCount(ids.length, getMainWindow);
       updateManager?.setRunningSessionCount(ids.length);
+      // The wait for a hot update is over: nothing is mid-turn any more.
+      if (pendingHotUpdate && ids.length === 0) {
+        appendMainLog("hot update pending: sessions idle, restarting the host");
+        notifyHotUpdate(false);
+        applyHotUpdate();
+      }
     } else if (msg.type === "agent-end") {
       const sessionId = String(msg.sessionId ?? "");
       // Notify if no focused window or window is hidden (desktop value-add)
@@ -512,19 +575,6 @@ app.on("before-quit", () => {
   destroyTray();
   hostManager?.stop();
   disposeDesktopTerminals();
-  void browserService?.dispose();
-});
-
-app.on("certificate-error", (event, webContents, url, _error, _certificate, callback) => {
-  try {
-    const hostname = new URL(url).hostname;
-    if (browserService?.handleCertificateError(webContents.id, hostname)) {
-      event.preventDefault();
-      callback(true);
-    }
-  } catch {
-    // Chromium's default certificate policy remains in force.
-  }
 });
 
 app.on("window-all-closed", () => {
@@ -539,8 +589,8 @@ app.on("window-all-closed", () => {
 // Deep link registration
 if (process.defaultApp) {
   if (process.argv.length >= 2) {
-    app.setAsDefaultProtocolClient("pi-agent-desktop", process.execPath, [path.resolve(process.argv[1])]);
+    app.setAsDefaultProtocolClient("pi-worktable", process.execPath, [path.resolve(process.argv[1])]);
   }
 } else {
-  app.setAsDefaultProtocolClient("pi-agent-desktop");
+  app.setAsDefaultProtocolClient("pi-worktable");
 }

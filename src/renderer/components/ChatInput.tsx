@@ -27,6 +27,7 @@ import {
 import { FolderIcon, getFileIcon } from "./FileIcons";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useI18n } from "@/i18n";
+import { MAX_ATTACHED_IMAGES, shrinkImageFiles } from "@/lib/image-attachments";
 import type { ModelCatalogStatus } from "@contract/types";
 import { AUTO_COMPACT_HINT_TURNS, AUTO_COMPACT_TURN_THRESHOLD } from "@shared/auto-compact";
 
@@ -384,23 +385,13 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
       if (isStreaming) return;
       const imageFiles = files.filter((f) => f.type.startsWith("image/"));
       if (!imageFiles.length) return;
-      const newImages = await Promise.all(
-        imageFiles.map(
-          (file) =>
-            new Promise<AttachedImage>((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = () => {
-                const result = reader.result as string;
-                // result is "data:<mime>;base64,<data>"
-                const base64 = result.split(",")[1];
-                resolve({ data: base64, mimeType: file.type, previewUrl: URL.createObjectURL(file) });
-              };
-              reader.onerror = reject;
-              reader.readAsDataURL(file);
-            }),
-        ),
-      );
-      setAttachedImages((prev) => [...prev, ...newImages]);
+      try {
+        // Downscale before sending: a phone-sized photo is both expensive and often rejected.
+        const shrunk = await shrinkImageFiles(imageFiles);
+        setAttachedImages((prev) => [...prev, ...shrunk].slice(0, MAX_ATTACHED_IMAGES));
+      } catch (error) {
+        console.error("[pi-desktop] attaching an image failed:", error);
+      }
     },
     [isStreaming],
   );
@@ -972,6 +963,14 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
   // Always show the compaction control for any chat (even empty ones) so the
   // manual action is permanently discoverable, never gated on message count.
   const showCompactHint = Boolean(onCompactMemory || onShowMemory);
+  /**
+   * `isCompacting` is pi's flag and is true for both operations, so each button
+   * must subtract the other's scope: otherwise a memory compaction paints the
+   * context button red and lets it cancel a run it did not start.
+   */
+  const isContextCompacting = Boolean(isCompacting) && !isMemoryCompacting;
+  const memoryCompactDisabled = isContextCompacting || (isStreaming && !isMemoryCompacting);
+  const contextCompactDisabled = isMemoryCompacting || (isStreaming && !isContextCompacting);
   const compactIsNearLimit = conversationTurns >= compactHintAt;
   const compactBarText =
     conversationTurns >= compactThreshold
@@ -1356,18 +1355,18 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
             <button
               type="button"
               onClick={() => (isMemoryCompacting ? onAbortCompaction?.() : onCompactMemory?.())}
-              disabled={isStreaming && !isCompacting}
+              disabled={memoryCompactDisabled}
               style={{
                 flexShrink: 0,
                 padding: "3px 10px",
-                background: isCompacting ? "rgba(239,68,68,0.1)" : "var(--accent)",
-                border: isCompacting ? "1px solid rgba(239,68,68,0.3)" : "none",
+                background: isMemoryCompacting ? "rgba(239,68,68,0.1)" : "var(--accent)",
+                border: isMemoryCompacting ? "1px solid rgba(239,68,68,0.3)" : "none",
                 borderRadius: 5,
-                color: isCompacting ? "#ef4444" : "#fff",
-                cursor: isStreaming && !isCompacting ? "not-allowed" : "pointer",
+                color: isMemoryCompacting ? "#ef4444" : "#fff",
+                cursor: memoryCompactDisabled ? "not-allowed" : "pointer",
                 fontSize: 12,
                 fontWeight: 600,
-                opacity: isStreaming && !isCompacting ? 0.5 : 1,
+                opacity: memoryCompactDisabled ? 0.5 : 1,
               }}
             >
               {isMemoryCompacting ? t("compacting", "Compacting…") : t("compactNow", "Compact to memory")}
@@ -2529,10 +2528,10 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                     type="button"
                     onClick={() => {
                       closeControlDropdowns();
-                      if (isCompacting) onAbortCompaction?.();
+                      if (isContextCompacting) onAbortCompaction?.();
                       else onCompactContext();
                     }}
-                    disabled={isStreaming && !isCompacting}
+                    disabled={contextCompactDisabled}
                     style={{
                       display: "flex",
                       alignItems: "center",
@@ -2541,28 +2540,36 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                       padding: isMobile ? 0 : "0 9px",
                       minWidth: 32,
                       height: 32,
-                      background: isCompacting ? "rgba(239,68,68,0.08)" : "var(--bg-panel)",
-                      border: `1px solid ${isCompacting ? "rgba(239,68,68,0.3)" : "var(--border)"}`,
+                      background: isContextCompacting ? "rgba(239,68,68,0.08)" : "var(--bg-panel)",
+                      border: `1px solid ${isContextCompacting ? "rgba(239,68,68,0.3)" : "var(--border)"}`,
                       borderRadius: 9,
-                      color: isCompacting ? "#ef4444" : "var(--text-muted)",
-                      cursor: isStreaming && !isCompacting ? "not-allowed" : "pointer",
+                      color: isContextCompacting ? "#ef4444" : "var(--text-muted)",
+                      cursor: contextCompactDisabled ? "not-allowed" : "pointer",
                       fontSize: 12,
-                      opacity: isStreaming && !isCompacting ? 0.5 : 1,
+                      opacity: contextCompactDisabled ? 0.5 : 1,
                       transition: "background 0.12s, color 0.12s",
                     }}
                     onMouseEnter={(e) => {
-                      if (isStreaming && !isCompacting) return;
-                      e.currentTarget.style.background = isCompacting ? "rgba(239,68,68,0.16)" : "var(--bg-hover)";
-                      e.currentTarget.style.color = isCompacting ? "#ef4444" : "var(--text)";
+                      if (contextCompactDisabled) return;
+                      e.currentTarget.style.background = isContextCompacting
+                        ? "rgba(239,68,68,0.16)"
+                        : "var(--bg-hover)";
+                      e.currentTarget.style.color = isContextCompacting ? "#ef4444" : "var(--text)";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = isCompacting ? "rgba(239,68,68,0.08)" : "var(--bg-panel)";
-                      e.currentTarget.style.color = isCompacting ? "#ef4444" : "var(--text-muted)";
+                      e.currentTarget.style.background = isContextCompacting
+                        ? "rgba(239,68,68,0.08)"
+                        : "var(--bg-panel)";
+                      e.currentTarget.style.color = isContextCompacting ? "#ef4444" : "var(--text-muted)";
                     }}
-                    title={isCompacting ? t("stopCompaction", "Stop compaction") : t("compact", "Compact context")}
-                    aria-label={isCompacting ? t("stopCompaction", "Stop compaction") : t("compact", "Compact context")}
+                    title={
+                      isContextCompacting ? t("stopCompaction", "Stop compaction") : t("compact", "Compact context")
+                    }
+                    aria-label={
+                      isContextCompacting ? t("stopCompaction", "Stop compaction") : t("compact", "Compact context")
+                    }
                   >
-                    {isCompacting ? (
+                    {isContextCompacting ? (
                       <>
                         <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                           <rect x="2" y="2" width="6" height="6" rx="1" fill="currentColor" />

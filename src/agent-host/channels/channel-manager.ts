@@ -466,7 +466,7 @@ export class ChannelManager {
           secret,
           peerId: pairing.peerId,
           contextToken,
-          text: "Pi Agent Desktop 配对已批准，现在可以开始对话。",
+          text: "Pi Worktable 配对已批准，现在可以开始对话。",
         })
         .catch((error) => {
           this.log(`[${account.id}] pairing approval notification failed: ${safeChannelError(error)}`);
@@ -836,7 +836,7 @@ export class ChannelManager {
       contextToken: envelope.providerContext?.contextToken,
       threadId: envelope.threadId,
       replyToMessageId: envelope.providerContext?.replyToMessageId,
-      text: `Pi Agent Desktop 配对码：${pairing.code}\n请在桌面应用的“设置 → 消息渠道”中批准此请求。`,
+      text: `Pi Worktable 配对码：${pairing.code}\n请在桌面应用的“设置 → 消息渠道”中批准此请求。`,
     });
     this.state.addDelivery(receipt);
   }

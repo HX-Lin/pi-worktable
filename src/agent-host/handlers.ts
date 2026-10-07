@@ -16,10 +16,12 @@ import {
   writeFileSync,
 } from "fs";
 import { homedir, tmpdir } from "os";
+import { randomUUID } from "node:crypto";
 import path from "path";
 import {
   DefaultResourceLoader,
   CredentialSynchronizationError,
+  ModelRegistry,
   ModelRuntime,
   SessionManager,
   createAgentSessionServices,
@@ -82,9 +84,19 @@ import type { ContextFoldCommand } from "../shared/api-types";
 import { applyFoldCommand, emptyFoldSnapshot, peekFoldSession } from "./context-fold";
 import { readJevConfig, setJevKey, testJevChannel, updateJevConfig } from "./jev/service";
 import { readMemoryOverview } from "./memory-store";
-import { callMain } from "./parent-rpc";
 import { createAuthLoginService, resolveLoginCode } from "./auth-login";
 import { getSharedModelRuntime, modelCatalogRefreshCoordinator, reloadSharedModelRuntimeConfig } from "./model-runtime";
+import { writeInterruptedSnapshot } from "./resume-interrupted";
+import {
+  patchMcpServer,
+  readMcpConfig,
+  removeMcpServer,
+  runPiMcpCommand,
+  setAutoEnableCodemode,
+  setMcpServer,
+  type McpExposure,
+  type McpScope,
+} from "./mcp-config";
 import { applyPluginAction, readPlugins } from "./plugins-service";
 import { installSkill, searchSkills } from "./skills-service";
 import { projectSessionTreeForResponse } from "./project-tree";
@@ -295,6 +307,21 @@ function filterByExactEnabledModels<T extends { id: string; provider: string }>(
   return visible.length > 0 ? visible : available;
 }
 
+/**
+ * Environment credentials are resolved by Pi at request time, but they are not
+ * connections the desktop app manages. Keep the provider available to add, yet
+ * never report it as already configured: the Models panel has no way to remove an
+ * environment credential, which previously left a "configured" provider whose
+ * Disconnect button did nothing.
+ */
+export function describeApiKeyProviderAuth(status: { configured: boolean; source?: string; label?: string }): {
+  configured: boolean;
+  environmentSource?: string;
+} {
+  if (status.source !== "environment") return { configured: status.configured };
+  return { configured: false, environmentSource: status.label ?? "environment" };
+}
+
 export async function credentialMutationFailure(
   modelRuntime: ModelRuntime,
   providerId: string,
@@ -312,6 +339,16 @@ export async function credentialMutationFailure(
     throw new RpcError({ code: "INTERNAL", message: `Credential change for ${providerId} could not be verified` });
   }
   throw new RpcError({ code: "BAD_REQUEST", message: error instanceof Error ? error.message : String(error) });
+}
+
+/**
+ * The extension-facing registry view of the shared host runtime.
+ *
+ * Jev is reached through pi's classifier API, and a `ModelRegistry` is what an extension context
+ * hands out, so the host-level probes use the same facade the gate and the router see.
+ */
+async function jevModelRegistry(): Promise<ModelRegistry> {
+  return new ModelRegistry(await getSharedModelRuntime());
 }
 
 function resolveModelsCwd(params: { cwd?: string } | void): string {
@@ -378,6 +415,8 @@ export function registerHandlers(server: RpcServer): () => Promise<void> {
     } catch {
       /* ignore */
     }
+    // Remember what was mid-turn, so a restart can continue it instead of dropping the work.
+    writeInterruptedSnapshot(process.env.PI_DESKTOP_USER_DATA, ids);
   });
 
   server.handle({
@@ -461,7 +500,15 @@ export function registerHandlers(server: RpcServer): () => Promise<void> {
         if (!filePath) throw new RpcError({ code: "NOT_FOUND", message: "Session not found" });
 
         const openStartedAt = performance.now();
-        const { manager: sm, entries } = getSessionContentSnapshot(filePath);
+        // A session with a running turn is being appended to; its live entries are consistent and
+        // fresher than a file read, and reading the file mid-turn is exactly when it is unstable.
+        const liveSnapshot = getRpcSession(id)?.liveSnapshot() ?? null;
+        const { manager: sm, entries } = liveSnapshot
+          ? {
+              manager: liveSnapshot.manager,
+              entries: liveSnapshot.entries as unknown as ReturnType<typeof getSessionContentSnapshot>["entries"],
+            }
+          : getSessionContentSnapshot(filePath);
         const openMs = performance.now() - openStartedAt;
 
         const contextStartedAt = performance.now();
@@ -622,19 +669,67 @@ export function registerHandlers(server: RpcServer): () => Promise<void> {
       return { content: lines.join("\n"), suggestedName: `session-${id}.md` };
     },
 
-    "jev.getConfig": async () => readJevConfig(),
+    "jev.getConfig": async () => readJevConfig(await jevModelRegistry()),
 
     "jev.updateConfig": async (params) => {
       const { patch } = params as { patch?: unknown };
-      return updateJevConfig(patch ?? {});
+      return updateJevConfig(patch ?? {}, await jevModelRegistry());
     },
 
     "jev.setKey": async (params) => {
       const { apiKey } = params as { apiKey?: string };
-      return setJevKey(typeof apiKey === "string" ? apiKey : "");
+      return setJevKey(typeof apiKey === "string" ? apiKey : "", await jevModelRegistry());
     },
 
-    "jev.test": async () => testJevChannel(),
+    "jev.test": async () => testJevChannel(await jevModelRegistry()),
+
+    "mcp.getConfig": async (params) => readMcpConfig(resolveModelsCwd(params as { cwd?: string } | void)),
+
+    "mcp.setServer": async (params) => {
+      const { cwd, name, config, scope } = params as {
+        cwd?: string;
+        name: string;
+        config: Record<string, unknown>;
+        scope?: McpScope;
+      };
+      const root = resolveModelsCwd({ cwd });
+      setMcpServer(root, name, config, scope ?? "global");
+      return readMcpConfig(root);
+    },
+
+    "mcp.patchServer": async (params) => {
+      const { cwd, name, patch, scope } = params as {
+        cwd?: string;
+        name: string;
+        patch: { enabled?: boolean; exposure?: McpExposure; description?: string | null };
+        scope?: McpScope;
+      };
+      const root = resolveModelsCwd({ cwd });
+      patchMcpServer(root, name, patch, scope ?? "global");
+      return readMcpConfig(root);
+    },
+
+    "mcp.removeServer": async (params) => {
+      const { cwd, name, scope } = params as { cwd?: string; name: string; scope?: McpScope };
+      const root = resolveModelsCwd({ cwd });
+      removeMcpServer(root, name, scope ?? "global");
+      return readMcpConfig(root);
+    },
+
+    "mcp.setAutoEnableCodemode": async (params) => {
+      const { cwd, value, scope } = params as { cwd?: string; value: boolean; scope?: McpScope };
+      const root = resolveModelsCwd({ cwd });
+      setAutoEnableCodemode(root, value, scope ?? "global");
+      return readMcpConfig(root);
+    },
+
+    "mcp.runCommand": async (params) => {
+      const { cwd, args } = params as { cwd?: string; args: string[] };
+      if (!Array.isArray(args) || args.some((arg) => typeof arg !== "string")) {
+        throw new RpcError({ code: "BAD_REQUEST", message: "args must be an array of strings" });
+      }
+      return runPiMcpCommand(args, { cwd: resolveModelsCwd({ cwd }) });
+    },
 
     "context.map": async (params) => {
       const { sessionId } = params as { sessionId: string };
@@ -691,7 +786,6 @@ export function registerHandlers(server: RpcServer): () => Promise<void> {
       invalidateSessionContent(filePath);
       const deletedSession = sessionIndex.removePath(filePath);
       invalidateSessionPathCache(id);
-      void callMain("browser.sessionEnded", { sessionId: id }).catch(() => undefined);
       server.emit("sessions.changed", id, {
         cwd: deletedSession?.cwd ?? null,
         sessionId: id,
@@ -1300,6 +1394,14 @@ export function registerHandlers(server: RpcServer): () => Promise<void> {
         const timeout = setTimeout(() => controller.abort(), TEST_TIMEOUT_MS);
         let status: number | undefined;
         const startedAt = Date.now();
+        const testSessionId = `pi-desktop-model-test-${randomUUID()}`;
+        const configuredBaseUrl = [body.model.baseUrl, body.provider.baseUrl]
+          .find((value): value is string => typeof value === "string" && value.trim().length > 0)
+          ?.toLowerCase();
+        const isOpenCodeEndpoint =
+          providerName === "opencode" ||
+          providerName === "opencode-go" ||
+          configuredBaseUrl?.includes("opencode.ai") === true;
         try {
           const message = await modelRuntime.completeSimple(
             model,
@@ -1317,6 +1419,13 @@ export function registerHandlers(server: RpcServer): () => Promise<void> {
               timeoutMs: TEST_TIMEOUT_MS,
               maxRetries: 0,
               cacheRetention: "none",
+              // OpenCode Go requires x-opencode-session for request routing. The
+              // normal agent path supplies the session id, but this standalone
+              // model probe has no AgentSession, so give it an isolated id.
+              sessionId: testSessionId,
+              ...(isOpenCodeEndpoint
+                ? { headers: { "x-opencode-session": testSessionId, "x-opencode-client": "pi" } }
+                : {}),
               signal: controller.signal,
               onResponse: (response: { status: number }) => {
                 status = response.status;
@@ -1403,7 +1512,7 @@ export function registerHandlers(server: RpcServer): () => Promise<void> {
         result.push({
           id: model.provider,
           displayName: provider.name,
-          configured: status.configured,
+          ...describeApiKeyProviderAuth(status),
           source: status.label ?? status.source,
           modelCount: all.filter((candidate) => candidate.provider === model.provider).length,
         });

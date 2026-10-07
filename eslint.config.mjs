@@ -4,7 +4,7 @@ import prettier from "eslint-config-prettier";
 import reactHooks from "eslint-plugin-react-hooks";
 import tseslint from "typescript-eslint";
 
-const sourceFiles = ["src/**/*.{ts,tsx}"];
+const sourceFiles = ["src/**/*.{ts,tsx}", "web/src/**/*.{ts,tsx}"];
 
 export default tseslint.config(
   {
@@ -53,7 +53,7 @@ export default tseslint.config(
     files: ["**/*.{ts,tsx}"],
   })),
   {
-    files: ["src/**/*.{ts,tsx,mjs}", "scripts/**/*.mjs", "*.{ts,mjs}"],
+    files: ["src/**/*.{ts,tsx,mjs}", "web/**/*.{ts,tsx}", "scripts/**/*.mjs", "*.{ts,mjs}"],
     plugins: {
       "@eslint-community/eslint-comments": eslintComments,
     },
@@ -65,7 +65,7 @@ export default tseslint.config(
     files: sourceFiles,
     languageOptions: {
       parserOptions: {
-        project: ["./tsconfig.json", "./tsconfig.renderer.json"],
+        project: ["./tsconfig.json", "./tsconfig.renderer.json", "./web/tsconfig.json"],
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -84,7 +84,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ["src/renderer/**/*.{ts,tsx}"],
+    files: ["src/renderer/**/*.{ts,tsx}", "web/src/**/*.{ts,tsx}"],
     plugins: {
       "react-hooks": reactHooks,
     },

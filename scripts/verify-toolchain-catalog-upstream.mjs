@@ -12,7 +12,7 @@ const components = catalogs.flatMap((catalog) => catalog.components);
 const githubToken = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
 const headers = {
   Accept: "application/vnd.github+json",
-  "User-Agent": "Pi-Agent-Desktop-Toolchain-Catalog-Release-Check",
+  "User-Agent": "Pi-Worktable-Toolchain-Catalog-Release-Check",
   ...(githubToken ? { Authorization: `Bearer ${githubToken}` } : {}),
 };
 

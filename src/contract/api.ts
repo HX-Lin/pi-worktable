@@ -18,7 +18,14 @@ import type {
   TestResult,
   WorktreeInfo,
 } from "./types";
-import type { JevConfigPayload, JevTestResult } from "../shared/api-types";
+import type {
+  JevConfigPayload,
+  JevTestResult,
+  McpCommandResultPayload,
+  McpConfigPayload,
+  McpExposurePayload,
+  McpScopePayload,
+} from "../shared/api-types";
 import type {
   ContextFoldCommand,
   ContextFoldResult,
@@ -220,6 +227,37 @@ export interface Api {
   "jev.test": {
     params: void;
     result: JevTestResult;
+  };
+
+  "mcp.getConfig": {
+    params: { cwd?: string } | void;
+    result: McpConfigPayload;
+  };
+  "mcp.setServer": {
+    params: { cwd?: string; name: string; config: Record<string, unknown>; scope?: McpScopePayload };
+    result: McpConfigPayload;
+  };
+  "mcp.patchServer": {
+    params: {
+      cwd?: string;
+      name: string;
+      patch: { enabled?: boolean; exposure?: McpExposurePayload; description?: string | null };
+      scope?: McpScopePayload;
+    };
+    result: McpConfigPayload;
+  };
+  "mcp.removeServer": {
+    params: { cwd?: string; name: string; scope?: McpScopePayload };
+    result: McpConfigPayload;
+  };
+  "mcp.setAutoEnableCodemode": {
+    params: { cwd?: string; value: boolean; scope?: McpScopePayload };
+    result: McpConfigPayload;
+  };
+  /** `list` reports live state and tools; `login`/`logout` drive OAuth through pi's own flow. */
+  "mcp.runCommand": {
+    params: { cwd?: string; args: string[] };
+    result: McpCommandResultPayload;
   };
 
   "context.map": {
