@@ -348,6 +348,17 @@ function GateSection({
           <option value="allow">{t("jevUncertainAllow", "Allow")}</option>
         </select>
       </Row>
+      <Row label={t("jevGateUnavailable", "Classifier unavailable")}>
+        <select
+          value={gate.onUnavailable}
+          disabled={busy}
+          onChange={(event) => void patchGate({ onUnavailable: event.target.value })}
+          style={selectStyle}
+        >
+          <option value="skip">{t("jevUnavailableSkip", "Skip the gate (recommended)")}</option>
+          <option value="block">{t("jevUnavailableBlock", "Block the call")}</option>
+        </select>
+      </Row>
       <Row label={t("jevGateTimeout", "Per-attempt timeout (ms)")}>
         <input
           type="number"

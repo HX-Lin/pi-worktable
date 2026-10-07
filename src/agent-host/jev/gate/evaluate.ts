@@ -31,7 +31,21 @@ import {
   unique,
 } from "./policy";
 import { extractRecentIntent } from "./intent";
+import { SKIPPABLE_UNAVAILABLE_REASONS } from "./engine";
 import type { DecisionRecord } from "./record";
+
+/**
+ * The transport's structured failure reason, read without importing the error class.
+ *
+ * `JevUnavailableError` carries the reason the request failed; recognising it by shape keeps this
+ * module independent of the transport (and unit-testable on its own).
+ */
+function unavailableReasonOf(error: unknown): string {
+  const candidate = error as { name?: unknown; reason?: unknown } | null | undefined;
+  return candidate?.name === "JevUnavailableError" && typeof candidate.reason === "string"
+    ? candidate.reason
+    : "engine_error";
+}
 
 /** The scope's own label for "nothing vouches for this call". */
 export const NOT_KNOWN_SAFE_REASON = "not on the known-safe list";
@@ -47,6 +61,8 @@ export interface GateSettings {
   enabled: boolean;
   scope: "all" | "matched";
   uncertain: "deny" | "ask" | "allow";
+  /** What an unavailable decision engine resolves to. */
+  onUnavailable: "skip" | "block";
   safeCommands: readonly string[];
   allowedCommands: readonly string[];
   disallowedCommands: readonly string[];
@@ -229,12 +245,15 @@ export async function evaluateToolCall(
   let verdict: EngineVerdict;
   try {
     verdict = await deps.engine.judge(input, { signal: ctx.signal });
-  } catch {
-    // An engine that throws is an engine that cannot decide. Fail closed.
+  } catch (error) {
+    // An engine that throws is an engine that cannot decide. Keep the reason the transport
+    // reported (rate limit, network, an answer that cannot be used) so `onUnavailable` can tell a
+    // transient outage from a real ambiguity instead of treating every failure the same.
+    const reason = unavailableReasonOf(error);
     verdict = {
       verdict: "unavailable",
-      reason: "engine_error",
-      rationale: "The decision engine threw an error.",
+      reason,
+      rationale: error instanceof Error ? error.message : "The decision engine threw an error.",
     };
   }
 
@@ -278,6 +297,18 @@ export async function evaluateToolCall(
 
     case "unavailable": {
       const rationale = `No decision was available (${verdict.reason}): ${verdict.rationale}`;
+      // A classifier that is rate limited, unreachable or timing out must not block every tool
+      // call. An answer it *did* give but that cannot be used stays fail-closed.
+      if (settings.onUnavailable === "skip" && SKIPPABLE_UNAVAILABLE_REASONS.has(verdict.reason)) {
+        return permit(deps, {
+          call,
+          reasons,
+          status: "allowed",
+          source: "unavailable",
+          rationale: `${rationale}. The gate was skipped because the classifier was unavailable.`,
+          evidence,
+        });
+      }
       return blocked(
         deps,
         { call, reasons, status: "blocked", source: "unavailable", rationale, evidence },

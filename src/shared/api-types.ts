@@ -90,6 +90,8 @@ export interface JevSettingsPayload {
     enabled: boolean;
     scope: "all" | "matched";
     uncertain: "deny" | "ask" | "allow";
+    /** What an unavailable classifier resolves to: skip the gate or block the call. */
+    onUnavailable: "skip" | "block";
     timeoutMs: number;
     maxRetries: number;
     safeCommands: string[];

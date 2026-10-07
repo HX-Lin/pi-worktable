@@ -20,11 +20,28 @@ import { evaluateToolCall, type GateContext, type GateSettings } from "./evaluat
 import { getJevRuntime } from "../service";
 import { readJevSettings, type JevGateSettings } from "../settings";
 
+/**
+ * How often an unavailable gate may announce itself.
+ *
+ * A rate-limited classifier fails on every tool call, so an unconditional notification would bury
+ * the conversation in identical toasts.
+ */
+const UNAVAILABLE_NOTICE_COOLDOWN_MS = 60_000;
+let lastUnavailableNoticeAt = 0;
+
+function notifyUnavailable(ctx: ExtensionContext, message: string): void {
+  const now = Date.now();
+  if (now - lastUnavailableNoticeAt < UNAVAILABLE_NOTICE_COOLDOWN_MS) return;
+  lastUnavailableNoticeAt = now;
+  ctx.ui.notify(message, "warning");
+}
+
 export function gateSettingsToSettings(gate: JevGateSettings, policyNotes: string): GateSettings {
   return {
     enabled: gate.enabled,
     scope: gate.scope,
     uncertain: gate.uncertain,
+    onUnavailable: gate.onUnavailable,
     safeCommands: gate.safeCommands,
     allowedCommands: gate.allowedCommands,
     disallowedCommands: gate.disallowedCommands,
@@ -121,8 +138,14 @@ export const JEV_GATE_EXTENSION: InlineExtension = {
           { engine: await engineFor(ctx), record, now: () => Date.now() },
         );
       } catch (error) {
-        // The gate never lets its own failure become an approval.
         const message = error instanceof Error ? error.message : String(error);
+        if (settings.gate.onUnavailable === "skip") {
+          // The gate itself could not run (no engine, provider failure, …). Skip rather than block
+          // every call, but say so once in a while so the outage stays visible.
+          notifyUnavailable(ctx, `jev auto mode unavailable (${message}); skipping the gate for this call`);
+          return undefined;
+        }
+        // The gate never lets its own failure become an approval.
         ctx.ui.notify(`jev auto mode failed (${message}); blocking the call`, "error");
         return { block: true, reason: `Jev auto mode could not decide: ${message}` };
       }

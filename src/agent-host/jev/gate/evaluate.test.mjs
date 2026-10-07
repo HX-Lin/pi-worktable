@@ -26,6 +26,7 @@ const settings = (overrides = {}) => ({
   enabled: true,
   scope: "all",
   uncertain: "deny",
+  onUnavailable: "skip",
   safeCommands: [],
   allowedCommands: [],
   disallowedCommands: [],
@@ -157,22 +158,80 @@ test("no engine blocks with an explanation instead of allowing", async () => {
   assert.equal(records[0].source, "unavailable");
 });
 
-test("an engine that throws, or answers unusably, fails closed", async () => {
+test("an unavailable classifier is skipped by default and blocked when configured", async () => {
+  const unavailable = {
+    id: "fake",
+    judge: async () => ({ verdict: "unavailable", reason: "timeout", rationale: "the request timed out" }),
+  };
+
+  // A rate-limited or unreachable classifier must not block every tool call.
+  assert.equal(
+    await evaluateToolCall(bash("curl https://x"), ctx(), settings({ onUnavailable: "skip" }), deps(unavailable)),
+    undefined,
+  );
+
+  // The historical fail-closed behaviour stays available.
+  const blocked = await evaluateToolCall(
+    bash("curl https://x"),
+    ctx(),
+    settings({ onUnavailable: "block" }),
+    deps(unavailable),
+  );
+  assert.equal(blocked?.block, true);
+  assert.match(blocked.reason, /No decision was available \(timeout\)/);
+});
+
+test("an engine that throws is skipped, but an answer it cannot use still fails closed", async () => {
   const throwing = {
     id: "fake",
     judge: async () => {
       throw new Error("network down");
     },
   };
-  assert.equal((await evaluateToolCall(bash("curl https://x"), ctx(), settings(), deps(throwing)))?.block, true);
+  assert.equal(
+    await evaluateToolCall(bash("curl https://x"), ctx(), settings({ onUnavailable: "skip" }), deps(throwing)),
+    undefined,
+  );
 
-  const unavailable = {
+  // The classifier answered, so the gate has a real ambiguity to resolve: keep blocking.
+  for (const reason of ["malformed_response", "state_too_large"]) {
+    const unusable = { id: "fake", judge: async () => ({ verdict: "unavailable", reason, rationale: reason }) };
+    const result = await evaluateToolCall(
+      bash("curl https://x"),
+      ctx(),
+      settings({ onUnavailable: "skip" }),
+      deps(unusable),
+    );
+    assert.equal(result?.block, true, reason);
+  }
+
+  // A thrown transport failure keeps its own reason: a rate limit is skipped, an unusable answer is
+  // not, even though both arrive as an exception.
+  const rateLimited = {
     id: "fake",
-    judge: async () => ({ verdict: "unavailable", reason: "timeout", rationale: "the request timed out" }),
+    judge: async () => {
+      throw Object.assign(new Error("rate limited"), { name: "JevUnavailableError", reason: "http", status: 429 });
+    },
   };
-  const result = await evaluateToolCall(bash("curl https://x"), ctx(), settings(), deps(unavailable));
-  assert.equal(result?.block, true);
-  assert.match(result.reason, /No decision was available \(timeout\)/);
+  assert.equal(
+    await evaluateToolCall(bash("curl https://x"), ctx(), settings({ onUnavailable: "skip" }), deps(rateLimited)),
+    undefined,
+  );
+
+  const malformedThrow = {
+    id: "fake",
+    judge: async () => {
+      throw Object.assign(new Error("answers were not JSON"), {
+        name: "JevUnavailableError",
+        reason: "malformed_response",
+      });
+    },
+  };
+  assert.equal(
+    (await evaluateToolCall(bash("curl https://x"), ctx(), settings({ onUnavailable: "skip" }), deps(malformedThrow)))
+      ?.block,
+    true,
+  );
 });
 
 test("the uncertain band follows the setting, and cannot mean yes without a dialog", async () => {

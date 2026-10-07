@@ -50,6 +50,7 @@ test("the gate thresholds keep a middle band and the gate stays fail-closed", ()
     gate: {
       enabled: true,
       uncertain: "whatever",
+      onUnavailable: "whatever",
       timeoutMs: 10,
       maxRetries: 99,
       // 0.5 closes the band, > 1 is impossible: both are dropped.
@@ -58,6 +59,7 @@ test("the gate thresholds keep a middle band and the gate stays fail-closed", ()
   });
 
   assert.equal(settings.gate.uncertain, "deny");
+  assert.equal(settings.gate.onUnavailable, "skip");
   assert.equal(settings.gate.timeoutMs, 500);
   assert.equal(settings.gate.maxRetries, 5);
   assert.deepEqual(settings.gate.thresholds, { intent_coverage: 0.7 });

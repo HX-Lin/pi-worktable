@@ -46,6 +46,16 @@ const UNAVAILABLE_TEXT: Record<string, string> = {
   unknown: "the Jev request failed for an unknown reason",
 };
 
+/**
+ * Reasons that mean the gate never got an answer, as opposed to an answer it cannot use.
+ *
+ * `onUnavailable: skip` lets these through so a rate limit or an outage does not block every tool
+ * call. `malformed_response` (the classifier answered unusably) and `state_too_large` (the call
+ * description is itself too big, which is common for the risky calls the gate exists for) stay
+ * fail-closed.
+ */
+export const SKIPPABLE_UNAVAILABLE_REASONS = new Set(["timeout", "network", "http", "unknown", "engine_error"]);
+
 function unavailable(reason: string, rationale?: string): EngineVerdict {
   return {
     verdict: "unavailable",

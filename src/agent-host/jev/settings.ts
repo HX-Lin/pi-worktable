@@ -20,6 +20,15 @@ export interface JevGateSettings {
   scope: "all" | "matched";
   /** What the middle band resolves to. `deny` keeps the gate fail-closed. */
   uncertain: "deny" | "ask" | "allow";
+  /**
+   * What an unavailable decision engine resolves to.
+   *
+   * `skip` lets the call through when the classifier is rate limited, unreachable, timing out or
+   * otherwise unable to answer, so a transient outage does not block every tool call. `block` keeps
+   * the historical fail-closed behaviour. An answer the classifier *did* give but that cannot be
+   * used is never a skip: see `SKIPPABLE_UNAVAILABLE_REASONS`.
+   */
+  onUnavailable: "skip" | "block";
   timeoutMs: number;
   maxRetries: number;
   safeCommands: string[];
@@ -84,6 +93,7 @@ export function defaultJevSettings(): JevSettings {
       enabled: false,
       scope: "all",
       uncertain: "deny",
+      onUnavailable: "skip",
       timeoutMs: 4000,
       maxRetries: 1,
       safeCommands: [],
@@ -180,6 +190,7 @@ export function normalizeJevSettings(raw: unknown): JevSettings {
       enabled: boolean(gate.enabled, defaults.gate.enabled),
       scope: oneOf(gate.scope, ["all", "matched"] as const, defaults.gate.scope),
       uncertain: oneOf(gate.uncertain, ["deny", "ask", "allow"] as const, defaults.gate.uncertain),
+      onUnavailable: oneOf(gate.onUnavailable, ["skip", "block"] as const, defaults.gate.onUnavailable),
       timeoutMs: number(gate.timeoutMs, defaults.gate.timeoutMs, 500, 60_000),
       maxRetries: number(gate.maxRetries, defaults.gate.maxRetries, 0, 5),
       safeCommands: stringList(gate.safeCommands),
