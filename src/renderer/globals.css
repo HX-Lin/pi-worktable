@@ -143,20 +143,6 @@ html.niri .right-panel-container :is(input, textarea) {
   text-shadow: none;
 }
 
-/* Embedded terminal: a translucent dark surface (kitty-style) so the
-   wallpaper glows through instead of the area looking like bare wallpaper
-   or pure black; characters get a soft shadow for readability. */
-html.niri .xterm {
-  background: rgba(10, 12, 18, 0.55);
-  text-shadow: 0 1px 2px rgba(4, 6, 12, 0.55);
-}
-html.niri .xterm-screen,
-html.niri .xterm-viewport,
-html.niri .xterm-rows,
-html.niri .xterm-scrollable-element {
-  background: transparent;
-}
-
 /* Theme toggle: circular wipe via View Transitions API.
    Disable the UA cross-fade; the actual clip-path animation is driven by
    Element.animate() in hooks/useTheme.ts after transition.ready resolves. */

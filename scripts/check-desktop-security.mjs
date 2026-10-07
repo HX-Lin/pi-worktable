@@ -15,15 +15,12 @@ const diagnostics = read("src/main/diagnostics.ts");
 const diagnosticsRedaction = read("src/main/diagnostics-redaction.ts");
 const fileViewer = read("src/renderer/components/FileViewer.tsx");
 const credentialVault = read("src/main/credential-vault.ts");
-const weixinChannelApi = read("src/agent-host/channels/adapters/weixin/api.ts");
-const telegramChannelApi = read("src/agent-host/channels/adapters/telegram/api.ts");
 const feishuChannelApi = read("src/agent-host/channels/adapters/feishu/api.ts");
 const channelManager = read("src/agent-host/channels/channel-manager.ts");
 const channelMediaStore = read("src/agent-host/channels/media-store.ts");
 const channelOutboundFiles = read("src/agent-host/channels/outbound-files.ts");
 const channelPiBridge = read("src/agent-host/channels/pi-session-bridge.ts");
 const rpcManager = read("src/agent-host/rpc-manager.ts");
-const weixinMedia = read("src/agent-host/channels/adapters/weixin/media.ts");
 const channelContract = read("src/contract/api.ts");
 const desktopContract = read("src/contract/desktop.ts");
 const desktopIpc = read("src/main/ipc.ts");
@@ -168,8 +165,6 @@ const checks = [
   [globals.includes("../contract/desktop"), "renderer globals must use the shared desktop bridge contract"],
   [credentialVault.includes("safeStorage.encryptString"), "channel credentials must use Electron safeStorage"],
   [credentialVault.includes("safeStorage.isEncryptionAvailable"), "channel credential persistence must fail closed"],
-  [!/(createServer|\.listen\s*\()/.test(weixinChannelApi), "Weixin MVP must not open a local listener"],
-  [!/(createServer|\.listen\s*\()/.test(telegramChannelApi), "Telegram polling must not open a local listener"],
   [!/(createServer|\.listen\s*\()/.test(feishuChannelApi), "Feishu WebSocket mode must not open a local listener"],
   [
     feishuChannelApi.includes("im.v1.messageResource.get") &&
@@ -194,10 +189,6 @@ const checks = [
       channelOutboundFiles.includes("isInside(canonical, root)") &&
       channelPiBridge.includes("collectOutboundFiles({ finalText: result.finalText, cwd })"),
     "linked-file delivery must remain inside the actual bound session workspace",
-  ],
-  [
-    weixinMedia.includes('url.protocol !== "https:"') && weixinMedia.includes('redirect: "error"'),
-    "Weixin media must use trusted HTTPS origins without cross-origin redirects",
   ],
   [
     channelPiBridge.includes("channelPromptText(envelope.text") && !channelPiBridge.includes("[外部消息来源："),

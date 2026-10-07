@@ -14,7 +14,6 @@ import { SessionSidebar } from "./SessionSidebar";
 import { ChatWindow } from "./ChatWindow";
 import { FileExplorer } from "./FileExplorer";
 import { FileViewer } from "./FileViewer";
-import { TerminalPanel } from "./TerminalPanel";
 import { WindowControls } from "./WindowControls";
 import { TabBar, type Tab } from "./TabBar";
 import { SettingsConfig, type SettingsTab } from "./SettingsConfig";
@@ -47,11 +46,6 @@ import type { ChannelsSnapshot } from "@shared/channel-types";
 
 type SessionCopyField = "file" | "id";
 const EXPLORER_TAB_ID = "explorer";
-const TERMINAL_TAB_PREFIX = "terminal-";
-
-function isTerminalTabId(id: string | null): boolean {
-  return typeof id === "string" && id.startsWith(TERMINAL_TAB_PREFIX);
-}
 const EMPTY_CHANNELS: ChannelsSnapshot = { accounts: [], statuses: [], pairings: [], bindings: [], activities: [] };
 
 function initialRightPanelPreferredWidth(): number {
@@ -204,9 +198,6 @@ export function AppShell() {
 
   // Right panel — file tabs only
   const [fileTabs, setFileTabs] = useState<Tab[]>([]);
-  // Embedded terminals are dynamic tabs created via the "+" button.
-  const [terminalTabs, setTerminalTabs] = useState<{ id: string; cwd: string }[]>([]);
-  const terminalCounterRef = useRef(0);
   const [activeFileTabId, setActiveFileTabId] = useState<string | null>(EXPLORER_TAB_ID);
   const [rightPanelOpen, setRightPanelOpen] = useState(false);
   const [rightPanelBounds, setRightPanelBounds] = useState(() =>
@@ -731,7 +722,7 @@ export function AppShell() {
     (tabId: string) => {
       setFileTabs((prev) => {
         const next = prev.filter((t) => t.id !== tabId);
-        if (next.length === 0 && terminalTabs.length === 0) setRightPanelOpen(false);
+        if (next.length === 0) setRightPanelOpen(false);
         return next;
       });
       setActiveFileTabId((cur) => {
@@ -740,38 +731,8 @@ export function AppShell() {
         return remaining.length > 0 ? remaining[remaining.length - 1].id : EXPLORER_TAB_ID;
       });
     },
-    [fileTabs, terminalTabs.length],
+    [fileTabs],
   );
-
-  const handleCloseTerminalTab = useCallback((tabId: string) => {
-    setTerminalTabs((prev) => prev.filter((t) => t.id !== tabId));
-    setActiveFileTabId((cur) => {
-      if (cur !== tabId) return cur;
-      return EXPLORER_TAB_ID;
-    });
-  }, []);
-
-  // Close a file tab or an embedded terminal tab depending on its id.
-  const handleCloseAnyTab = useCallback(
-    (tabId: string) => {
-      if (isTerminalTabId(tabId)) handleCloseTerminalTab(tabId);
-      else handleCloseFileTab(tabId);
-    },
-    [handleCloseFileTab, handleCloseTerminalTab],
-  );
-
-  // Open a new embedded terminal in the current project directory.
-  const handleAddTerminal = useCallback(() => {
-    const cwd = activeCwd ?? selectedSession?.cwd ?? newSessionCwd;
-    if (!cwd) return;
-    terminalCounterRef.current += 1;
-    const id = `${TERMINAL_TAB_PREFIX}${terminalCounterRef.current}`;
-    // The visible label is computed from the live index in allTabs below, so
-    // closing a terminal renumbers the survivors (1, 2, 3, …) instead of
-    // counting up forever.
-    setTerminalTabs((prev) => [...prev, { id, cwd }]);
-    setActiveFileTabId(id);
-  }, [activeCwd, selectedSession?.cwd, newSessionCwd]);
 
   // Show chat area if a session is selected, or if we have a cwd to start a new session in
   const effectiveNewSessionCwd = newSessionCwd ?? (selectedSession === null && activeCwd ? activeCwd : null);
@@ -785,18 +746,8 @@ export function AppShell() {
   // be absent); macOS keeps its native traffic lights.
   const showWindowControls = window.piBridge?.platform !== "darwin";
   const windowControlsWidth = showWindowControls ? 142 : 0;
-  // Merge embedded terminal tabs with file tabs for the shared TabBar.
-  // Terminal labels are derived from the live index so they always read
-  // "Terminal 1, 2, 3…" for the currently open set.
-  const allTabs: Tab[] = [
-    ...terminalTabs.map((terminalTab, index) => ({
-      id: terminalTab.id,
-      label: `${t("terminalLabel", "Terminal")} ${index + 1}`,
-      filePath: terminalTab.cwd,
-      kind: "terminal" as const,
-    })),
-    ...fileTabs,
-  ];
+  // File tabs opened from the current session, for the shared TabBar.
+  const allTabs: Tab[] = fileTabs;
 
   useEffect(() => {
     if (!activeCwd || isMobile) return;
@@ -1664,13 +1615,7 @@ export function AppShell() {
               display: "flex",
               flexDirection: "column",
               borderLeft: "1px solid var(--border)",
-              // While a terminal tab is active in the niri theme the panel
-              // lets the wallpaper shine straight through — the embedded
-              // xterm draws its own translucent surface (see globals.css).
-              background:
-                isTerminalTabId(activeFileTabId) && document.documentElement.classList.contains("niri")
-                  ? "transparent"
-                  : "var(--bg)",
+              background: "var(--bg)",
               "--right-panel-width": `${rightPanelWidth}px`,
               "--right-panel-min-width": `${rightPanelBounds.minWidth}px`,
             } as CSSProperties
@@ -1743,61 +1688,9 @@ export function AppShell() {
                   tabs={allTabs}
                   activeTabId={activeFileTabId ?? ""}
                   onSelectTab={setActiveFileTabId}
-                  onCloseTab={handleCloseAnyTab}
+                  onCloseTab={handleCloseFileTab}
                 />
               </div>
-              <button
-                type="button"
-                onClick={handleAddTerminal}
-                disabled={!explorerCwd}
-                title={
-                  explorerCwd
-                    ? t("newTerminal", "New terminal")
-                    : t("selectProjectPlaceholder", "Select a project to browse files")
-                }
-                aria-label={t("newTerminal", "New terminal")}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 30,
-                  height: 30,
-                  margin: "0 6px 0 4px",
-                  padding: 0,
-                  flexShrink: 0,
-                  background: "none",
-                  border: "none",
-                  borderRadius: 5,
-                  color: explorerCwd ? "var(--text-dim)" : "var(--border)",
-                  cursor: explorerCwd ? "pointer" : "default",
-                  fontSize: 18,
-                  lineHeight: 1,
-                  transition: "color 0.1s",
-                }}
-                onMouseEnter={(e) => {
-                  if (!explorerCwd) return;
-                  e.currentTarget.style.color = "var(--text)";
-                  e.currentTarget.style.background = "var(--bg-hover)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = explorerCwd ? "var(--text-dim)" : "var(--border)";
-                  e.currentTarget.style.background = "none";
-                }}
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  aria-hidden="true"
-                >
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-              </button>
             </div>
             {activeFileTabId === EXPLORER_TAB_ID && explorerCwd && (
               <button
@@ -1875,34 +1768,10 @@ export function AppShell() {
                 </div>
               )}
             </div>
-            <div style={{ height: "100%", display: isTerminalTabId(activeFileTabId) ? "block" : "none" }}>
-              {terminalTabs.map((terminalTab) => (
-                <div
-                  key={terminalTab.id}
-                  style={{ height: "100%", display: activeFileTabId === terminalTab.id ? "block" : "none" }}
-                >
-                  <TerminalPanel cwd={terminalTab.cwd} active={activeFileTabId === terminalTab.id} />
-                </div>
-              ))}
-              {terminalTabs.length === 0 ? (
-                <div
-                  style={{
-                    height: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "var(--text-dim)",
-                    fontSize: 12,
-                  }}
-                >
-                  {t("newTerminalHint", "Click + to open a terminal")}
-                </div>
-              ) : null}
-            </div>
             <div
               style={{
                 height: "100%",
-                display: activeFileTabId === EXPLORER_TAB_ID || isTerminalTabId(activeFileTabId) ? "none" : "block",
+                display: activeFileTabId === EXPLORER_TAB_ID ? "none" : "block",
               }}
             >
               {activeFileTab?.filePath ? (

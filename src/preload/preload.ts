@@ -87,17 +87,6 @@ const bridge: PiBridge = {
   showItemInFolder: (fsPath) => ipcRenderer.invoke("desktop:show-item-in-folder", fsPath),
   readClipboardText: () => ipcRenderer.invoke("desktop:clipboard-read-text"),
   writeClipboardText: (text) => ipcRenderer.invoke("desktop:clipboard-write-text", text),
-  terminal: {
-    create: (cwd, cols, rows) => ipcRenderer.invoke("desktop:terminal-create", { cwd, cols, rows }),
-    write: (id, data) => ipcRenderer.invoke("desktop:terminal-write", { id, data }),
-    resize: (id, cols, rows) => ipcRenderer.invoke("desktop:terminal-resize", { id, cols, rows }),
-    kill: (id) => ipcRenderer.invoke("desktop:terminal-kill", id),
-    onEvent: (cb) => {
-      const handler = (_: Electron.IpcRendererEvent, event: Parameters<typeof cb>[0]) => cb(event);
-      ipcRenderer.on("terminal:event", handler);
-      return () => ipcRenderer.removeListener("terminal:event", handler);
-    },
-  },
   windowControl: {
     minimize: () => ipcRenderer.invoke("desktop:window-minimize"),
     toggleMaximize: () => ipcRenderer.invoke("desktop:window-toggle-maximize"),

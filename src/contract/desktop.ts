@@ -70,18 +70,6 @@ export interface SaveBinaryFileOptions {
   defaultPath?: string;
 }
 
-/** In-app terminal session events pushed from the main process. */
-export type DesktopTerminalEvent =
-  { id: number; type: "data"; data: string } | { id: number; type: "exit"; code: number };
-
-export interface DesktopTerminalBridge {
-  create(cwd: string, cols: number, rows: number): Promise<{ id: number }>;
-  write(id: number, data: string): Promise<void>;
-  resize(id: number, cols: number, rows: number): Promise<void>;
-  kill(id: number): Promise<void>;
-  onEvent(cb: (event: DesktopTerminalEvent) => void): () => void;
-}
-
 /** Custom titlebar window controls for window managers without decorations. */
 export interface DesktopWindowControlBridge {
   minimize: () => Promise<void>;
@@ -110,7 +98,6 @@ export interface PiBridge {
   showItemInFolder: (fsPath: string) => Promise<void>;
   readClipboardText: () => Promise<string>;
   writeClipboardText: (text: string) => Promise<void>;
-  terminal: DesktopTerminalBridge;
   windowControl: DesktopWindowControlBridge;
   selectDirectory: () => Promise<string | null>;
   setChannelCredential: (payload: ChannelCredentialWrite) => Promise<void>;

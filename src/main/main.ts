@@ -15,7 +15,7 @@ import { loadUiState } from "./window-state";
 import { createTray, destroyTray, setTrayRunningCount } from "./tray";
 import { createMainWindow } from "./window";
 import { startRuntimeWatcher } from "./runtime-watch";
-import { installDesktopIpc, disposeDesktopTerminals, warmupDesktopTerminals } from "./ipc";
+import { installDesktopIpc } from "./ipc";
 import { createCredentialRequestHandler, CredentialVault } from "./credential-vault";
 import { createProductionUpdateAdapter, isProductionUpdatePlatformEnabled } from "./update-adapter";
 import { createUpdateManager, redactUpdateError, type UpdateManager } from "./update-manager";
@@ -409,9 +409,6 @@ void app.whenReady().then(async () => {
   // (npm start after build, or dev fallback when VITE_DEV_SERVER_URL is unset).
   handleAppProtocol();
 
-  // Preload node-pty so the first in-app terminal opens instantly.
-  warmupDesktopTerminals();
-
   installDesktopIpc({
     getHostManager: () => hostManager,
     getMainWindow,
@@ -577,7 +574,6 @@ app.on("before-quit", () => {
   updateManager?.stopAutomaticChecks();
   destroyTray();
   hostManager?.stop();
-  disposeDesktopTerminals();
 });
 
 app.on("window-all-closed", () => {
