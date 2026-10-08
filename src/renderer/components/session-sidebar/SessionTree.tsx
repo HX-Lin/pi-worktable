@@ -369,21 +369,22 @@ export function SessionTree(props: Props) {
               gap: 6,
               width: "100%",
               padding: "7px 10px",
-              background: "none",
-              border: "1px dashed var(--border)",
+              /* 虚线框 + 透明底在照片上和背景分不开，给它和其他浮控件一样的实底。 */
+              background: "var(--control-chip-bg)",
+              border: "1px dashed var(--control-chip-border)",
               borderRadius: "var(--radius-sm)",
-              color: "var(--text-dim)",
+              color: "var(--control-chip-fg)",
               cursor: "pointer",
               fontSize: 12,
               transition: "color 0.12s, border-color 0.12s",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.color = "var(--text)";
+              e.currentTarget.style.color = "var(--accent)";
               e.currentTarget.style.borderColor = "var(--accent)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.color = "var(--text-dim)";
-              e.currentTarget.style.borderColor = "var(--border)";
+              e.currentTarget.style.color = "var(--control-chip-fg)";
+              e.currentTarget.style.borderColor = "var(--control-chip-border)";
             }}
           >
             <span style={{ fontSize: 14, lineHeight: 1 }}>+</span>
