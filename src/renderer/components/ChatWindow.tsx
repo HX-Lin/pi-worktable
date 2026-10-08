@@ -494,16 +494,6 @@ export function ChatWindow({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      {/* Grid paper + corner ticks (design.html grid style) */}
-      <div
-        className={`chat-grid-bg${isEmptyNew ? " chat-grid-bg-idle" : ""} pointer-events-none absolute inset-0 z-0`}
-        aria-hidden="true"
-      />
-      <div className="chat-corner-tick chat-corner-tick-tl" aria-hidden="true" />
-      <div className="chat-corner-tick chat-corner-tick-tr" aria-hidden="true" />
-      <div className="chat-corner-tick chat-corner-tick-bl" aria-hidden="true" />
-      <div className="chat-corner-tick chat-corner-tick-br" aria-hidden="true" />
-
       {isDragOver && !agentRunning && (
         <div
           className="pointer-events-none absolute inset-0 z-50 flex animate-[drop-zone-in_0.15s_ease_both] items-center justify-center backdrop-blur-[1px]"

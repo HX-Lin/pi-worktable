@@ -127,7 +127,6 @@
   --accent-chip-bg: color-mix(in srgb, var(--accent) 16%, transparent);
   --accent-chip-fg: color-mix(in srgb, var(--accent) 70%, var(--text-color));
   --bg-subtle: var(--sunken-bg);
-  --grid-line: color-mix(in srgb, var(--text-color) 6%, transparent);
   --selection: color-mix(in srgb, var(--accent) 38%, transparent);
   --thinking-bg: color-mix(in srgb, var(--panel-color) var(--card-alpha), transparent);
   --thinking-border: var(--border-color);
@@ -233,9 +232,9 @@ html.niri {
 
   /* 磨砂玻璃：这一层只决定"壁纸透出多少"。壁纸是照片，暗部本来就接近黑色，
      所以数值必须足够低，暗部才看得出纹理——0.4 左右在壁纸暗部等同于不透明。 */
-  --base-alpha: 20%;
-  --panel-alpha: 14%;
-  --card-alpha: 16%;
+  --base-alpha: 8%;
+  --panel-alpha: 12%;
+  --card-alpha: 18%;
   --user-alpha: 30%;
   --tool-alpha: 24%;
   --chip-alpha: 8%;
@@ -243,7 +242,6 @@ html.niri {
   /* 选中态在深色主题下是橙色低透，不能跟着 chip 的白色 9% 走 */
   --bg-selected: rgba(251, 146, 60, 0.24);
   --menu-bg: #1a1d27;
-  --grid-line: rgba(255, 255, 255, 0.08);
 }
 
 /* Readability on translucent panels without raising opacity: a soft dark
@@ -451,51 +449,6 @@ html.dark ::-webkit-scrollbar-thumb {
 }
 
 /* Chat area grid paper background */
-.chat-grid-bg {
-  background-image:
-    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
-  background-size: 28px 28px;
-  opacity: 0.18;
-}
-
-.chat-grid-bg.chat-grid-bg-idle {
-  opacity: 0.36;
-}
-
-/* Corner calibration ticks */
-.chat-corner-tick {
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  pointer-events: none;
-  opacity: 0.28;
-  z-index: 0;
-}
-.chat-corner-tick-tl {
-  top: 10px;
-  left: 10px;
-  border-left: 2px solid var(--accent);
-  border-top: 2px solid var(--accent);
-}
-.chat-corner-tick-tr {
-  top: 10px;
-  right: 10px;
-  border-right: 2px solid var(--accent);
-  border-top: 2px solid var(--accent);
-}
-.chat-corner-tick-bl {
-  bottom: 10px;
-  left: 10px;
-  border-left: 2px solid var(--accent);
-  border-bottom: 2px solid var(--accent);
-}
-.chat-corner-tick-br {
-  bottom: 10px;
-  right: 10px;
-  border-right: 2px solid var(--accent);
-  border-bottom: 2px solid var(--accent);
-}
 
 pre,
 code {
