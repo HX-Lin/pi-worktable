@@ -1,7 +1,8 @@
 /**
  * Plugin package management for the desktop Agent Host.
  */
-import { existsSync, mkdirSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from "fs";
+import { existsSync, readFileSync, statSync } from "fs";
+import { readJsonFile, writeJsonFileAtomic } from "./json-file";
 import { basename, dirname, extname, join, relative } from "path";
 import {
   DefaultPackageManager,
@@ -43,27 +44,14 @@ function disabledBackupPath(): string {
 
 function readDisabledBackups(): Record<string, PackageSource> {
   try {
-    return JSON.parse(readFileSync(disabledBackupPath(), "utf8")) as Record<string, PackageSource>;
+    return readJsonFile(disabledBackupPath(), {});
   } catch {
     return {};
   }
 }
 
 function writeDisabledBackups(backups: Record<string, PackageSource>): void {
-  const filePath = disabledBackupPath();
-  const tmp = `${filePath}.${process.pid}.tmp`;
-  mkdirSync(dirname(filePath), { recursive: true });
-  writeFileSync(tmp, JSON.stringify(backups, null, 2), "utf8");
-  try {
-    renameSync(tmp, filePath);
-  } catch (error) {
-    try {
-      unlinkSync(tmp);
-    } catch {
-      /* ignore cleanup failure */
-    }
-    throw error;
-  }
+  writeJsonFileAtomic(disabledBackupPath(), backups);
 }
 
 function clearDisabledBackup(source: string, scope: PluginScope): void {

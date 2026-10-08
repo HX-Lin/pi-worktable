@@ -1,4 +1,5 @@
-import { existsSync, mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync, chmodSync } from "node:fs";
+import { existsSync, readFileSync, renameSync } from "node:fs";
+import { writeJsonFileAtomic } from "../json-file";
 import path from "node:path";
 import type { ChannelAccountConfig, ChannelBinding, ChannelId, FeishuDomain } from "../../shared/channel-types";
 
@@ -9,27 +10,6 @@ type ChannelConfigFile = {
 };
 
 const EMPTY_CONFIG: ChannelConfigFile = { version: 1, accounts: [], bindings: [] };
-
-function atomicWrite(filePath: string, value: unknown): void {
-  mkdirSync(path.dirname(filePath), { recursive: true });
-  const temp = `${filePath}.${process.pid}.${Date.now()}.tmp`;
-  writeFileSync(temp, JSON.stringify(value, null, 2), { encoding: "utf8", mode: 0o600 });
-  try {
-    renameSync(temp, filePath);
-    try {
-      chmodSync(filePath, 0o600);
-    } catch {
-      /* best effort on Windows */
-    }
-  } catch (error) {
-    try {
-      unlinkSync(temp);
-    } catch {
-      /* ignore cleanup failure */
-    }
-    throw error;
-  }
-}
 
 function readStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
@@ -123,7 +103,7 @@ export class ChannelConfigStore {
         accounts: Array.isArray(parsed.accounts) ? parsed.accounts.map((account) => normalizeAccount(account)) : [],
         bindings: Array.isArray(parsed.bindings) ? parsed.bindings.map(normalizeBinding) : [],
       };
-      if (parsed.version === undefined) atomicWrite(this.filePath, migrated);
+      if (parsed.version === undefined) writeJsonFileAtomic(this.filePath, migrated);
       return migrated;
     } catch (error) {
       if (error instanceof SyntaxError) {
@@ -135,7 +115,7 @@ export class ChannelConfigStore {
   }
 
   private persist(): void {
-    atomicWrite(this.filePath, this.data);
+    writeJsonFileAtomic(this.filePath, this.data);
   }
 
   listAccounts(): ChannelAccountConfig[] {
@@ -190,5 +170,3 @@ export class ChannelConfigStore {
     this.persist();
   }
 }
-
-export { atomicWrite };

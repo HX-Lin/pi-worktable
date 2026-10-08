@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, renameSync } from "node:fs";
 import type { ChannelActivity, ChannelPairingRequest, DeliveryReceipt } from "../../shared/channel-types";
-import { atomicWrite } from "./config-store";
+import { writeJsonFileAtomic } from "../json-file";
 
 type ChannelStateFile = {
   version: 1;
@@ -55,7 +55,7 @@ export class ChannelStateStore {
         deliveries: Array.isArray(parsed.deliveries) ? parsed.deliveries : [],
         activities: Array.isArray(parsed.activities) ? parsed.activities : [],
       };
-      if (parsed.version === undefined) atomicWrite(this.filePath, migrated);
+      if (parsed.version === undefined) writeJsonFileAtomic(this.filePath, migrated);
       return migrated;
     } catch (error) {
       if (error instanceof SyntaxError) {
@@ -67,7 +67,7 @@ export class ChannelStateStore {
   }
 
   private persist(): void {
-    atomicWrite(this.filePath, this.data);
+    writeJsonFileAtomic(this.filePath, this.data);
   }
 
   private prune(persist = true): void {
