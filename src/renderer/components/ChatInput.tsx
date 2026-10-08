@@ -31,7 +31,6 @@ import { useI18n } from "@/i18n";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { MAX_ATTACHED_IMAGES, shrinkImageFiles } from "@/lib/image-attachments";
 import type { ModelCatalogStatus } from "@contract/types";
-import { AUTO_COMPACT_CONTEXT_PERCENT } from "@shared/auto-compact";
 
 export interface AttachedImage {
   data: string; // base64, no prefix
@@ -72,7 +71,6 @@ interface Props {
   /** Conversation (user/assistant) message count on the active branch. */
   conversationMessageCount?: number;
   /** How full the context window is, in percent. */
-  contextUsagePercent?: number | null;
   toolPreset?: "none" | "default" | "full";
   onToolPresetChange?: (preset: "none" | "default" | "full") => void;
   thinkingLevel?: "auto" | "off" | "minimal" | "low" | "medium" | "high" | "xhigh";
@@ -299,8 +297,6 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
     isCompacting,
     compactError,
     compactResult,
-    conversationMessageCount = 0,
-    contextUsagePercent,
     toolPreset,
     onToolPresetChange,
     thinkingLevel,
@@ -1020,13 +1016,6 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
   const compactResultText = compactResult
     ? `${compactVerb} ${formatTokenCount(compactResult.tokensBefore)} -> ${formatTokenCount(compactResult.estimatedTokensAfter)} tokens (${formatTokenCount(compactSavedTokens)} saved)`
     : null;
-  // Keep the compaction control visible for any active chat so the manual
-  // action is always discoverable; the text states when the Host will compact
-  // on its own. The bar becomes highlighted as the window fills up.
-  const contextPercent = Math.round(contextUsagePercent ?? 0);
-  // Always show the compaction control for any chat (even empty ones) so the
-  // manual action is permanently discoverable, never gated on message count.
-  const showCompactHint = Boolean(onCompactContext);
   const isContextCompacting = Boolean(isCompacting);
   // A compaction can take a while; counting the seconds is the only feedback
   // available until it ends.
@@ -1045,17 +1034,6 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
     };
   }, [isContextCompacting]);
   const contextCompactDisabled = isStreaming && !isContextCompacting;
-  const compactIsNearLimit = contextPercent >= AUTO_COMPACT_CONTEXT_PERCENT - 10;
-  const compactBarLabel = t("compactContextHint", "Context {percent}% full — compacts automatically at {threshold}%")
-    .replace("{percent}", String(contextPercent))
-    .replace("{threshold}", String(AUTO_COMPACT_CONTEXT_PERCENT));
-  const compactMessageDetail =
-    conversationMessageCount > 0
-      ? t("compactMessageDetail", "context holds {messages} messages").replace(
-          "{messages}",
-          String(conversationMessageCount),
-        )
-      : "";
   const thinkingLabels: Record<(typeof THINKING_LEVELS)[number], string> = {
     auto: t("thinkingAuto", "Auto"),
     off: t("thinkingOff", "Off"),
@@ -1370,42 +1348,6 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
               <polyline points="20 6 9 17 4 12" />
             </svg>
             {compactResultText}
-          </div>
-        )}
-        {showCompactHint && (
-          <div
-            style={{
-              marginBottom: 8,
-              padding: "5px 10px",
-              background: compactIsNearLimit ? "var(--amber-soft)" : "var(--control-chip-bg)",
-              border: `1px solid ${compactIsNearLimit ? "var(--amber-border)" : "var(--control-chip-border)"}`,
-              borderRadius: "var(--radius-sm)",
-              fontSize: 12,
-              color: "var(--control-chip-fg)",
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{ flexShrink: 0 }}
-            >
-              <path d="M12 3v18" />
-              <path d="M5 8h14" />
-              <path d="M5 16h14" />
-            </svg>
-            <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {compactBarLabel}
-              {compactMessageDetail ? ` · ${compactMessageDetail}` : ""}
-            </span>
           </div>
         )}
         {/* Image previews */}

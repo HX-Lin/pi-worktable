@@ -260,7 +260,6 @@ export function ChatWindow({
     isCompacting,
     compactError,
     compactResult,
-    conversationMessageCount,
     memoryMessages,
     displayModel: displayModelValue,
     sessionStats,
@@ -523,8 +522,6 @@ export function ChatWindow({
       isCompacting={isCompacting}
       compactError={compactError}
       compactResult={compactResult}
-      conversationMessageCount={conversationMessageCount}
-      contextUsagePercent={contextUsage?.percent ?? null}
       toolPreset={toolPreset}
       onToolPresetChange={session || isNew ? handleToolPresetChange : undefined}
       thinkingLevel={thinkingLevel}
