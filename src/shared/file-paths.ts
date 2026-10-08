@@ -5,10 +5,6 @@ export function normalizeFilePathSlashes(filePath: string): string {
   return filePath;
 }
 
-export function encodeFilePathForApi(filePath: string): string {
-  return normalizeFilePathSlashes(filePath).split("/").filter(Boolean).map(encodeURIComponent).join("/");
-}
-
 export function getFileName(filePath: string): string {
   const normalized = normalizeFilePathSlashes(filePath).replace(/\/+$/, "");
   return normalized.split("/").pop() ?? normalized;
