@@ -343,9 +343,40 @@ html.niri body::before {
   pointer-events: auto !important;
 }
 
+/* The composer is one box: the textarea on top, the tools row below, drawn by
+   .composer-box so the focus ring can wrap both halves. */
+.composer-box {
+  background: var(--inputbox-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.composer-box:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  box-shadow:
+    inset 0 1px 0 var(--glow-05),
+    0 0 0 3px var(--accent-soft);
+}
+
+.composer-box[data-streaming="true"] {
+  border-color: var(--amber-border);
+}
+
+.composer-tools {
+  padding: 6px 10px 8px;
+}
+
+.chat-composer-shell {
+  padding: 10px 12px 0;
+}
+
 .chat-composer-shell:focus-within {
-  border-color: color-mix(in srgb, var(--accent) 58%, var(--border)) !important;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
 }
 
 .chat-composer-shell textarea:focus-visible {

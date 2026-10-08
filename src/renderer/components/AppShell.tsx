@@ -53,6 +53,51 @@ const EXPLORER_TAB_ID = "explorer";
 const TASKS_TAB_ID = "tasks";
 const MEMORY_TAB_ID = "memory";
 const GIT_TAB_ID = "git";
+
+const PANEL_ICON = {
+  width: 15,
+  height: 15,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 1.9,
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+} as const;
+
+function PanelIconExplorer() {
+  return (
+    <svg {...PANEL_ICON} aria-hidden="true">
+      <path d="M3 5a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
+    </svg>
+  );
+}
+function PanelIconGit() {
+  return (
+    <svg {...PANEL_ICON} aria-hidden="true">
+      <circle cx="6" cy="6" r="2.5" />
+      <circle cx="6" cy="18" r="2.5" />
+      <circle cx="18" cy="9" r="2.5" />
+      <path d="M6 8.5v7M8.5 6h4A3.5 3.5 0 0 1 16 9.5V9" />
+    </svg>
+  );
+}
+function PanelIconTasks() {
+  return (
+    <svg {...PANEL_ICON} aria-hidden="true">
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M8 9h8M8 13h8M8 17h4" />
+    </svg>
+  );
+}
+function PanelIconMemory() {
+  return (
+    <svg {...PANEL_ICON} aria-hidden="true">
+      <path d="M12 3a4 4 0 0 0-4 4v1a3 3 0 0 0 0 6v1a4 4 0 0 0 8 0v-1a3 3 0 0 0 0-6V7a4 4 0 0 0-4-4Z" />
+      <path d="M12 3v18" />
+    </svg>
+  );
+}
 const EMPTY_CHANNELS: ChannelsSnapshot = { accounts: [], statuses: [], pairings: [], bindings: [], activities: [] };
 
 function initialRightPanelPreferredWidth(): number {
@@ -756,6 +801,13 @@ export function AppShell() {
   const showPlaceholder = initialSessionRestored && !showChat;
 
   const activeFileTab = fileTabs.find((t) => t.id === activeFileTabId) ?? null;
+  // Project-scoped panels live in an icon rail; opened files follow the divider.
+  const panelTabs = [
+    { id: EXPLORER_TAB_ID, label: t("explorer", "Explorer"), icon: <PanelIconExplorer /> },
+    { id: GIT_TAB_ID, label: t("git", "Git"), icon: <PanelIconGit /> },
+    { id: TASKS_TAB_ID, label: t("tasksTitle", "Tasks"), icon: <PanelIconTasks /> },
+    { id: MEMORY_TAB_ID, label: t("memoryTitle", "Memory"), icon: <PanelIconMemory /> },
+  ];
   const explorerCwd = activeCwd ?? selectedSession?.cwd ?? newSessionCwd;
   // Custom titlebar controls are shown on Linux/Windows (native decorations may
   // be absent); macOS keeps its native traffic lights.
@@ -1671,152 +1723,55 @@ export function AppShell() {
               boxSizing: "border-box",
             }}
           >
-            <button
-              type="button"
-              onClick={() => setActiveFileTabId(EXPLORER_TAB_ID)}
-              aria-pressed={activeFileTabId === EXPLORER_TAB_ID}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                height: 36,
-                padding: "0 12px",
-                flexShrink: 0,
-                background: activeFileTabId === EXPLORER_TAB_ID ? "var(--bg)" : "var(--bg-panel)",
-                border: "none",
-                borderRight: "1px solid var(--border)",
-                color: activeFileTabId === EXPLORER_TAB_ID ? "var(--text)" : "var(--text-muted)",
-                cursor: "pointer",
-                fontSize: 12,
-                fontWeight: activeFileTabId === EXPLORER_TAB_ID ? 500 : 400,
-              }}
+            {/* Project panels: an icon rail, so the file tabs keep the width.
+                Scope matters here — these four describe the repository, the tabs
+                after the divider belong to this conversation. */}
+            <div
+              role="tablist"
+              aria-label={t("projectPanels", "Project panels")}
+              style={{ display: "flex", alignItems: "center", gap: 2, padding: "0 6px", flexShrink: 0 }}
             >
-              <svg
-                width="13"
-                height="13"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M3 5a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
-              </svg>
-              Explorer
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveFileTabId(TASKS_TAB_ID)}
-              aria-pressed={activeFileTabId === TASKS_TAB_ID}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                height: 36,
-                padding: "0 12px",
-                flexShrink: 0,
-                background: activeFileTabId === TASKS_TAB_ID ? "var(--bg)" : "var(--bg-panel)",
-                border: "none",
-                borderRight: "1px solid var(--border)",
-                color: activeFileTabId === TASKS_TAB_ID ? "var(--text)" : "var(--text-muted)",
-                cursor: "pointer",
-                fontSize: 12,
-                fontWeight: activeFileTabId === TASKS_TAB_ID ? 500 : 400,
-              }}
-            >
-              <svg
-                width="13"
-                height="13"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M9 6h11M9 12h11M9 18h11" />
-                <path d="M4 6l1.5 1.5L8 5" />
-                <path d="M4 12l1.5 1.5L8 11" />
-                <path d="M4 18l1.5 1.5L8 17" />
-              </svg>
-              {t("tasksTitle", "Tasks")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveFileTabId(GIT_TAB_ID)}
-              aria-pressed={activeFileTabId === GIT_TAB_ID}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                height: 36,
-                padding: "0 12px",
-                flexShrink: 0,
-                background: activeFileTabId === GIT_TAB_ID ? "var(--bg)" : "var(--bg-panel)",
-                border: "none",
-                borderRight: "1px solid var(--border)",
-                color: activeFileTabId === GIT_TAB_ID ? "var(--text)" : "var(--text-muted)",
-                cursor: "pointer",
-                fontSize: 12,
-                fontWeight: activeFileTabId === GIT_TAB_ID ? 500 : 400,
-              }}
-            >
-              <svg
-                width="13"
-                height="13"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                aria-hidden="true"
-              >
-                <circle cx="6" cy="6" r="2.5" />
-                <circle cx="6" cy="18" r="2.5" />
-                <circle cx="18" cy="9" r="2.5" />
-                <path d="M6 8.5v7M8.5 6h4A3.5 3.5 0 0 1 16 9.5V9" />
-              </svg>
-              {t("git", "Git")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveFileTabId(MEMORY_TAB_ID)}
-              aria-pressed={activeFileTabId === MEMORY_TAB_ID}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                height: 36,
-                padding: "0 12px",
-                flexShrink: 0,
-                background: activeFileTabId === MEMORY_TAB_ID ? "var(--bg)" : "var(--bg-panel)",
-                border: "none",
-                borderRight: "1px solid var(--border)",
-                color: activeFileTabId === MEMORY_TAB_ID ? "var(--text)" : "var(--text-muted)",
-                cursor: "pointer",
-                fontSize: 12,
-                fontWeight: activeFileTabId === MEMORY_TAB_ID ? 500 : 400,
-              }}
-            >
-              <svg
-                width="13"
-                height="13"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M12 3a4 4 0 0 0-4 4v1a3 3 0 0 0 0 6v1a4 4 0 0 0 8 0v-1a3 3 0 0 0 0-6V7a4 4 0 0 0-4-4Z" />
-                <path d="M12 3v18" />
-              </svg>
-              {t("memoryTitle", "Memory")}
-            </button>
+              {panelTabs.map((panel) => {
+                const active = activeFileTabId === panel.id;
+                return (
+                  <button
+                    key={panel.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    title={panel.label}
+                    aria-label={panel.label}
+                    data-panel-tab={panel.id}
+                    onClick={() => setActiveFileTabId(panel.id)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: 28,
+                      height: 28,
+                      padding: 0,
+                      border: "none",
+                      borderRadius: "var(--radius-md)",
+                      background: active ? "var(--accent-soft)" : "transparent",
+                      color: active ? "var(--accent)" : "var(--text-muted)",
+                      cursor: "pointer",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!active) e.currentTarget.style.color = "var(--text)";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!active) e.currentTarget.style.color = "var(--text-muted)";
+                    }}
+                  >
+                    {panel.icon}
+                  </button>
+                );
+              })}
+            </div>
+            <div
+              aria-hidden="true"
+              style={{ width: 1, height: 18, background: "var(--border)", flexShrink: 0, margin: "0 6px" }}
+            />
             <div style={{ flex: 1, overflow: "hidden", display: "flex", alignItems: "center", minWidth: 0 }}>
               <div style={{ flex: 1, overflow: "hidden", minWidth: 0 }}>
                 <TabBar
@@ -1919,7 +1874,7 @@ export function AppShell() {
             <div
               style={{
                 height: "100%",
-                display: activeFileTabId === EXPLORER_TAB_ID || activeFileTabId === TASKS_TAB_ID ? "none" : "block",
+                display: panelTabs.some((panel) => panel.id === activeFileTabId) ? "none" : "block",
               }}
             >
               {activeFileTab?.filePath ? (

@@ -10,6 +10,8 @@ const zhCN: Record<string, string> = {
   general: "通用",
   models: "模型",
   git: "Git",
+  projectPanels: "项目面板",
+  explorer: "文件",
   gitChanges: "改动",
   gitHistory: "历史",
   gitStaged: "已暂存",
