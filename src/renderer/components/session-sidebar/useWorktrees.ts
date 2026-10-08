@@ -165,6 +165,21 @@ export function useWorktrees({ selectedCwd, refreshKey, allSessions, onSelectCwd
     [worktreeState, wtBusy, selectedCwd, setSelectedCwd],
   );
 
+  // Close the worktree dropdown on an outside click.
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (wtDropdownRef.current && !wtDropdownRef.current.contains(e.target as Node)) {
+        setWtDropdownOpen(false);
+        setWtNewOpen(false);
+        setWtNewBranch("");
+        setWtError(null);
+        setWtConfirmRemove(null);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   // Sessions of every worktree in the selected project are shown together
   const selectedProject = projectRootFor(selectedCwd);
   const showWorktreeSwitcher = Boolean(
