@@ -112,7 +112,7 @@ export function ProjectMenu({
               color: "var(--text)",
               cursor: "pointer",
               textAlign: "left",
-              fontSize: 12,
+              fontSize: "var(--text-md)",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = "var(--bg-hover)";
@@ -155,7 +155,7 @@ export function ProjectMenu({
               color: "var(--danger)",
               cursor: "pointer",
               textAlign: "left",
-              fontSize: 12,
+              fontSize: "var(--text-md)",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = "rgba(220,38,38,0.08)";

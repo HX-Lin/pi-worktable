@@ -93,7 +93,7 @@ export function TaskBoard({ cwd }: { cwd: string | null }) {
 
   if (!cwd) {
     return (
-      <div style={{ padding: 12, fontSize: 12, color: "var(--text-dim)" }}>
+      <div style={{ padding: 12, fontSize: "var(--text-md)", color: "var(--text-dim)" }}>
         {t("tasksNoProject", "Open a project to see its task board.")}
       </div>
     );
@@ -113,7 +113,7 @@ export function TaskBoard({ cwd }: { cwd: string | null }) {
             flex: 1,
             minWidth: 0,
             padding: "6px 8px",
-            fontSize: 12,
+            fontSize: "var(--text-md)",
             borderRadius: "var(--radius-sm)",
             background: "var(--bg)",
             color: "var(--text)",
@@ -126,7 +126,7 @@ export function TaskBoard({ cwd }: { cwd: string | null }) {
           disabled={!draft.trim()}
           style={{
             padding: "6px 12px",
-            fontSize: 12,
+            fontSize: "var(--text-md)",
             borderRadius: "var(--radius-sm)",
             border: "1px solid var(--border)",
             background: "var(--bg-hover)",
@@ -139,15 +139,17 @@ export function TaskBoard({ cwd }: { cwd: string | null }) {
       </div>
 
       {error && (
-        <div style={{ padding: "6px 12px", fontSize: 11, color: "var(--danger)" }} role="alert">
+        <div style={{ padding: "6px 12px", fontSize: "var(--text-sm)", color: "var(--danger)" }} role="alert">
           {error}
         </div>
       )}
 
       {loading ? (
-        <div style={{ padding: 12, fontSize: 12, color: "var(--text-dim)" }}>{t("loading", "Loading…")}</div>
+        <div style={{ padding: 12, fontSize: "var(--text-md)", color: "var(--text-dim)" }}>
+          {t("loading", "Loading…")}
+        </div>
       ) : tasks.length === 0 ? (
-        <div style={{ padding: 12, fontSize: 12, color: "var(--text-dim)", lineHeight: 1.6 }}>
+        <div style={{ padding: 12, fontSize: "var(--text-md)", color: "var(--text-dim)", lineHeight: 1.6 }}>
           {t(
             "tasksEmpty",
             "No tasks yet. The agent can add them with the `task` tool, or add one above — the board is stored in .pi/tasks.json.",
@@ -169,7 +171,14 @@ export function TaskBoard({ cwd }: { cwd: string | null }) {
             if (columnTasks.length === 0 && column.id !== "todo") return null;
             return (
               <div key={column.id} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <div style={{ fontSize: 11, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: 0.4 }}>
+                <div
+                  style={{
+                    fontSize: "var(--text-sm)",
+                    color: "var(--text-dim)",
+                    textTransform: "uppercase",
+                    letterSpacing: 0.4,
+                  }}
+                >
                   {t(column.labelKey, column.label)} · {columnTasks.length}
                 </div>
                 {columnTasks.map((task) => (
@@ -188,7 +197,7 @@ export function TaskBoard({ cwd }: { cwd: string | null }) {
                   >
                     <div
                       style={{
-                        fontSize: 12,
+                        fontSize: "var(--text-md)",
                         color: task.status === "done" ? "var(--text-muted)" : "var(--text)",
                         lineHeight: 1.5,
                       }}
@@ -197,7 +206,9 @@ export function TaskBoard({ cwd }: { cwd: string | null }) {
                       {task.title}
                     </div>
                     {task.notes && (
-                      <div style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.5 }}>{task.notes}</div>
+                      <div style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", lineHeight: 1.5 }}>
+                        {task.notes}
+                      </div>
                     )}
                     <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
                       {COLUMNS.filter((option) => option.id !== task.status).map((option) => (
@@ -207,7 +218,7 @@ export function TaskBoard({ cwd }: { cwd: string | null }) {
                           onClick={() => void move(task, option.id)}
                           style={{
                             padding: "2px 7px",
-                            fontSize: 10,
+                            fontSize: "var(--text-xs)",
                             borderRadius: 999,
                             border: "1px solid var(--border)",
                             background: "transparent",
@@ -225,7 +236,7 @@ export function TaskBoard({ cwd }: { cwd: string | null }) {
                         style={{
                           marginLeft: "auto",
                           padding: "2px 7px",
-                          fontSize: 10,
+                          fontSize: "var(--text-xs)",
                           borderRadius: 999,
                           border: "1px solid var(--border)",
                           background: "transparent",

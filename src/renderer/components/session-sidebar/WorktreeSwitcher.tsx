@@ -59,7 +59,7 @@ export function WorktreeSwitcher(
                   border: "1px solid var(--border)",
                   borderRadius: "var(--radius-sm)",
                   cursor: "pointer",
-                  fontSize: 11,
+                  fontSize: "var(--text-sm)",
                   lineHeight: 1.35,
                   color: "var(--text-muted)",
                   textAlign: "left",
@@ -89,10 +89,10 @@ export function WorktreeSwitcher(
                   style={{ flex: 1, fontFamily: "var(--font-mono)", color: "var(--text)" }}
                 />
                 {currentWt?.isMain && (
-                  <span style={{ flexShrink: 0, color: "var(--text-dim)", fontSize: 10 }}>main</span>
+                  <span style={{ flexShrink: 0, color: "var(--text-dim)", fontSize: "var(--text-xs)" }}>main</span>
                 )}
                 {worktreeState.worktrees.length > 1 && (
-                  <span style={{ flexShrink: 0, color: "var(--text-dim)", fontSize: 10 }}>
+                  <span style={{ flexShrink: 0, color: "var(--text-dim)", fontSize: "var(--text-xs)" }}>
                     {worktreeState.worktrees.length}
                   </span>
                 )}
@@ -147,7 +147,7 @@ export function WorktreeSwitcher(
                           <span
                             style={{
                               flex: 1,
-                              fontSize: 11,
+                              fontSize: "var(--text-sm)",
                               color: "var(--text)",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
@@ -165,7 +165,7 @@ export function WorktreeSwitcher(
                               border: "none",
                               borderRadius: "var(--radius-sm)",
                               color: "var(--on-accent)",
-                              fontSize: 11,
+                              fontSize: "var(--text-sm)",
                               fontWeight: 600,
                               cursor: "pointer",
                               flexShrink: 0,
@@ -181,7 +181,7 @@ export function WorktreeSwitcher(
                               border: "1px solid var(--border)",
                               borderRadius: "var(--radius-sm)",
                               color: "var(--text-muted)",
-                              fontSize: 11,
+                              fontSize: "var(--text-sm)",
                               cursor: "pointer",
                               flexShrink: 0,
                             }}
@@ -216,7 +216,7 @@ export function WorktreeSwitcher(
                             color: isCurrent ? "var(--text)" : "var(--text-muted)",
                             cursor: "pointer",
                             textAlign: "left",
-                            fontSize: 11,
+                            fontSize: "var(--text-sm)",
                             fontFamily: "var(--font-mono)",
                           }}
                         >
@@ -239,7 +239,9 @@ export function WorktreeSwitcher(
                           )}
                           <PathLabel text={wt.branch ?? displayCwd(wt.path, homeDir)} style={{ flex: 1 }} />
                           {wt.isMain && (
-                            <span style={{ flexShrink: 0, color: "var(--text-dim)", fontSize: 10 }}>main</span>
+                            <span style={{ flexShrink: 0, color: "var(--text-dim)", fontSize: "var(--text-xs)" }}>
+                              main
+                            </span>
                           )}
                         </button>
                         {!wt.isMain && (
@@ -314,7 +316,7 @@ export function WorktreeSwitcher(
                       color: "var(--text-muted)",
                       cursor: "pointer",
                       textAlign: "left",
-                      fontSize: 11,
+                      fontSize: "var(--text-sm)",
                     }}
                   >
                     <svg
@@ -355,7 +357,7 @@ export function WorktreeSwitcher(
                       placeholder="branch name"
                       style={{
                         width: "100%",
-                        fontSize: 11,
+                        fontSize: "var(--text-sm)",
                         fontFamily: "var(--font-mono)",
                         padding: "5px 8px",
                         border: "1px solid var(--accent)",
@@ -377,7 +379,7 @@ export function WorktreeSwitcher(
                           border: "none",
                           borderRadius: "var(--radius-sm)",
                           color: "var(--on-accent)",
-                          fontSize: 11,
+                          fontSize: "var(--text-sm)",
                           fontWeight: 600,
                           cursor: wtBusy || !wtNewBranch.trim() ? "not-allowed" : "pointer",
                           opacity: wtBusy || !wtNewBranch.trim() ? 0.65 : 1,
@@ -398,7 +400,7 @@ export function WorktreeSwitcher(
                           border: "1px solid var(--border)",
                           borderRadius: "var(--radius-sm)",
                           color: "var(--text-muted)",
-                          fontSize: 11,
+                          fontSize: "var(--text-sm)",
                           cursor: "pointer",
                         }}
                       >
@@ -412,7 +414,7 @@ export function WorktreeSwitcher(
                     style={{
                       padding: "5px 10px 8px",
                       color: "var(--danger)",
-                      fontSize: 11,
+                      fontSize: "var(--text-sm)",
                       lineHeight: 1.35,
                       overflowWrap: "anywhere",
                     }}
@@ -450,7 +452,7 @@ export function WorktreeSwitcher(
               borderRadius: "var(--radius-sm)",
               background: "var(--bg-hover)",
               color: "var(--text-dim)",
-              fontSize: 11,
+              fontSize: "var(--text-sm)",
               lineHeight: 1.35,
               whiteSpace: "nowrap",
               textAlign: "left",
@@ -481,7 +483,7 @@ export function WorktreeSwitcher(
               style={{
                 marginTop: 4,
                 padding: "6px 10px",
-                fontSize: 11,
+                fontSize: "var(--text-sm)",
                 lineHeight: 1.45,
                 color: "var(--text-muted)",
                 background: "var(--bg-hover)",

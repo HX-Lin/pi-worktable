@@ -67,7 +67,7 @@ export function MemoryPanel({ cwd }: { cwd: string | null }) {
 
   if (!cwd) {
     return (
-      <div style={{ padding: 12, fontSize: 12, color: "var(--text-dim)" }}>
+      <div style={{ padding: 12, fontSize: "var(--text-md)", color: "var(--text-dim)" }}>
         {t("memoryNoProject", "Open a project to see what it remembers.")}
       </div>
     );
@@ -87,7 +87,7 @@ export function MemoryPanel({ cwd }: { cwd: string | null }) {
             flex: 1,
             minWidth: 0,
             padding: "6px 8px",
-            fontSize: 12,
+            fontSize: "var(--text-md)",
             borderRadius: "var(--radius-sm)",
             background: "var(--bg)",
             color: "var(--text)",
@@ -100,7 +100,7 @@ export function MemoryPanel({ cwd }: { cwd: string | null }) {
           disabled={!draft.trim()}
           style={{
             padding: "6px 12px",
-            fontSize: 12,
+            fontSize: "var(--text-md)",
             borderRadius: "var(--radius-sm)",
             border: "1px solid var(--border)",
             background: "var(--bg-hover)",
@@ -113,15 +113,17 @@ export function MemoryPanel({ cwd }: { cwd: string | null }) {
       </div>
 
       {error && (
-        <div style={{ padding: "6px 12px", fontSize: 11, color: "var(--danger)" }} role="alert">
+        <div style={{ padding: "6px 12px", fontSize: "var(--text-sm)", color: "var(--danger)" }} role="alert">
           {error}
         </div>
       )}
 
       {loading ? (
-        <div style={{ padding: 12, fontSize: 12, color: "var(--text-dim)" }}>{t("loading", "Loading…")}</div>
+        <div style={{ padding: 12, fontSize: "var(--text-md)", color: "var(--text-dim)" }}>
+          {t("loading", "Loading…")}
+        </div>
       ) : entries.length === 0 ? (
-        <div style={{ padding: 12, fontSize: 12, color: "var(--text-dim)", lineHeight: 1.6 }}>
+        <div style={{ padding: 12, fontSize: "var(--text-md)", color: "var(--text-dim)", lineHeight: 1.6 }}>
           {t(
             "memoryEmpty",
             "Nothing remembered yet. The agent records durable facts with the `memory` tool; they are injected into every session in this project.",
@@ -149,7 +151,7 @@ export function MemoryPanel({ cwd }: { cwd: string | null }) {
                 {entry.tag && (
                   <span
                     style={{
-                      fontSize: 10,
+                      fontSize: "var(--text-xs)",
                       padding: "1px 6px",
                       marginRight: 6,
                       borderRadius: 999,
@@ -160,7 +162,7 @@ export function MemoryPanel({ cwd }: { cwd: string | null }) {
                     {entry.tag}
                   </span>
                 )}
-                <span style={{ fontSize: 12, color: "var(--text)", lineHeight: 1.5 }}>{entry.text}</span>
+                <span style={{ fontSize: "var(--text-md)", color: "var(--text)", lineHeight: 1.5 }}>{entry.text}</span>
               </div>
               <button
                 type="button"
@@ -169,7 +171,7 @@ export function MemoryPanel({ cwd }: { cwd: string | null }) {
                 style={{
                   flexShrink: 0,
                   padding: "2px 7px",
-                  fontSize: 10,
+                  fontSize: "var(--text-xs)",
                   borderRadius: 999,
                   border: "1px solid var(--border)",
                   background: "transparent",

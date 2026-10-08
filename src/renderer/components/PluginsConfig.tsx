@@ -81,7 +81,7 @@ function ResourceList({ pkg }: { pkg: PluginPackageInfo }) {
 
   if (groups.length === 0) {
     return (
-      <div style={{ fontSize: 12, color: "var(--text-dim)" }}>
+      <div style={{ fontSize: "var(--text-md)", color: "var(--text-dim)" }}>
         {pkg.disabled ? "Package disabled" : "No resolved resources"}
       </div>
     );
@@ -105,7 +105,7 @@ function ResourceList({ pkg }: { pkg: PluginPackageInfo }) {
         >
           <div
             style={{
-              fontSize: 10,
+              fontSize: "var(--text-xs)",
               fontWeight: 700,
               color: "var(--text-dim)",
               textTransform: "uppercase",
@@ -119,7 +119,7 @@ function ResourceList({ pkg }: { pkg: PluginPackageInfo }) {
               <div key={`${resource.kind}:${resource.path}`} style={{ minWidth: 0 }}>
                 <div
                   style={{
-                    fontSize: 12,
+                    fontSize: "var(--text-md)",
                     color: "var(--text)",
                     fontFamily: "var(--font-mono)",
                     overflow: "hidden",
@@ -132,7 +132,7 @@ function ResourceList({ pkg }: { pkg: PluginPackageInfo }) {
                 </div>
                 <div
                   style={{
-                    fontSize: 10,
+                    fontSize: "var(--text-xs)",
                     color: "var(--text-dim)",
                     fontFamily: "var(--font-mono)",
                     overflow: "hidden",
@@ -157,7 +157,7 @@ function ScopeTag({ scope }: { scope: PluginScope }) {
   return (
     <span
       style={{
-        fontSize: 10,
+        fontSize: "var(--text-xs)",
         padding: "1px 5px",
         borderRadius: "var(--radius-sm)",
         flexShrink: 0,
@@ -178,7 +178,7 @@ function buttonStyle(disabled?: boolean, danger?: boolean): React.CSSProperties 
     borderRadius: "var(--radius-sm)",
     color: danger ? "var(--danger)" : "var(--text-muted)",
     cursor: disabled ? "not-allowed" : "pointer",
-    fontSize: 12,
+    fontSize: "var(--text-md)",
     opacity: disabled ? 0.5 : 1,
   };
 }
@@ -258,7 +258,7 @@ function SegmentedScope({ value, onChange }: { value: PluginScope; onChange: (sc
               background: active ? "var(--bg-selected)" : "none",
               color: active ? "var(--text)" : "var(--text-muted)",
               cursor: "pointer",
-              fontSize: 12,
+              fontSize: "var(--text-md)",
             }}
           >
             {scope}
@@ -298,14 +298,17 @@ function AddPluginPanel({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18, maxWidth: 660, minHeight: "100%" }}>
       <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>Add Plugin</div>
-        <div style={{ fontSize: 12, color: "var(--text-dim)", fontFamily: "var(--font-mono)" }}>
+        <div style={{ fontSize: "var(--text-lg)", fontWeight: 700, color: "var(--text)" }}>Add Plugin</div>
+        <div style={{ fontSize: "var(--text-md)", color: "var(--text-dim)", fontFamily: "var(--font-mono)" }}>
           {installLocation(scope, cwd)}
         </div>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-        <label htmlFor="plugin-source" style={{ fontSize: 12, fontWeight: 600, color: "var(--text-muted)" }}>
+        <label
+          htmlFor="plugin-source"
+          style={{ fontSize: "var(--text-md)", fontWeight: 600, color: "var(--text-muted)" }}
+        >
           Source
         </label>
         <input
@@ -323,7 +326,7 @@ function AddPluginPanel({
             background: "var(--bg-panel)",
             color: "var(--text)",
             fontFamily: "var(--font-mono)",
-            fontSize: 13,
+            fontSize: "var(--text-base)",
             outline: "none",
           }}
           onKeyDown={(e) => {
@@ -350,7 +353,7 @@ function AddPluginPanel({
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-muted)" }}>Examples</div>
+        <div style={{ fontSize: "var(--text-md)", fontWeight: 600, color: "var(--text-muted)" }}>Examples</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {examples.map((example) => (
             <button
@@ -368,7 +371,7 @@ function AddPluginPanel({
                 color: "var(--text-dim)",
                 cursor: "pointer",
                 fontFamily: "var(--font-mono)",
-                fontSize: 11,
+                fontSize: "var(--text-sm)",
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = "var(--bg-hover)";
@@ -385,7 +388,9 @@ function AddPluginPanel({
         </div>
       </div>
 
-      {actionError && <div style={{ fontSize: 12, color: "var(--danger)", whiteSpace: "pre-wrap" }}>{actionError}</div>}
+      {actionError && (
+        <div style={{ fontSize: "var(--text-md)", color: "var(--danger)", whiteSpace: "pre-wrap" }}>{actionError}</div>
+      )}
     </div>
   );
 }
@@ -437,7 +442,7 @@ function PackageDetail({
           {pkg.disabled ? (
             <span
               style={{
-                fontSize: 10,
+                fontSize: "var(--text-xs)",
                 padding: "1px 5px",
                 borderRadius: "var(--radius-sm)",
                 background: "var(--sunken-bg)",
@@ -450,7 +455,7 @@ function PackageDetail({
             pkg.filtered && (
               <span
                 style={{
-                  fontSize: 10,
+                  fontSize: "var(--text-xs)",
                   padding: "1px 5px",
                   borderRadius: "var(--radius-sm)",
                   background: "var(--amber-soft)",
@@ -464,7 +469,7 @@ function PackageDetail({
           <span
             style={{
               fontFamily: "var(--font-mono)",
-              fontSize: 12,
+              fontSize: "var(--text-md)",
               color: "var(--text)",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -506,7 +511,7 @@ function PackageDetail({
           display: "grid",
           gridTemplateColumns: "minmax(96px, 130px) minmax(0, 1fr)",
           gap: "9px 14px",
-          fontSize: 12,
+          fontSize: "var(--text-md)",
           lineHeight: 1.45,
         }}
       >
@@ -537,12 +542,14 @@ function PackageDetail({
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text)" }}>Resolved Resources</div>
+        <div style={{ fontSize: "var(--text-md)", fontWeight: 700, color: "var(--text)" }}>Resolved Resources</div>
         <ResourceList pkg={pkg} />
       </div>
 
-      {actionMessage && <div style={{ fontSize: 12, color: "var(--success)" }}>{actionMessage}</div>}
-      {actionError && <div style={{ fontSize: 12, color: "var(--danger)", whiteSpace: "pre-wrap" }}>{actionError}</div>}
+      {actionMessage && <div style={{ fontSize: "var(--text-md)", color: "var(--success)" }}>{actionMessage}</div>}
+      {actionError && (
+        <div style={{ fontSize: "var(--text-md)", color: "var(--danger)", whiteSpace: "pre-wrap" }}>{actionError}</div>
+      )}
     </div>
   );
 }
@@ -759,10 +766,10 @@ export function PluginsConfig({
             }}
           >
             <div style={{ display: "flex", alignItems: "baseline", gap: 10, minWidth: 0 }}>
-              <span style={{ fontSize: 15, fontWeight: 700, color: "var(--text)" }}>Plugins</span>
+              <span style={{ fontSize: "var(--text-lg)", fontWeight: 700, color: "var(--text)" }}>Plugins</span>
               <code
                 style={{
-                  fontSize: 11,
+                  fontSize: "var(--text-sm)",
                   color: "var(--text-muted)",
                   fontFamily: "var(--font-mono)",
                   overflow: "hidden",
@@ -780,7 +787,7 @@ export function PluginsConfig({
                 border: "none",
                 color: "var(--text-muted)",
                 cursor: "pointer",
-                fontSize: 20,
+                fontSize: "var(--text-3xl)",
                 lineHeight: 1,
                 padding: "2px 6px",
               }}
@@ -805,18 +812,22 @@ export function PluginsConfig({
           >
             <div style={{ flex: 1, overflowY: "auto", padding: "8px 6px" }}>
               {loading ? (
-                <div style={{ padding: "10px 8px", fontSize: 12, color: "var(--text-muted)" }}>Loading...</div>
+                <div style={{ padding: "10px 8px", fontSize: "var(--text-md)", color: "var(--text-muted)" }}>
+                  Loading...
+                </div>
               ) : error ? (
-                <div style={{ padding: "10px 8px", fontSize: 11, color: "var(--danger)" }}>{error}</div>
+                <div style={{ padding: "10px 8px", fontSize: "var(--text-sm)", color: "var(--danger)" }}>{error}</div>
               ) : packages.length === 0 ? (
-                <div style={{ padding: "10px 8px", fontSize: 11, color: "var(--text-dim)" }}>No plugins configured</div>
+                <div style={{ padding: "10px 8px", fontSize: "var(--text-sm)", color: "var(--text-dim)" }}>
+                  No plugins configured
+                </div>
               ) : (
                 groupedPackages.map((group) => (
                   <div key={group.scope} style={{ marginBottom: 6 }}>
                     <div
                       style={{
                         padding: "4px 8px 3px",
-                        fontSize: 10,
+                        fontSize: "var(--text-xs)",
                         fontWeight: 600,
                         color: "var(--text-dim)",
                         textTransform: "uppercase",
@@ -864,7 +875,7 @@ export function PluginsConfig({
                           <div style={{ minWidth: 0, flex: 1 }}>
                             <div
                               style={{
-                                fontSize: 12,
+                                fontSize: "var(--text-md)",
                                 fontWeight: isSelected ? 600 : 400,
                                 color: "var(--text)",
                                 fontFamily: "var(--font-mono)",
@@ -877,7 +888,7 @@ export function PluginsConfig({
                             </div>
                             <div
                               style={{
-                                fontSize: 10,
+                                fontSize: "var(--text-xs)",
                                 color: "var(--text-dim)",
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",
@@ -890,7 +901,7 @@ export function PluginsConfig({
                             {(pkg.version || pkg.configuredVersion) && (
                               <div
                                 style={{
-                                  fontSize: 10,
+                                  fontSize: "var(--text-xs)",
                                   color: "var(--text-dim)",
                                   overflow: "hidden",
                                   textOverflow: "ellipsis",
@@ -928,7 +939,7 @@ export function PluginsConfig({
                   cursor: "pointer",
                   background: addMode ? "var(--bg-selected)" : "none",
                   color: addMode ? "var(--accent)" : "var(--text-dim)",
-                  fontSize: 12,
+                  fontSize: "var(--text-md)",
                 }}
                 onMouseEnter={(e) => {
                   if (!addMode) e.currentTarget.style.background = "var(--bg-hover)";
@@ -1000,7 +1011,7 @@ export function PluginsConfig({
                   alignItems: "center",
                   justifyContent: "center",
                   color: "var(--text-dim)",
-                  fontSize: 13,
+                  fontSize: "var(--text-base)",
                 }}
               >
                 {t("selectPackage", "Select a package")}
@@ -1020,7 +1031,9 @@ export function PluginsConfig({
             flexShrink: 0,
           }}
         >
-          <div style={{ minWidth: 0, flex: 1, fontSize: 11, color: "var(--text-dim)", overflow: "hidden" }}>
+          <div
+            style={{ minWidth: 0, flex: 1, fontSize: "var(--text-sm)", color: "var(--text-dim)", overflow: "hidden" }}
+          >
             {data?.diagnostics.length ? (
               <span
                 title={data.diagnostics

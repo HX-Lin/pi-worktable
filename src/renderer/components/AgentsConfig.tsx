@@ -64,7 +64,7 @@ export function AgentsConfig({ cwd }: Props) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       <SectionTitle>{t("agentsTitle", "Agents")}</SectionTitle>
-      <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.6 }}>
+      <p style={{ margin: 0, fontSize: "var(--text-md)", color: "var(--text-muted)", lineHeight: 1.6 }}>
         {t(
           "agentsDescription",
           "Agents the subagent tool can delegate to. Definitions live in ~/.pi/agent/agents and <project>/.pi/agents as markdown files with frontmatter; the body becomes the agent's system prompt.",
@@ -72,15 +72,22 @@ export function AgentsConfig({ cwd }: Props) {
       </p>
 
       {error && (
-        <div style={{ fontSize: 12, color: "var(--danger)", padding: "7px 9px", background: "var(--bg-panel)" }}>
+        <div
+          style={{
+            fontSize: "var(--text-md)",
+            color: "var(--danger)",
+            padding: "7px 9px",
+            background: "var(--bg-panel)",
+          }}
+        >
           {error}
         </div>
       )}
 
       {loading ? (
-        <div style={{ fontSize: 12, color: "var(--text-dim)" }}>{t("loading", "Loading…")}</div>
+        <div style={{ fontSize: "var(--text-md)", color: "var(--text-dim)" }}>{t("loading", "Loading…")}</div>
       ) : agents.length === 0 ? (
-        <div style={{ fontSize: 12, color: "var(--text-dim)" }}>
+        <div style={{ fontSize: "var(--text-md)", color: "var(--text-dim)" }}>
           {t("agentsEmpty", "No agents found. Add a markdown file to ~/.pi/agent/agents to create one.")}
         </div>
       ) : (
@@ -101,10 +108,10 @@ export function AgentsConfig({ cwd }: Props) {
             >
               <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ fontSize: 13, color: "var(--text)" }}>{agent.name}</span>
+                  <span style={{ fontSize: "var(--text-base)", color: "var(--text)" }}>{agent.name}</span>
                   <span
                     style={{
-                      fontSize: 10,
+                      fontSize: "var(--text-xs)",
                       padding: "1px 6px",
                       borderRadius: 999,
                       background: "var(--bg-subtle)",
@@ -114,17 +121,23 @@ export function AgentsConfig({ cwd }: Props) {
                     {agent.source === "project" ? t("agentsProject", "project") : t("agentsUser", "user")}
                   </span>
                   {agent.tools && agent.tools.length > 0 && (
-                    <span style={{ fontSize: 10, color: "var(--text-dim)" }}>
+                    <span style={{ fontSize: "var(--text-xs)", color: "var(--text-dim)" }}>
                       {agent.tools.length} {t("agentsTools", "tools")}
                     </span>
                   )}
                 </div>
-                <div style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.5 }}>{agent.description}</div>
-                <div style={{ fontSize: 10, color: "var(--text-dim)", wordBreak: "break-all" }}>{agent.filePath}</div>
+                <div style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", lineHeight: 1.5 }}>
+                  {agent.description}
+                </div>
+                <div style={{ fontSize: "var(--text-xs)", color: "var(--text-dim)", wordBreak: "break-all" }}>
+                  {agent.filePath}
+                </div>
               </div>
 
               <label style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
-                <span style={{ fontSize: 10, color: "var(--text-dim)" }}>{t("agentsModel", "Model")}</span>
+                <span style={{ fontSize: "var(--text-xs)", color: "var(--text-dim)" }}>
+                  {t("agentsModel", "Model")}
+                </span>
                 <select
                   value={agent.model ?? ""}
                   disabled={busyFile === agent.filePath}
@@ -132,7 +145,7 @@ export function AgentsConfig({ cwd }: Props) {
                   style={{
                     minWidth: 220,
                     padding: "5px 7px",
-                    fontSize: 11,
+                    fontSize: "var(--text-sm)",
                     borderRadius: "var(--radius-sm)",
                     background: "var(--bg)",
                     color: agent.model ? "var(--text)" : "var(--text-dim)",

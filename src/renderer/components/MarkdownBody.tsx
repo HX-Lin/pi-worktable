@@ -322,7 +322,7 @@ function CodeBlock({ code, lang, headerAction }: { code: string; lang: string; h
           customStyle={{
             margin: 0,
             padding: "11px 13px",
-            fontSize: 12.5,
+            fontSize: "var(--text-md)",
             lineHeight: 1.62,
             borderRadius: 0,
             background: "color-mix(in srgb, var(--bg) 92%, var(--bg-panel))",
@@ -336,7 +336,7 @@ function CodeBlock({ code, lang, headerAction }: { code: string; lang: string; h
           style={{
             margin: 0,
             padding: "11px 13px",
-            fontSize: 12.5,
+            fontSize: "var(--text-md)",
             lineHeight: 1.62,
             overflow: "auto",
             whiteSpace: "pre",

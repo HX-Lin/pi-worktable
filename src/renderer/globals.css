@@ -154,10 +154,14 @@
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
-  --text-xs: 10px;
-  --text-sm: 11px;
-  --text-md: 12px;
-  --text-lg: 14px;
+  --text-xs: 10px; /* 计数、元信息 */
+  --text-sm: 11px; /* 次级标签 */
+  --text-md: 12px; /* 密集界面正文 */
+  --text-base: 13px; /* 阅读正文 */
+  --text-lg: 14px; /* 面板标题 */
+  --text-xl: 16px; /* 页面标题 */
+  --text-2xl: 18px; /* 对话框标题 */
+  --text-3xl: 20px; /* 空状态主标题 */
   --font-size-caption: var(--text-md);
   --font-size-control: 13px;
   --font-size-body: 14px;
@@ -204,44 +208,47 @@ html.dark {
    geometry-corner-radius 给窗口圆角）；应用只负责画半透明表面，文字保持不透明。
    透明度就是第 2 节这几个旋钮，没有应用内开关、没有持久状态、没有运行时注入。 */
 html.niri {
-  --bg-color: #11131a;
-  --panel-color: #1a1d27;
-  --hover-color: #ffffff;
-  --selected-color: #fb923c;
-  --border-color: rgba(255, 255, 255, 0.16);
-  --border-soft-color: rgba(255, 255, 255, 0.1);
-  --text-color: #f8f9fc;
-  --text-muted-color: #d6dbe6;
-  --text-dim-color: #c2c8d5;
-  --text-faint-color: #9aa2b4;
-  --accent-color: #fb923c;
-  --accent-hover-color: #fdba74;
-  --tool-bg-color: #0a0c11;
-  --tool-fg-color: #ccd0da;
-  --tool-border-color: rgba(255, 255, 255, 0.16);
-  --user-bg-color: #2a2e3a;
-  --user-fg-color: #f5f6fa;
-  --assistant-bg-color: #1a1d27;
-  /* 代码块与工具卡在这类应用里占屏幕最大，跟着底色一起玻璃化，否则"看得到壁纸"只发生在缝隙里。 */
-  --code-bg: color-mix(in srgb, #0a0c11 40%, transparent);
-  --code-text: #ccd0da;
-  --red: #f87171;
-  --green: #4ade80;
-  --amber: #fbbf24;
-  --blue: #60a5fa;
+  /* 清晰壁纸下的可读性：浅色玻璃（白雾）配深色文字。
+     壁纸是照片，亮部会吃掉白字——这正是"透明之后按键文字看不清"的原因，
+     所以文字一律走深色，表面只做一层很淡的白色薄雾，壁纸依然清晰。 */
+  --bg-color: #ffffff;
+  --panel-color: #ffffff;
+  --hover-color: #000000;
+  --selected-color: #c2410c;
+  --border-color: rgba(0, 0, 0, 0.18);
+  --border-soft-color: rgba(0, 0, 0, 0.1);
+  --text-color: #12141a;
+  --text-muted-color: #363c48;
+  --text-dim-color: #555c6a;
+  --text-faint-color: #767d8c;
+  /* 深橙：浅底上文字与图标才有对比（原来的亮橙只适合深底）。 */
+  --accent-color: #c2410c;
+  --accent-hover-color: #9a3412;
+  --tool-bg-color: #ffffff;
+  --tool-fg-color: #262b35;
+  --tool-border-color: rgba(0, 0, 0, 0.12);
+  --user-bg-color: #ffffff;
+  --user-fg-color: #12141a;
+  --assistant-bg-color: #ffffff;
+  /* 代码块在这类应用里占屏幕最大，跟着换成浅色玻璃，否则整块还是深底。 */
+  --code-bg: color-mix(in srgb, #f5f7fb 82%, transparent);
+  --code-text: #1b2029;
+  --red: #b3261e;
+  --green: #15803d;
+  --amber: #a16207;
+  --blue: #1d4ed8;
 
-  /* 磨砂玻璃：这一层只决定"壁纸透出多少"。壁纸是照片，暗部本来就接近黑色，
-     所以数值必须足够低，暗部才看得出纹理——0.4 左右在壁纸暗部等同于不透明。 */
-  --base-alpha: 8%;
-  --panel-alpha: 12%;
-  --card-alpha: 18%;
-  --user-alpha: 30%;
-  --tool-alpha: 24%;
-  --chip-alpha: 8%;
-  --input-alpha: 26%;
-  /* 选中态在深色主题下是橙色低透，不能跟着 chip 的白色 9% 走 */
-  --bg-selected: rgba(251, 146, 60, 0.24);
-  --menu-bg: #1a1d27;
+  /* 白雾厚度：数值只决定"壁纸之上蒙多厚的白"，壁纸始终看得见。 */
+  --base-alpha: 12%;
+  --panel-alpha: 16%;
+  --card-alpha: 30%;
+  --user-alpha: 34%;
+  --tool-alpha: 30%;
+  --chip-alpha: 10%;
+  --input-alpha: 38%;
+  --bg-selected: color-mix(in srgb, var(--accent) 20%, transparent);
+  /* 菜单必须实色：密集列表叠在半透明上会透出底下的字。 */
+  --menu-bg: #ffffff;
 }
 
 /* Readability on translucent panels without raising opacity: a soft dark
@@ -251,8 +258,8 @@ html.niri .sidebar-container,
 html.niri .right-panel-container,
 html.niri .top-bar {
   text-shadow:
-    0 1px 2px rgba(4, 6, 12, 0.9),
-    0 0 4px rgba(4, 6, 12, 0.65);
+    0 1px 1px rgba(255, 255, 255, 0.75),
+    0 0 7px rgba(255, 255, 255, 0.55);
 }
 html.niri .sidebar-container :is(input, textarea),
 html.niri .right-panel-container :is(input, textarea) {
@@ -287,7 +294,7 @@ body {
   background: transparent;
   color: var(--text);
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: var(--text-lg);
   overscroll-behavior: none;
 }
 
@@ -433,6 +440,9 @@ html.niri body::before {
 html.dark ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
 }
+html.niri ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.22);
+}
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-dim);
 }
@@ -457,7 +467,7 @@ code {
 
 /* react-markdown output styles */
 .markdown-body {
-  font-size: 14px;
+  font-size: var(--text-lg);
   line-height: 1.7;
   color: var(--text);
   word-break: break-word;
@@ -552,7 +562,7 @@ code {
   display: inline-block;
   margin: 6px 0;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--text-md);
   font-family: var(--font-mono);
 }
 .markdown-body .markdown-inline-code {
@@ -621,7 +631,7 @@ code {
   border-collapse: separate;
   border-spacing: 0;
   min-width: 100%;
-  font-size: 13px;
+  font-size: var(--text-base);
 }
 .markdown-body th,
 .markdown-body td {
@@ -762,7 +772,7 @@ code {
   padding-top: 8px;
   border-top: 1px solid var(--border);
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--text-md);
 }
 .compaction-file-details summary {
   cursor: pointer;
@@ -775,7 +785,7 @@ code {
 .compaction-file-title {
   margin-bottom: 4px;
   color: var(--text);
-  font-size: 11px;
+  font-size: var(--text-sm);
   font-weight: 650;
 }
 .compaction-file-list {
@@ -787,7 +797,7 @@ code {
   border-radius: var(--radius-sm);
   background: var(--bg-panel);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--text-sm);
   line-height: 1.45;
   list-style: none;
 }
@@ -812,7 +822,7 @@ code {
   background: var(--bg-panel);
   border-bottom: 1px solid var(--border);
   color: var(--text-dim);
-  font-size: 11px;
+  font-size: var(--text-sm);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -836,7 +846,7 @@ code {
   color: var(--text-muted);
   cursor: pointer;
   font: inherit;
-  font-size: 11px;
+  font-size: var(--text-sm);
   line-height: 1.25;
 }
 .markdown-code-action:hover:not(:disabled) {
@@ -868,7 +878,7 @@ code {
 .mermaid-block-error {
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--text-md);
 }
 
 /* File viewer markdown preview — larger headings */
@@ -891,7 +901,7 @@ code {
   padding: 12px 16px;
   overflow-x: auto;
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--text-base);
   margin: 12px 0;
 }
 .markdown-file-preview code {

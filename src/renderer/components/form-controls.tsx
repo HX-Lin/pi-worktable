@@ -25,7 +25,7 @@ export function Field({ label, children }: { label: string; children: ReactNode 
   return (
     <FieldControlIdContext.Provider value={controlId}>
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        <label htmlFor={controlId} style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>
+        <label htmlFor={controlId} style={{ fontSize: "var(--text-md)", color: "var(--text-muted)", fontWeight: 500 }}>
           {label}
         </label>
         {children}
@@ -41,7 +41,7 @@ export const inputStyle = {
   border: "1px solid var(--border)",
   borderRadius: "var(--radius-sm)",
   color: "var(--text)",
-  fontSize: 13,
+  fontSize: "var(--text-base)",
   outline: "none",
   width: "100%",
   boxSizing: "border-box" as const,
@@ -239,7 +239,7 @@ export function Check({
         minHeight: 36,
         padding: "4px 0",
         cursor: "pointer",
-        fontSize: 13,
+        fontSize: "var(--text-base)",
         color: "var(--text-muted)",
       }}
     >
@@ -258,7 +258,7 @@ export function SectionTitle({ children }: { children: ReactNode }) {
   return (
     <div
       style={{
-        fontSize: 11,
+        fontSize: "var(--text-sm)",
         fontWeight: 600,
         color: "var(--text-dim)",
         textTransform: "uppercase",

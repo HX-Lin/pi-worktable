@@ -18,7 +18,7 @@ const sessionMenuItemStyle: CSSProperties = {
   background: "transparent",
   color: "var(--text-muted)",
   cursor: "pointer",
-  fontSize: 13,
+  fontSize: "var(--text-base)",
   textAlign: "left",
 };
 
@@ -176,7 +176,7 @@ export function SessionItem({
             style={{
               flex: 1,
               minWidth: 0,
-              fontSize: 12,
+              fontSize: "var(--text-md)",
               color: "var(--text)",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -205,7 +205,7 @@ export function SessionItem({
                 borderRadius: "var(--radius-sm)",
                 color: "var(--on-accent)",
                 cursor: "pointer",
-                fontSize: 12,
+                fontSize: "var(--text-md)",
                 fontWeight: 600,
                 whiteSpace: "nowrap",
               }}
@@ -240,7 +240,7 @@ export function SessionItem({
                 borderRadius: "var(--radius-sm)",
                 color: "var(--text-muted)",
                 cursor: "pointer",
-                fontSize: 12,
+                fontSize: "var(--text-md)",
                 fontWeight: 500,
                 whiteSpace: "nowrap",
               }}
@@ -263,7 +263,7 @@ export function SessionItem({
           autoFocus
           style={{
             flex: 1,
-            fontSize: 13,
+            fontSize: "var(--text-base)",
             padding: "5px 8px",
             border: "1px solid var(--accent)",
             borderRadius: "var(--radius-sm)",
@@ -333,7 +333,7 @@ export function SessionItem({
                   alignItems: "center",
                   gap: 7,
                   minWidth: 0,
-                  fontSize: 13,
+                  fontSize: "var(--text-base)",
                   fontWeight: isSelected ? 600 : 500,
                   lineHeight: 1.4,
                   color: "var(--text)",
@@ -367,7 +367,7 @@ export function SessionItem({
                   gap: 8,
                   alignItems: "center",
                   color: "var(--text-dim)",
-                  fontSize: 12,
+                  fontSize: "var(--text-md)",
                   minWidth: 0,
                   paddingLeft: 13,
                 }}
@@ -376,7 +376,7 @@ export function SessionItem({
                 <span
                   style={{
                     fontFamily: "var(--font-mono)",
-                    fontSize: 11,
+                    fontSize: "var(--text-sm)",
                     color: "var(--accent-chip-fg)",
                     background: "var(--accent-chip-bg)",
                     padding: "1px 6px",

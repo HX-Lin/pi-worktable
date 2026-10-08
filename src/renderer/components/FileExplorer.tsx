@@ -160,7 +160,7 @@ function TreeNode({
           </span>
           <span
             style={{
-              fontSize: 13,
+              fontSize: "var(--text-base)",
               color: "var(--text)",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -208,7 +208,7 @@ function TreeNode({
               borderRadius: "var(--radius-sm)",
               color: "var(--accent)",
               cursor: "pointer",
-              fontSize: 12,
+              fontSize: "var(--text-md)",
               fontWeight: 600,
               whiteSpace: "nowrap",
             }}
@@ -259,7 +259,7 @@ function TreeNode({
               borderRadius: "var(--radius-sm)",
               color: "var(--text-muted)",
               cursor: downloading ? "wait" : "pointer",
-              fontSize: 12,
+              fontSize: "var(--text-md)",
               fontWeight: 600,
               whiteSpace: "nowrap",
             }}
@@ -300,7 +300,7 @@ function TreeNode({
             <div
               style={{
                 paddingLeft: 8 + (depth + 1) * 14,
-                fontSize: 12,
+                fontSize: "var(--text-md)",
                 color: "var(--text-dim)",
                 height: 32,
                 display: "flex",
@@ -387,11 +387,13 @@ export function FileExplorer({ cwd, onOpenFile, refreshKey, onAtMention }: Props
   );
 
   if (loading) {
-    return <div style={{ padding: "8px 12px", fontSize: 11, color: "var(--text-dim)" }}>Loading files...</div>;
+    return (
+      <div style={{ padding: "8px 12px", fontSize: "var(--text-sm)", color: "var(--text-dim)" }}>Loading files...</div>
+    );
   }
 
   if (error) {
-    return <div style={{ padding: "8px 12px", fontSize: 11, color: "var(--danger)" }}>{error}</div>;
+    return <div style={{ padding: "8px 12px", fontSize: "var(--text-sm)", color: "var(--danger)" }}>{error}</div>;
   }
 
   return (
@@ -402,7 +404,7 @@ export function FileExplorer({ cwd, onOpenFile, refreshKey, onAtMention }: Props
           alignItems: "center",
           gap: 7,
           padding: "5px 8px 7px",
-          fontSize: 10.5,
+          fontSize: "var(--text-xs)",
           color: "var(--text-dim)",
           borderBottom: "1px solid var(--border)",
           marginBottom: 3,
@@ -460,7 +462,7 @@ export function FileExplorer({ cwd, onOpenFile, refreshKey, onAtMention }: Props
         />
       ))}
       {roots.length === 0 && (
-        <div style={{ padding: "8px 12px", fontSize: 11, color: "var(--text-dim)" }}>No files found</div>
+        <div style={{ padding: "8px 12px", fontSize: "var(--text-sm)", color: "var(--text-dim)" }}>No files found</div>
       )}
     </div>
   );

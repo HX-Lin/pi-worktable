@@ -139,7 +139,7 @@ export function App() {
         <div style={cardStyle}>
           <h1 style={titleStyle}>Cannot connect to Agent Host</h1>
           <p style={bodyStyle}>{error}</p>
-          <p style={{ ...bodyStyle, fontSize: 12 }}>
+          <p style={{ ...bodyStyle, fontSize: "var(--text-md)" }}>
             Host must be running (utilityProcess). Check logs if this persists.
           </p>
           <button type="button" onClick={() => window.location.reload()} style={btnPrimary}>
@@ -157,8 +157,8 @@ export function App() {
     return (
       <div style={centerStyle}>
         <div style={{ ...cardStyle, textAlign: "center" }}>
-          <div style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 8 }}>{status}</div>
-          <div style={{ fontSize: 12, color: "var(--text-dim)" }}>Pi Worktable</div>
+          <div style={{ fontSize: "var(--text-base)", color: "var(--text-muted)", marginBottom: 8 }}>{status}</div>
+          <div style={{ fontSize: "var(--text-md)", color: "var(--text-dim)" }}>Pi Worktable</div>
         </div>
       </div>
     );
@@ -195,16 +195,21 @@ const cardStyle: CSSProperties = {
 };
 
 const titleStyle: CSSProperties = {
-  fontSize: 18,
+  fontSize: "var(--text-2xl)",
   margin: "0 0 12px",
   fontFamily: "ui-monospace, monospace",
   color: "var(--text)",
 };
 
-const bodyStyle: CSSProperties = { fontSize: 13.5, lineHeight: 1.55, color: "var(--text-muted)", margin: "0 0 8px" };
+const bodyStyle: CSSProperties = {
+  fontSize: "var(--text-base)",
+  lineHeight: 1.55,
+  color: "var(--text-muted)",
+  margin: "0 0 8px",
+};
 
 const preStyle: CSSProperties = {
-  fontSize: 11,
+  fontSize: "var(--text-sm)",
   overflow: "auto",
   maxHeight: 200,
   background: "var(--tool-bg)",
@@ -237,7 +242,7 @@ const hotUpdateBannerStyle: CSSProperties = {
   background: "var(--bg-panel)",
   boxShadow: "var(--shadow-md)",
   color: "var(--text-muted)",
-  fontSize: 12,
+  fontSize: "var(--text-md)",
   pointerEvents: "none",
 };
 

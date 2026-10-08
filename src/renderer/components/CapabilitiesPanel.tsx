@@ -238,14 +238,19 @@ export function CapabilitiesPanel({ sessionId, cwd }: { sessionId: string | null
   );
 }
 
-const valueStyle: React.CSSProperties = { fontSize: 12.5, color: "var(--text)", minWidth: 0, wordBreak: "break-word" };
-const hintStyle: React.CSSProperties = { color: "var(--text-dim)", fontSize: 11, margin: "6px 0 0" };
+const valueStyle: React.CSSProperties = {
+  fontSize: "var(--text-md)",
+  color: "var(--text)",
+  minWidth: 0,
+  wordBreak: "break-word",
+};
+const hintStyle: React.CSSProperties = { color: "var(--text-dim)", fontSize: "var(--text-sm)", margin: "6px 0 0" };
 const codeStyle: React.CSSProperties = {
   background: "var(--sunken-bg)",
   border: "1px solid var(--border)",
   borderRadius: "var(--radius-sm)",
   color: "var(--text-muted)",
-  fontSize: 11,
+  fontSize: "var(--text-sm)",
   padding: "2px 6px",
 };
 const listStyle: React.CSSProperties = {
@@ -253,7 +258,7 @@ const listStyle: React.CSSProperties = {
   paddingLeft: 18,
   display: "grid",
   gap: 5,
-  fontSize: 12,
+  fontSize: "var(--text-md)",
   color: "var(--text-muted)",
 };
 const buttonStyle: React.CSSProperties = {
@@ -263,7 +268,7 @@ const buttonStyle: React.CSSProperties = {
   color: "var(--text)",
   cursor: "pointer",
   font: "inherit",
-  fontSize: 12,
+  fontSize: "var(--text-md)",
   padding: "5px 12px",
 };
 
@@ -271,7 +276,7 @@ function Section({ title, description, children }: { title: string; description?
   return (
     <section style={{ display: "grid", gap: 10 }}>
       <div>
-        <h3 style={{ fontSize: 13, margin: 0 }}>{title}</h3>
+        <h3 style={{ fontSize: "var(--text-base)", margin: 0 }}>{title}</h3>
         {description && <p style={{ ...hintStyle, marginTop: 4 }}>{description}</p>}
       </div>
       {children}
@@ -282,7 +287,7 @@ function Section({ title, description, children }: { title: string; description?
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ display: "flex", gap: 12, alignItems: "baseline", minHeight: 26 }}>
-      <span style={{ fontSize: 12, color: "var(--text-muted)", minWidth: 160 }}>{label}</span>
+      <span style={{ fontSize: "var(--text-md)", color: "var(--text-muted)", minWidth: 160 }}>{label}</span>
       {children}
     </div>
   );

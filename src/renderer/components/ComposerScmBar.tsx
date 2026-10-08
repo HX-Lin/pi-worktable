@@ -109,7 +109,7 @@ export function ComposerScmBar({ cwd, refreshKey = 0, worktrees }: Props) {
     alignItems: "center",
     gap: 5,
     padding: "3px 8px",
-    fontSize: 11,
+    fontSize: "var(--text-sm)",
     borderRadius: "var(--radius-sm)",
     border: "1px solid var(--border)",
     background: "var(--bg-panel)",
@@ -182,7 +182,7 @@ export function ComposerScmBar({ cwd, refreshKey = 0, worktrees }: Props) {
                   width: "100%",
                   textAlign: "left",
                   padding: "5px 8px",
-                  fontSize: 11.5,
+                  fontSize: "var(--text-sm)",
                   borderRadius: "var(--radius-sm)",
                   border: "none",
                   background: branch === status.branch ? "var(--bg-hover)" : "transparent",
@@ -276,7 +276,7 @@ export function ComposerScmBar({ cwd, refreshKey = 0, worktrees }: Props) {
                 width: "100%",
                 resize: "vertical",
                 padding: "6px 8px",
-                fontSize: 12,
+                fontSize: "var(--text-md)",
                 borderRadius: "var(--radius-sm)",
                 background: "var(--bg)",
                 color: "var(--text)",
@@ -285,7 +285,7 @@ export function ComposerScmBar({ cwd, refreshKey = 0, worktrees }: Props) {
               }}
             />
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ fontSize: 10, color: "var(--text-dim)", flex: 1 }}>
+              <span style={{ fontSize: "var(--text-xs)", color: "var(--text-dim)", flex: 1 }}>
                 {t("scmCommitHint", "Stages tracked changes, then commits")}
               </span>
               <button
@@ -294,7 +294,7 @@ export function ComposerScmBar({ cwd, refreshKey = 0, worktrees }: Props) {
                 disabled={!message.trim() || busy === "commit"}
                 style={{
                   padding: "5px 12px",
-                  fontSize: 11.5,
+                  fontSize: "var(--text-sm)",
                   borderRadius: "var(--radius-sm)",
                   border: "1px solid var(--border)",
                   background: "var(--accent)",
@@ -314,7 +314,7 @@ export function ComposerScmBar({ cwd, refreshKey = 0, worktrees }: Props) {
         <span
           title={note.text}
           style={{
-            fontSize: 10.5,
+            fontSize: "var(--text-xs)",
             color: note.error ? "var(--danger)" : "var(--text-dim)",
             maxWidth: 280,
             overflow: "hidden",

@@ -49,7 +49,7 @@ function buttonStyle(primary = false): React.CSSProperties {
     background: primary ? "var(--accent)" : "var(--bg)",
     color: primary ? "white" : "var(--text-muted)",
     minHeight: 36,
-    fontSize: 13,
+    fontSize: "var(--text-base)",
     padding: "0 12px",
     cursor: "pointer",
   };
@@ -62,7 +62,7 @@ const inputStyle: React.CSSProperties = {
   background: "var(--bg)",
   color: "var(--text)",
   minHeight: 36,
-  fontSize: 13,
+  fontSize: "var(--text-base)",
   padding: "8px 9px",
 };
 
@@ -199,8 +199,10 @@ export function ChannelsConfig({ onSnapshotChange }: { onSnapshotChange?: (snaps
       <div style={{ maxWidth: 820, margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
           <div>
-            <h2 style={{ margin: 0, color: "var(--text)", fontSize: 16 }}>{t("channels", "Messaging channels")}</h2>
-            <p style={{ margin: "6px 0 0", color: "var(--text-dim)", fontSize: 12, lineHeight: 1.6 }}>
+            <h2 style={{ margin: 0, color: "var(--text)", fontSize: "var(--text-xl)" }}>
+              {t("channels", "Messaging channels")}
+            </h2>
+            <p style={{ margin: "6px 0 0", color: "var(--text-dim)", fontSize: "var(--text-md)", lineHeight: 1.6 }}>
               {t("channelsDescription", "Connect IM accounts, control access, and bind conversations to Pi sessions.")}
             </p>
           </div>
@@ -228,7 +230,7 @@ export function ChannelsConfig({ onSnapshotChange }: { onSnapshotChange?: (snaps
               color: "var(--danger)",
               borderRadius: "var(--radius-sm)",
               padding: 10,
-              fontSize: 12,
+              fontSize: "var(--text-md)",
             }}
           >
             {error}
@@ -238,7 +240,7 @@ export function ChannelsConfig({ onSnapshotChange }: { onSnapshotChange?: (snaps
         <section style={{ marginTop: 20 }}>
           <div
             style={{
-              fontSize: 11,
+              fontSize: "var(--text-sm)",
               color: "var(--text-dim)",
               textTransform: "uppercase",
               letterSpacing: ".08em",
@@ -248,7 +250,7 @@ export function ChannelsConfig({ onSnapshotChange }: { onSnapshotChange?: (snaps
             {t("channelOverview", "Overview")} · {configuredCount} {t("configuredAccounts", "accounts configured")}
           </div>
           {loading ? (
-            <div style={{ color: "var(--text-dim)", fontSize: 12 }}>{t("loading", "Loading…")}</div>
+            <div style={{ color: "var(--text-dim)", fontSize: "var(--text-md)" }}>{t("loading", "Loading…")}</div>
           ) : snapshot.accounts.length === 0 ? (
             <div
               style={{
@@ -257,7 +259,7 @@ export function ChannelsConfig({ onSnapshotChange }: { onSnapshotChange?: (snaps
                 padding: 28,
                 textAlign: "center",
                 color: "var(--text-dim)",
-                fontSize: 12,
+                fontSize: "var(--text-md)",
               }}
             >
               {t("noChannels", "No messaging accounts configured. Connect Feishu / Lark to get started.")}
@@ -471,19 +473,27 @@ export function AccountCard({
             {account.domain === "lark" ? "L" : "飞"}
           </div>
           <div>
-            <div style={{ color: "var(--text)", fontSize: 13, fontWeight: 700 }}>{account.name}</div>
-            <div style={{ color: statusColor(status), fontSize: 11, marginTop: 2 }}>
+            <div style={{ color: "var(--text)", fontSize: "var(--text-base)", fontWeight: 700 }}>{account.name}</div>
+            <div style={{ color: statusColor(status), fontSize: "var(--text-sm)", marginTop: 2 }}>
               {t(`channelStatus_${status?.state ?? "stopped"}`, status?.state ?? "stopped")} ·{" "}
               {account.credentialFingerprint ?? t("notConfigured", "not configured")}
             </div>
-            <div style={{ color: "var(--text-dim)", fontSize: 10, marginTop: 2 }}>
+            <div style={{ color: "var(--text-dim)", fontSize: "var(--text-xs)", marginTop: 2 }}>
               {label}
               {account.providerUsername ? ` · ${account.providerUsername}` : ""}
               {account.providerAccountId ? ` · ${account.providerAccountId}` : ""}
             </div>
           </div>
         </div>
-        <label style={{ fontSize: 11, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6 }}>
+        <label
+          style={{
+            fontSize: "var(--text-sm)",
+            color: "var(--text-muted)",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
           <input
             type="checkbox"
             checked={draft.enabled}
@@ -495,7 +505,7 @@ export function AccountCard({
       </div>
 
       {status?.lastError && (
-        <div style={{ color: "var(--danger)", fontSize: 11, marginTop: 10 }}>{status.lastError}</div>
+        <div style={{ color: "var(--danger)", fontSize: "var(--text-sm)", marginTop: 10 }}>{status.lastError}</div>
       )}
 
       <div
@@ -682,7 +692,7 @@ export function AccountCard({
           >
             {updatingToken ? t("saving", "Saving…") : t("updateFeishuCredential", "Update credentials")}
           </button>
-          <div style={{ gridColumn: "1 / -1", color: "var(--text-dim)", fontSize: 10, lineHeight: 1.5 }}>
+          <div style={{ gridColumn: "1 / -1", color: "var(--text-dim)", fontSize: "var(--text-xs)", lineHeight: 1.5 }}>
             {t(
               "feishuCredentialHint",
               "Changing the App Secret, App ID, or domain verifies the bot and hot-reloads its WebSocket connection without restarting Pi Desktop.",
@@ -690,7 +700,7 @@ export function AccountCard({
           </div>
           <div
             data-testid="feishu-rich-card-hint"
-            style={{ gridColumn: "1 / -1", color: "var(--text-dim)", fontSize: 10, lineHeight: 1.5 }}
+            style={{ gridColumn: "1 / -1", color: "var(--text-dim)", fontSize: "var(--text-xs)", lineHeight: 1.5 }}
           >
             {t(
               "feishuRichCardHint",
@@ -764,7 +774,7 @@ export function AccountCard({
             borderRadius: "var(--radius-sm)",
             background: probeFeedback.ok ? "#22c55e12" : "#ef444412",
             color: probeFeedback.ok ? "var(--success)" : "var(--danger)",
-            fontSize: 11,
+            fontSize: "var(--text-sm)",
           }}
         >
           {probeFeedback.ok ? "✓" : "!"} {probeFeedback.message} ·{" "}
@@ -831,7 +841,7 @@ function PairingSection({
               borderBottom: "1px solid var(--border)",
             }}
           >
-            <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
+            <div style={{ fontSize: "var(--text-md)", color: "var(--text-muted)" }}>
               <div>
                 {channelLabel(
                   pairing.channel,
@@ -920,7 +930,9 @@ function BindingRow({
         borderBottom: "1px solid var(--border)",
       }}
     >
-      <div style={{ fontSize: 11, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis" }}>
+      <div
+        style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis" }}
+      >
         {channelLabel(binding.channel, t)} · {binding.peerId}
         {binding.threadId ? ` · ${t("topic", "topic")} ${binding.threadId}` : ""}
       </div>
@@ -996,10 +1008,10 @@ function ActivitySection({ snapshot }: { snapshot: ChannelsSnapshot }) {
         }}
       >
         <span>
-          <span style={{ display: "block", fontSize: 12, fontWeight: 700 }}>
+          <span style={{ display: "block", fontSize: "var(--text-md)", fontWeight: 700 }}>
             {t("recentActivity", "Recent activity")} ({snapshot.activities.length})
           </span>
-          <span style={{ display: "block", marginTop: 3, fontSize: 10, color: "var(--text-dim)" }}>
+          <span style={{ display: "block", marginTop: 3, fontSize: "var(--text-xs)", color: "var(--text-dim)" }}>
             {t("recentActivityDescription", "Message content is never logged; the latest 100 records are retained.")}
           </span>
         </span>
@@ -1007,7 +1019,7 @@ function ActivitySection({ snapshot }: { snapshot: ChannelsSnapshot }) {
           aria-hidden="true"
           style={{
             color: "var(--text-dim)",
-            fontSize: 15,
+            fontSize: "var(--text-lg)",
             transform: expanded ? "rotate(180deg)" : "none",
             transition: "transform .15s ease",
           }}
@@ -1030,7 +1042,7 @@ function ActivitySection({ snapshot }: { snapshot: ChannelsSnapshot }) {
                   gap: 10,
                   padding: "7px 0",
                   borderBottom: "1px solid var(--border)",
-                  fontSize: 11,
+                  fontSize: "var(--text-sm)",
                 }}
               >
                 <span style={{ color: activity.outcome === "failed" ? "var(--danger)" : "var(--text-muted)" }}>
@@ -1113,8 +1125,10 @@ export function FeishuCredentialDialog({
           boxShadow: "var(--shadow-lg)",
         }}
       >
-        <h3 style={{ margin: 0, color: "var(--text)", fontSize: 16 }}>{t("connectFeishu", "Connect Feishu / Lark")}</h3>
-        <p style={{ color: "var(--text-muted)", fontSize: 12, lineHeight: 1.6 }}>
+        <h3 style={{ margin: 0, color: "var(--text)", fontSize: "var(--text-xl)" }}>
+          {t("connectFeishu", "Connect Feishu / Lark")}
+        </h3>
+        <p style={{ color: "var(--text-muted)", fontSize: "var(--text-md)", lineHeight: 1.6 }}>
           {t(
             "feishuCredentialDescription",
             "Connect a self-built app through the official WebSocket long connection. App Secret is stored with OS encryption and is never returned to the UI.",
@@ -1152,7 +1166,7 @@ export function FeishuCredentialDialog({
             background: "var(--bg-panel)",
             padding: "11px 13px",
             color: "var(--text-muted)",
-            fontSize: 11,
+            fontSize: "var(--text-sm)",
             lineHeight: 1.6,
           }}
         >
@@ -1195,7 +1209,7 @@ export function FeishuCredentialDialog({
               background: "var(--bg)",
               color: "var(--text-muted)",
               padding: "9px 10px",
-              fontSize: 10,
+              fontSize: "var(--text-xs)",
               lineHeight: 1.45,
               whiteSpace: "pre",
               userSelect: "text",
@@ -1233,7 +1247,13 @@ export function FeishuCredentialDialog({
           <div
             role="alert"
             data-testid="feishu-connect-error"
-            style={{ marginTop: 10, color: "var(--danger)", fontSize: 11, lineHeight: 1.5, overflowWrap: "anywhere" }}
+            style={{
+              marginTop: 10,
+              color: "var(--danger)",
+              fontSize: "var(--text-sm)",
+              lineHeight: 1.5,
+              overflowWrap: "anywhere",
+            }}
           >
             {error}
           </div>
@@ -1258,7 +1278,7 @@ export function FeishuCredentialDialog({
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div style={{ display: "grid", gap: 5, color: "var(--text-dim)", fontSize: 12 }}>
+    <div style={{ display: "grid", gap: 5, color: "var(--text-dim)", fontSize: "var(--text-md)" }}>
       <span>{label}</span>
       {children}
     </div>
@@ -1276,12 +1296,12 @@ function Section({ title, children }: { title: string; children: React.ReactNode
         padding: "13px 15px",
       }}
     >
-      <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text)", marginBottom: 5 }}>{title}</div>
+      <div style={{ fontSize: "var(--text-md)", fontWeight: 700, color: "var(--text)", marginBottom: 5 }}>{title}</div>
       {children}
     </section>
   );
 }
 
 function EmptyLine({ children }: { children: React.ReactNode }) {
-  return <div style={{ color: "var(--text-dim)", fontSize: 11, padding: "9px 0" }}>{children}</div>;
+  return <div style={{ color: "var(--text-dim)", fontSize: "var(--text-sm)", padding: "9px 0" }}>{children}</div>;
 }

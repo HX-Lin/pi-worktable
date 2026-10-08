@@ -185,7 +185,7 @@ export function QuickChannelBinding({ sessionId, snapshot, isMobile, onSnapshotC
             borderRadius: 999,
             background: bound ? `color-mix(in srgb, ${accent} 9%, var(--bg-panel))` : "var(--bg)",
             color: "var(--text-muted)",
-            fontSize: 11,
+            fontSize: "var(--text-sm)",
             whiteSpace: "nowrap",
             cursor: "pointer",
             overflow: "hidden",
@@ -208,7 +208,7 @@ export function QuickChannelBinding({ sessionId, snapshot, isMobile, onSnapshotC
               ? ` · ${currentBindings.length} ${t("conversations", "conversations")}`
               : ""}
           </span>
-          <span aria-hidden="true" style={{ fontSize: 9, opacity: 0.7 }}>
+          <span aria-hidden="true" style={{ fontSize: "var(--text-xs)", opacity: 0.7 }}>
             ▾
           </span>
         </button>
@@ -244,10 +244,10 @@ export function QuickChannelBinding({ sessionId, snapshot, isMobile, onSnapshotC
               outline: "none",
             }}
           >
-            <div style={{ color: "var(--text)", fontSize: 13, fontWeight: 700 }}>
+            <div style={{ color: "var(--text)", fontSize: "var(--text-base)", fontWeight: 700 }}>
               {t("quickChannelBinding", "Quick messaging-channel binding")}
             </div>
-            <div style={{ marginTop: 4, color: "var(--text-dim)", fontSize: 10, lineHeight: 1.5 }}>
+            <div style={{ marginTop: 4, color: "var(--text-dim)", fontSize: "var(--text-xs)", lineHeight: 1.5 }}>
               {t(
                 "quickChannelBindingDescription",
                 "Choose the messaging conversation that should share this active UI session.",
@@ -255,7 +255,9 @@ export function QuickChannelBinding({ sessionId, snapshot, isMobile, onSnapshotC
             </div>
 
             {error && (
-              <div style={{ marginTop: 9, color: "var(--danger)", fontSize: 11, overflowWrap: "anywhere" }}>
+              <div
+                style={{ marginTop: 9, color: "var(--danger)", fontSize: "var(--text-sm)", overflowWrap: "anywhere" }}
+              >
                 {error}
               </div>
             )}
@@ -268,7 +270,7 @@ export function QuickChannelBinding({ sessionId, snapshot, isMobile, onSnapshotC
                     borderRadius: "var(--radius-sm)",
                     padding: 12,
                     color: "var(--text-dim)",
-                    fontSize: 11,
+                    fontSize: "var(--text-sm)",
                     lineHeight: 1.6,
                   }}
                 >
@@ -303,7 +305,7 @@ export function QuickChannelBinding({ sessionId, snapshot, isMobile, onSnapshotC
                         <div
                           style={{
                             color: "var(--text)",
-                            fontSize: 11,
+                            fontSize: "var(--text-sm)",
                             fontWeight: 650,
                             overflow: "hidden",
                             textOverflow: "ellipsis",
@@ -321,7 +323,7 @@ export function QuickChannelBinding({ sessionId, snapshot, isMobile, onSnapshotC
                             marginTop: 3,
                             color: "var(--text-dim)",
                             fontFamily: "var(--font-mono)",
-                            fontSize: 10,
+                            fontSize: "var(--text-xs)",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
                             whiteSpace: "nowrap",
@@ -334,7 +336,7 @@ export function QuickChannelBinding({ sessionId, snapshot, isMobile, onSnapshotC
                             style={{
                               marginTop: 3,
                               color: boundHere ? "var(--accent)" : "var(--text-dim)",
-                              fontSize: 10,
+                              fontSize: "var(--text-xs)",
                             }}
                           >
                             {boundHere
@@ -353,7 +355,7 @@ export function QuickChannelBinding({ sessionId, snapshot, isMobile, onSnapshotC
                           background: boundHere ? "var(--bg)" : "var(--accent)",
                           color: boundHere ? "var(--danger)" : "white",
                           padding: "6px 9px",
-                          fontSize: 10,
+                          fontSize: "var(--text-xs)",
                           whiteSpace: "nowrap",
                           cursor: busyBindingId !== null ? "default" : "pointer",
                           opacity: busyBindingId !== null && !busy ? 0.55 : 1,

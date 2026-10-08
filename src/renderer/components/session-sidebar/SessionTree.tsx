@@ -72,7 +72,7 @@ export function SessionTree(props: Props) {
             justifyContent: "space-between",
             gap: 8,
             fontFamily: "var(--font-mono)",
-            fontSize: 12,
+            fontSize: "var(--text-md)",
             color: "var(--text-dim)",
             letterSpacing: "0.5px",
             textTransform: "uppercase",
@@ -119,7 +119,7 @@ export function SessionTree(props: Props) {
               borderRadius: "var(--radius-md)",
               background: "var(--bg-panel)",
               color: "var(--text)",
-              fontSize: 13,
+              fontSize: "var(--text-base)",
               outline: "none",
             }}
           />
@@ -140,7 +140,7 @@ export function SessionTree(props: Props) {
                 background: "transparent",
                 color: "var(--text-dim)",
                 cursor: "pointer",
-                fontSize: 18,
+                fontSize: "var(--text-2xl)",
                 lineHeight: 1,
               }}
             >
@@ -149,10 +149,14 @@ export function SessionTree(props: Props) {
           )}
         </div>
       </div>
-      {loading && <div style={{ padding: "16px 14px", color: "var(--text-muted)", fontSize: 12 }}>Loading...</div>}
-      {error && <div style={{ padding: "12px 14px", color: "var(--danger)", fontSize: 12 }}>{error}</div>}
+      {loading && (
+        <div style={{ padding: "16px 14px", color: "var(--text-muted)", fontSize: "var(--text-md)" }}>Loading...</div>
+      )}
+      {error && <div style={{ padding: "12px 14px", color: "var(--danger)", fontSize: "var(--text-md)" }}>{error}</div>}
       {!loading && !error && sidebarProjectRoots.length === 0 && (
-        <div style={{ padding: "16px 14px", color: "var(--text-muted)", fontSize: 13, lineHeight: 1.5 }}>
+        <div
+          style={{ padding: "16px 14px", color: "var(--text-muted)", fontSize: "var(--text-base)", lineHeight: 1.5 }}
+        >
           {t("noProjectsYet", "No projects yet — add a project to start a conversation")}
         </div>
       )}
@@ -233,7 +237,7 @@ export function SessionTree(props: Props) {
                     color: "var(--text-muted)",
                     cursor: "pointer",
                     textAlign: "left",
-                    fontSize: 12,
+                    fontSize: "var(--text-md)",
                     fontWeight: 450,
                   }}
                 >
@@ -259,7 +263,7 @@ export function SessionTree(props: Props) {
                       style={{
                         flexShrink: 0,
                         marginLeft: "auto",
-                        fontSize: 10,
+                        fontSize: "var(--text-xs)",
                         color: "var(--text-dim)",
                         fontFamily: "var(--font-mono)",
                       }}
@@ -289,7 +293,7 @@ export function SessionTree(props: Props) {
                     color: "var(--text-dim)",
                     cursor: "pointer",
                     flexShrink: 0,
-                    fontSize: 13,
+                    fontSize: "var(--text-base)",
                     lineHeight: 1,
                   }}
                   onMouseEnter={(e) => {
@@ -316,7 +320,7 @@ export function SessionTree(props: Props) {
                               style={{
                                 padding: "7px 8px 4px",
                                 color: "var(--text-dim)",
-                                fontSize: 12,
+                                fontSize: "var(--text-md)",
                                 fontWeight: 650,
                               }}
                             >
@@ -344,7 +348,7 @@ export function SessionTree(props: Props) {
                         ),
                     )
                   ) : (
-                    <div style={{ padding: "6px 8px 4px", color: "var(--text-dim)", fontSize: 11.5 }}>
+                    <div style={{ padding: "6px 8px 4px", color: "var(--text-dim)", fontSize: "var(--text-sm)" }}>
                       {sessionFilter.trim()
                         ? t("noMatchingSessions", "No matching sessions")
                         : t("noSessionsInProject", "No sessions in this project yet")}
@@ -374,7 +378,7 @@ export function SessionTree(props: Props) {
               borderRadius: "var(--radius-sm)",
               color: "var(--text-dim)",
               cursor: "pointer",
-              fontSize: 12,
+              fontSize: "var(--text-md)",
               transition: "color 0.12s, border-color 0.12s",
             }}
             onMouseEnter={(e) => {
@@ -386,7 +390,7 @@ export function SessionTree(props: Props) {
               e.currentTarget.style.borderColor = "var(--border)";
             }}
           >
-            <span style={{ fontSize: 14, lineHeight: 1 }}>+</span>
+            <span style={{ fontSize: "var(--text-lg)", lineHeight: 1 }}>+</span>
             {t("addProject", "Add project")}
           </button>
         </div>

@@ -257,9 +257,11 @@ export function SettingsConfig({
           }}
         >
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text)" }}>{t("settings", "Settings")}</div>
+            <div style={{ fontSize: "var(--text-xl)", fontWeight: 700, color: "var(--text)" }}>
+              {t("settings", "Settings")}
+            </div>
             {!isMobile && (
-              <div style={{ marginTop: 2, fontSize: 11, color: "var(--text-dim)" }}>
+              <div style={{ marginTop: 2, fontSize: "var(--text-sm)", color: "var(--text-dim)" }}>
                 {t("settingsDescription", "Manage app preferences, models, skills, and plugins.")}
               </div>
             )}
@@ -274,7 +276,7 @@ export function SettingsConfig({
               border: "none",
               color: "var(--text-muted)",
               cursor: "pointer",
-              fontSize: 20,
+              fontSize: "var(--text-3xl)",
               lineHeight: 1,
               width: 36,
               height: 36,
@@ -344,7 +346,7 @@ export function SettingsConfig({
                     borderRadius: "var(--radius-md)",
                     background: active ? "var(--accent-soft)" : "transparent",
                     color: active ? "var(--accent)" : "var(--text-dim)",
-                    fontSize: 13,
+                    fontSize: "var(--text-base)",
                     lineHeight: 1.35,
                     fontWeight: active ? 600 : 400,
                     textAlign: "left",
@@ -449,15 +451,15 @@ function AboutSettings({ onClose }: { onClose: () => void }) {
             }}
           />
           <div>
-            <h2 style={{ margin: 0, fontSize: 18, color: "var(--text)" }}>{APP_DISPLAY_NAME}</h2>
-            <p style={{ margin: "5px 0 0", fontSize: 12, lineHeight: 1.6, color: "var(--text-dim)" }}>
+            <h2 style={{ margin: 0, fontSize: "var(--text-2xl)", color: "var(--text)" }}>{APP_DISPLAY_NAME}</h2>
+            <p style={{ margin: "5px 0 0", fontSize: "var(--text-md)", lineHeight: 1.6, color: "var(--text-dim)" }}>
               {t("aboutDescription", "App, Pi, and project information.")}
             </p>
           </div>
         </section>
 
         <section>
-          <h2 style={{ margin: "0 0 12px", fontSize: 14, color: "var(--text)" }}>
+          <h2 style={{ margin: "0 0 12px", fontSize: "var(--text-lg)", color: "var(--text)" }}>
             {t("applicationInformation", "Application information")}
           </h2>
           <div
@@ -485,7 +487,7 @@ function AboutSettings({ onClose }: { onClose: () => void }) {
                     background: "none",
                     color: "var(--accent)",
                     fontFamily: "var(--font-mono)",
-                    fontSize: 12,
+                    fontSize: "var(--text-md)",
                     cursor: "pointer",
                     overflowWrap: "anywhere",
                     textAlign: "right",
@@ -559,10 +561,10 @@ function SoftwareUpdate({ onClose }: { onClose: () => void }) {
 
   return (
     <section aria-labelledby={headingId} style={{ marginTop: 28 }}>
-      <h2 id={headingId} style={{ margin: "0 0 6px", fontSize: 14, color: "var(--text)" }}>
+      <h2 id={headingId} style={{ margin: "0 0 6px", fontSize: "var(--text-lg)", color: "var(--text)" }}>
         {t("softwareUpdate", "Software update")}
       </h2>
-      <p style={{ margin: "0 0 12px", fontSize: 12, lineHeight: 1.6, color: "var(--text-dim)" }}>
+      <p style={{ margin: "0 0 12px", fontSize: "var(--text-md)", lineHeight: 1.6, color: "var(--text-dim)" }}>
         {t("softwareUpdateDescription", "Check stable releases and choose when a downloaded update is installed.")}
       </p>
 
@@ -593,9 +595,9 @@ function SoftwareUpdate({ onClose }: { onClose: () => void }) {
               }}
             />
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 650, color: "var(--text)" }}>{statusTitle}</div>
+              <div style={{ fontSize: "var(--text-base)", fontWeight: 650, color: "var(--text)" }}>{statusTitle}</div>
               {state && (
-                <div style={{ marginTop: 3, fontSize: 11, color: "var(--text-dim)" }}>
+                <div style={{ marginTop: 3, fontSize: "var(--text-sm)", color: "var(--text-dim)" }}>
                   {t("currentVersion", "Current version")}: {displayVersion(state.currentVersion)}
                 </div>
               )}
@@ -639,17 +641,20 @@ function SoftwareUpdate({ onClose }: { onClose: () => void }) {
 
           {state?.phase === "error" && state.error && (
             <div role="alert" aria-atomic="true" style={{ marginTop: 12 }}>
-              <p style={{ margin: 0, fontSize: 12, lineHeight: 1.55, color: "var(--danger)" }}>
+              <p style={{ margin: 0, fontSize: "var(--text-md)", lineHeight: 1.55, color: "var(--danger)" }}>
                 {getUpdateErrorMessage(state.error, t)}
               </p>
-              <code style={{ display: "block", marginTop: 5, fontSize: 10, color: "var(--text-dim)" }}>
+              <code style={{ display: "block", marginTop: 5, fontSize: "var(--text-xs)", color: "var(--text-dim)" }}>
                 {state.error.code}
               </code>
             </div>
           )}
 
           {actionFailed && (
-            <p role="alert" style={{ margin: "12px 0 0", fontSize: 12, lineHeight: 1.55, color: "var(--danger)" }}>
+            <p
+              role="alert"
+              style={{ margin: "12px 0 0", fontSize: "var(--text-md)", lineHeight: 1.55, color: "var(--danger)" }}
+            >
               {t("updateActionFailed", "The update action could not be completed. Try again or open the logs.")}
             </p>
           )}
@@ -739,12 +744,12 @@ function SoftwareUpdate({ onClose }: { onClose: () => void }) {
           }}
         >
           <div>
-            <label htmlFor={automaticChecksControlId} style={{ fontSize: 12, color: "var(--text)" }}>
+            <label htmlFor={automaticChecksControlId} style={{ fontSize: "var(--text-md)", color: "var(--text)" }}>
               {t("automaticUpdateChecks", "Automatically check for updates")}
             </label>
             <div
               id={automaticChecksDescriptionId}
-              style={{ marginTop: 3, fontSize: 10, lineHeight: 1.45, color: "var(--text-dim)" }}
+              style={{ marginTop: 3, fontSize: "var(--text-xs)", lineHeight: 1.45, color: "var(--text-dim)" }}
             >
               {t("automaticUpdateChecksDescription", "Checks periodically without downloading updates automatically.")}
             </div>
@@ -770,7 +775,7 @@ function SoftwareUpdate({ onClose }: { onClose: () => void }) {
 function UpdateReleaseDetails({ state, language }: { state: DesktopUpdateState; language: AppLanguage }) {
   const { t } = useI18n();
   return (
-    <div style={{ marginTop: 12, fontSize: 12, lineHeight: 1.55, color: "var(--text-muted)" }}>
+    <div style={{ marginTop: 12, fontSize: "var(--text-md)", lineHeight: 1.55, color: "var(--text-muted)" }}>
       {state.availableVersion && (
         <div>
           {t("availableVersion", "Available version")}: {displayVersion(state.availableVersion)}
@@ -800,7 +805,7 @@ function UpdateReleaseDetails({ state, language }: { state: DesktopUpdateState; 
               background: "var(--bg)",
               color: "var(--text-muted)",
               fontFamily: "inherit",
-              fontSize: 11,
+              fontSize: "var(--text-sm)",
               lineHeight: 1.55,
               whiteSpace: "pre-wrap",
               overflowWrap: "anywhere",
@@ -834,7 +839,7 @@ function UpdateDownloadProgress({ state, language }: { state: DesktopUpdateState
           flexWrap: "wrap",
           justifyContent: "space-between",
           gap: 8,
-          fontSize: 10,
+          fontSize: "var(--text-xs)",
           color: "var(--text-dim)",
         }}
       >
@@ -879,7 +884,7 @@ function UpdateButton({
         borderRadius: "var(--radius-sm)",
         background: primary ? "var(--accent)" : "var(--bg)",
         color: primary ? "white" : "var(--text)",
-        fontSize: 12,
+        fontSize: "var(--text-md)",
         fontWeight: 600,
         cursor: disabled ? "not-allowed" : "pointer",
         opacity: disabled ? 0.6 : 1,
@@ -970,7 +975,7 @@ function formatBytes(value: number, language: AppLanguage): string {
 
 const updateDetailStyle: React.CSSProperties = {
   margin: "12px 0 0",
-  fontSize: 12,
+  fontSize: "var(--text-md)",
   lineHeight: 1.55,
   color: "var(--text-muted)",
 };
@@ -988,13 +993,13 @@ function AboutRow({ label, value, last = false }: { label: string; value: React.
         borderBottom: last ? "none" : "1px solid var(--border)",
       }}
     >
-      <span style={{ flexShrink: 0, fontSize: 13, color: "var(--text-muted)" }}>{label}</span>
+      <span style={{ flexShrink: 0, fontSize: "var(--text-base)", color: "var(--text-muted)" }}>{label}</span>
       <span
         style={{
           minWidth: 0,
           color: "var(--text)",
           fontFamily: "var(--font-mono)",
-          fontSize: 12,
+          fontSize: "var(--text-md)",
           textAlign: "right",
         }}
       >
@@ -1029,7 +1034,7 @@ function GeneralSettings({
   const voiceInputStyle: React.CSSProperties = {
     width: 220,
     padding: "7px 9px",
-    fontSize: 12,
+    fontSize: "var(--text-md)",
     borderRadius: "var(--radius-sm)",
     background: "var(--bg)",
     color: "var(--text)",
@@ -1043,10 +1048,10 @@ function GeneralSettings({
   return (
     <div style={{ width: "100%", overflowY: "auto", padding: "28px clamp(18px, 5vw, 52px)" }}>
       <section style={{ maxWidth: 620 }}>
-        <h2 style={{ margin: 0, fontSize: 14, color: "var(--text)" }}>
+        <h2 style={{ margin: 0, fontSize: "var(--text-lg)", color: "var(--text)" }}>
           {t("interfaceLanguage", "Interface language")}
         </h2>
-        <p style={{ margin: "6px 0 16px", fontSize: 12, lineHeight: 1.6, color: "var(--text-dim)" }}>
+        <p style={{ margin: "6px 0 16px", fontSize: "var(--text-md)", lineHeight: 1.6, color: "var(--text-dim)" }}>
           {t("interfaceLanguageDescription", "Choose the language used by the app. Changes take effect immediately.")}
         </p>
         <SettingRow label={t("language", "Language")} controlId={languageControlId}>
@@ -1065,8 +1070,10 @@ function GeneralSettings({
       <div style={{ height: 1, background: "var(--border)", maxWidth: 620, margin: "28px 0" }} />
 
       <section style={{ maxWidth: 620 }}>
-        <h2 style={{ margin: 0, fontSize: 14, color: "var(--text)" }}>{t("backgroundMode", "Background mode")}</h2>
-        <p style={{ margin: "6px 0 16px", fontSize: 12, lineHeight: 1.6, color: "var(--text-dim)" }}>
+        <h2 style={{ margin: 0, fontSize: "var(--text-lg)", color: "var(--text)" }}>
+          {t("backgroundMode", "Background mode")}
+        </h2>
+        <p style={{ margin: "6px 0 16px", fontSize: "var(--text-md)", lineHeight: 1.6, color: "var(--text-dim)" }}>
           {t("backgroundModeDescription", "Keep messaging channels connected when the window is closed.")}
         </p>
         <SettingRow label={t("closeToTray", "Close window to tray")} controlId={backgroundModeControlId}>
@@ -1099,8 +1106,10 @@ function GeneralSettings({
       <div style={{ height: 1, background: "var(--border)", maxWidth: 620, margin: "28px 0" }} />
 
       <section style={{ maxWidth: 620 }}>
-        <h2 style={{ margin: 0, fontSize: 14, color: "var(--text)" }}>{t("voiceTitle", "Voice input")}</h2>
-        <p style={{ margin: "6px 0 16px", fontSize: 12, lineHeight: 1.6, color: "var(--text-dim)" }}>
+        <h2 style={{ margin: 0, fontSize: "var(--text-lg)", color: "var(--text)" }}>
+          {t("voiceTitle", "Voice input")}
+        </h2>
+        <p style={{ margin: "6px 0 16px", fontSize: "var(--text-md)", lineHeight: 1.6, color: "var(--text-dim)" }}>
           {t(
             "voiceDescription",
             "Recording happens in the desktop; transcription runs in the host with the API key you configured for that provider.",
@@ -1138,8 +1147,8 @@ function GeneralSettings({
       <div style={{ height: 1, background: "var(--border)", maxWidth: 620, margin: "28px 0" }} />
 
       <section style={{ maxWidth: 620 }}>
-        <h2 style={{ margin: 0, fontSize: 14, color: "var(--text)" }}>{t("appearance", "Appearance")}</h2>
-        <p style={{ margin: "6px 0 16px", fontSize: 12, lineHeight: 1.6, color: "var(--text-dim)" }}>
+        <h2 style={{ margin: 0, fontSize: "var(--text-lg)", color: "var(--text)" }}>{t("appearance", "Appearance")}</h2>
+        <p style={{ margin: "6px 0 16px", fontSize: "var(--text-md)", lineHeight: 1.6, color: "var(--text-dim)" }}>
           {t("appearanceDescription", "Choose the color mode used by the app.")}
         </p>
         <SettingRow label={t("theme", "Theme")} controlId={themeControlId}>
@@ -1177,7 +1186,10 @@ function SettingRow({ label, controlId, children }: { label: string; controlId: 
         background: "var(--bg-panel)",
       }}
     >
-      <label htmlFor={controlId} style={{ fontSize: 13, color: "var(--text-muted)", cursor: "pointer" }}>
+      <label
+        htmlFor={controlId}
+        style={{ fontSize: "var(--text-base)", color: "var(--text-muted)", cursor: "pointer" }}
+      >
         {label}
       </label>
       {children}
@@ -1199,10 +1211,10 @@ function ProjectRequired() {
       }}
     >
       <div style={{ maxWidth: 380 }}>
-        <div style={{ fontSize: 14, fontWeight: 650, color: "var(--text)" }}>
+        <div style={{ fontSize: "var(--text-lg)", fontWeight: 650, color: "var(--text)" }}>
           {t("projectRequiredTitle", "Select a project first")}
         </div>
-        <div style={{ marginTop: 7, fontSize: 12, lineHeight: 1.6, color: "var(--text-dim)" }}>
+        <div style={{ marginTop: 7, fontSize: "var(--text-md)", lineHeight: 1.6, color: "var(--text-dim)" }}>
           {t(
             "projectRequiredDescription",
             "Skills and plugins depend on the current project. Select a project directory from the sidebar first.",
@@ -1221,6 +1233,6 @@ const selectStyle: React.CSSProperties = {
   borderRadius: "var(--radius-sm)",
   background: "var(--bg)",
   color: "var(--text)",
-  fontSize: 13,
+  fontSize: "var(--text-base)",
   cursor: "pointer",
 };

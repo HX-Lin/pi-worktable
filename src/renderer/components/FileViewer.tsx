@@ -201,7 +201,14 @@ function DiffView({ oldContent, newContent }: { oldContent: string; newContent: 
   const hasChanges = diff.some((l) => l.type !== "unchanged");
   if (!hasChanges) {
     return (
-      <div style={{ padding: "12px 16px", fontSize: 12, color: "var(--text-dim)", fontFamily: "var(--font-mono)" }}>
+      <div
+        style={{
+          padding: "12px 16px",
+          fontSize: "var(--text-md)",
+          color: "var(--text-dim)",
+          fontFamily: "var(--font-mono)",
+        }}
+      >
         No changes
       </div>
     );
@@ -251,7 +258,7 @@ function DiffView({ oldContent, newContent }: { oldContent: string; newContent: 
   let diffIdx = 0;
 
   return (
-    <div style={{ fontFamily: "var(--font-mono)", fontSize: 13, lineHeight: 1.6 }}>
+    <div style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", lineHeight: 1.6 }}>
       {segments.map((seg, si) => {
         if (seg.hidden) {
           const result = (
@@ -261,7 +268,7 @@ function DiffView({ oldContent, newContent }: { oldContent: string; newContent: 
                 padding: "2px 16px",
                 color: "var(--text-dim)",
                 background: "var(--bg-panel)",
-                fontSize: 11,
+                fontSize: "var(--text-sm)",
                 borderTop: "1px solid var(--border)",
                 borderBottom: "1px solid var(--border)",
               }}
@@ -306,7 +313,7 @@ function DiffView({ oldContent, newContent }: { oldContent: string; newContent: 
                   textAlign: "right",
                   color: "var(--text-dim)",
                   userSelect: "none",
-                  fontSize: 11,
+                  fontSize: "var(--text-sm)",
                   lineHeight: 1.6,
                   borderRight: "1px solid var(--border)",
                   background: "var(--bg-panel)",
@@ -413,7 +420,7 @@ function ImageViewer({ filePath, cwd, sourceSessionId }: Props) {
           minHeight: 40,
           padding: "4px 12px",
           borderBottom: "1px solid var(--border)",
-          fontSize: 12,
+          fontSize: "var(--text-md)",
           color: "var(--text-dim)",
           background: "var(--bg)",
           flexShrink: 0,
@@ -470,9 +477,9 @@ function ImageViewer({ filePath, cwd, sourceSessionId }: Props) {
         }}
       >
         {error ? (
-          <div style={{ color: "var(--danger)", fontSize: 13 }}>{error}</div>
+          <div style={{ color: "var(--danger)", fontSize: "var(--text-base)" }}>{error}</div>
         ) : !src ? (
-          <div style={{ color: "var(--text-muted)", fontSize: 13 }}>Loading…</div>
+          <div style={{ color: "var(--text-muted)", fontSize: "var(--text-base)" }}>Loading…</div>
         ) : (
           <img
             src={src}
@@ -530,7 +537,7 @@ function AudioViewer({ filePath, cwd, sourceSessionId }: Props) {
           minHeight: 40,
           padding: "4px 12px",
           borderBottom: "1px solid var(--border)",
-          fontSize: 12,
+          fontSize: "var(--text-md)",
           color: "var(--text-dim)",
           background: "var(--bg)",
           flexShrink: 0,
@@ -579,7 +586,11 @@ function AudioViewer({ filePath, cwd, sourceSessionId }: Props) {
       >
         <div style={{ width: "min(680px, 100%)" }}>
           {error && (
-            <div style={{ color: "var(--danger)", fontSize: 13, marginBottom: 12, textAlign: "center" }}>{error}</div>
+            <div
+              style={{ color: "var(--danger)", fontSize: "var(--text-base)", marginBottom: 12, textAlign: "center" }}
+            >
+              {error}
+            </div>
           )}
           {src && (
             <audio
@@ -698,7 +709,7 @@ function DocumentViewer({ filePath, cwd, sourceSessionId }: Props) {
           minHeight: 40,
           padding: "4px 12px",
           borderBottom: "1px solid var(--border)",
-          fontSize: 12,
+          fontSize: "var(--text-md)",
           color: "var(--text-dim)",
           background: "var(--bg)",
           flexShrink: 0,
@@ -748,7 +759,7 @@ function DocumentViewer({ filePath, cwd, sourceSessionId }: Props) {
               justifyContent: "center",
               padding: 24,
               color: "var(--danger)",
-              fontSize: 13,
+              fontSize: "var(--text-base)",
               textAlign: "center",
             }}
           >
@@ -762,7 +773,7 @@ function DocumentViewer({ filePath, cwd, sourceSessionId }: Props) {
               alignItems: "center",
               justifyContent: "center",
               color: "var(--text-muted)",
-              fontSize: 13,
+              fontSize: "var(--text-base)",
             }}
           >
             Loading…
@@ -914,7 +925,7 @@ function TextFileViewer({ filePath, cwd, sourceSessionId }: Props) {
           alignItems: "center",
           justifyContent: "center",
           color: "var(--text-muted)",
-          fontSize: 13,
+          fontSize: "var(--text-base)",
         }}
       >
         Loading...
@@ -931,7 +942,7 @@ function TextFileViewer({ filePath, cwd, sourceSessionId }: Props) {
           alignItems: "center",
           justifyContent: "center",
           color: "var(--danger)",
-          fontSize: 13,
+          fontSize: "var(--text-base)",
         }}
       >
         {error}
@@ -957,7 +968,7 @@ function TextFileViewer({ filePath, cwd, sourceSessionId }: Props) {
           minHeight: 40,
           padding: "4px 12px",
           borderBottom: "1px solid var(--border)",
-          fontSize: 12,
+          fontSize: "var(--text-md)",
           color: "var(--text-dim)",
           background: "var(--bg)",
           flexShrink: 0,
@@ -1011,7 +1022,7 @@ function TextFileViewer({ filePath, cwd, sourceSessionId }: Props) {
               style={{
                 minHeight: 32,
                 padding: "0 10px",
-                fontSize: 12,
+                fontSize: "var(--text-md)",
                 border: "none",
                 cursor: "pointer",
                 background: viewMode === "source" ? "var(--bg-selected)" : "var(--bg-hover)",
@@ -1027,7 +1038,7 @@ function TextFileViewer({ filePath, cwd, sourceSessionId }: Props) {
               style={{
                 minHeight: 32,
                 padding: "0 10px",
-                fontSize: 12,
+                fontSize: "var(--text-md)",
                 border: "none",
                 borderLeft: "1px solid var(--border)",
                 cursor: "pointer",
@@ -1050,7 +1061,7 @@ function TextFileViewer({ filePath, cwd, sourceSessionId }: Props) {
             style={{
               minHeight: 32,
               padding: "0 10px",
-              fontSize: 12,
+              fontSize: "var(--text-md)",
               cursor: "pointer",
               background: wrapLines ? "var(--bg-selected)" : "var(--bg-hover)",
               color: wrapLines ? "var(--text)" : "var(--text-muted)",
@@ -1073,7 +1084,7 @@ function TextFileViewer({ filePath, cwd, sourceSessionId }: Props) {
               style={{
                 minHeight: 32,
                 padding: "0 10px",
-                fontSize: 12,
+                fontSize: "var(--text-md)",
                 cursor: saving ? "default" : "pointer",
                 background: "var(--accent)",
                 color: "var(--on-accent)",
@@ -1094,7 +1105,7 @@ function TextFileViewer({ filePath, cwd, sourceSessionId }: Props) {
               style={{
                 minHeight: 32,
                 padding: "0 10px",
-                fontSize: 12,
+                fontSize: "var(--text-md)",
                 cursor: saving ? "default" : "pointer",
                 background: "var(--bg-hover)",
                 color: "var(--text-muted)",
@@ -1106,7 +1117,9 @@ function TextFileViewer({ filePath, cwd, sourceSessionId }: Props) {
             </button>
           </>
         )}
-        {savedFlash && <span style={{ fontSize: 11, color: "var(--success)", alignSelf: "center" }}>Saved</span>}
+        {savedFlash && (
+          <span style={{ fontSize: "var(--text-sm)", color: "var(--success)", alignSelf: "center" }}>Saved</span>
+        )}
 
         {/* HTML source/preview toggle */}
         {isHtml && viewMode === "source" && (
@@ -1124,7 +1137,7 @@ function TextFileViewer({ filePath, cwd, sourceSessionId }: Props) {
               style={{
                 minHeight: 32,
                 padding: "0 10px",
-                fontSize: 12,
+                fontSize: "var(--text-md)",
                 border: "none",
                 cursor: "pointer",
                 background: !previewMode ? "var(--bg-selected)" : "var(--bg-hover)",
@@ -1140,7 +1153,7 @@ function TextFileViewer({ filePath, cwd, sourceSessionId }: Props) {
               style={{
                 minHeight: 32,
                 padding: "0 10px",
-                fontSize: 12,
+                fontSize: "var(--text-md)",
                 border: "none",
                 borderLeft: "1px solid var(--border)",
                 cursor: "pointer",
@@ -1170,7 +1183,7 @@ function TextFileViewer({ filePath, cwd, sourceSessionId }: Props) {
               style={{
                 minHeight: 32,
                 padding: "0 10px",
-                fontSize: 12,
+                fontSize: "var(--text-md)",
                 border: "none",
                 cursor: "pointer",
                 background: previewMode ? "var(--bg-selected)" : "var(--bg-hover)",
@@ -1186,7 +1199,7 @@ function TextFileViewer({ filePath, cwd, sourceSessionId }: Props) {
               style={{
                 minHeight: 32,
                 padding: "0 10px",
-                fontSize: 12,
+                fontSize: "var(--text-md)",
                 border: "none",
                 borderLeft: "1px solid var(--border)",
                 cursor: "pointer",
@@ -1236,13 +1249,17 @@ function TextFileViewer({ filePath, cwd, sourceSessionId }: Props) {
                 color: "var(--text)",
                 padding: 12,
                 fontFamily: "var(--font-mono)",
-                fontSize: 13,
+                fontSize: "var(--text-base)",
                 lineHeight: 1.6,
                 outline: "none",
                 tabSize: 2,
               }}
             />
-            {saveError && <div style={{ padding: "8px 2px 0", fontSize: 11, color: "var(--danger)" }}>{saveError}</div>}
+            {saveError && (
+              <div style={{ padding: "8px 2px 0", fontSize: "var(--text-sm)", color: "var(--danger)" }}>
+                {saveError}
+              </div>
+            )}
           </div>
         ) : viewMode === "diff" && hasDiff ? (
           <DiffView oldContent={prevContent!} newContent={data.content} language={data.language} />
@@ -1262,7 +1279,7 @@ function TextFileViewer({ filePath, cwd, sourceSessionId }: Props) {
               margin: 0,
               padding: "12px 0",
               background: "var(--bg)",
-              fontSize: 13,
+              fontSize: "var(--text-base)",
               lineHeight: 1.6,
               fontFamily: "var(--font-mono)",
               minHeight: "100%",
@@ -1284,7 +1301,7 @@ function TextFileViewer({ filePath, cwd, sourceSessionId }: Props) {
             style={{
               margin: 0,
               padding: "12px 14px",
-              fontSize: 13,
+              fontSize: "var(--text-base)",
               lineHeight: 1.6,
               fontFamily: "var(--font-mono)",
               color: "var(--text)",
