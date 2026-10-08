@@ -14,17 +14,21 @@ process.env.PI_CODING_AGENT_DIR = isolatedAgentDirectory;
 process.env.PI_CODING_AGENT_SESSION_DIR = path.join(isolatedAgentDirectory, "sessions");
 process.env.PI_OFFLINE = "1";
 process.once("exit", () => rmSync(isolatedAgentDirectory, { recursive: true, force: true }));
-let modulePromise;
+const modulePromises = new Map();
 
-async function loadHandlersModule() {
-  if (modulePromise) return modulePromise;
-  modulePromise = (async () => {
+async function loadModule(entry) {
+  if (modulePromises.has(entry)) return modulePromises.get(entry);
+  const promise = (async () => {
     const outputDirectory = path.join(root, ".artifacts", "test-modules");
     mkdirSync(outputDirectory, { recursive: true });
-    const outputFile = path.join(outputDirectory, `handlers-${process.pid}.mjs`);
+    const name = entry
+      .replace(/^src\/agent-host\//, "")
+      .replace(/[/\\]/g, "-")
+      .replace(/\.ts$/, "");
+    const outputFile = path.join(outputDirectory, `${name}-${process.pid}.mjs`);
     await build({
       absWorkingDir: root,
-      entryPoints: ["src/agent-host/handlers.ts"],
+      entryPoints: [entry],
       outfile: outputFile,
       bundle: true,
       format: "esm",
@@ -35,8 +39,12 @@ async function loadHandlersModule() {
     });
     return import(`${pathToFileURL(outputFile).href}?v=${Date.now()}`);
   })();
-  return modulePromise;
+  modulePromises.set(entry, promise);
+  return promise;
 }
+
+const loadHandlersModule = () => loadModule("src/agent-host/handlers.ts");
+const loadHandlerHelpers = () => loadModule("src/agent-host/handlers/helpers.ts");
 
 async function captureHandlers() {
   const { registerHandlers } = await loadHandlersModule();
@@ -64,7 +72,7 @@ test("registerHandlers wires the contract surface to a live server", async () =>
 });
 
 test("credential mutation failures distinguish committed state from an unverified mutation", async () => {
-  const { credentialMutationFailure } = await loadHandlersModule();
+  const { credentialMutationFailure } = await loadHandlerHelpers();
   const synchronizationError = new CredentialSynchronizationError("test-provider", "setRuntimeApiKey", undefined, {
     cause: new Error("secret upstream detail"),
   });
@@ -111,7 +119,7 @@ test("credential mutation failures distinguish committed state from an unverifie
 });
 
 test("environment credentials are never reported as app-managed provider connections", async () => {
-  const { describeApiKeyProviderAuth } = await loadHandlersModule();
+  const { describeApiKeyProviderAuth } = await loadHandlerHelpers();
 
   assert.deepEqual(describeApiKeyProviderAuth({ configured: true, source: "environment", label: "OPENAI_API_KEY" }), {
     configured: false,
