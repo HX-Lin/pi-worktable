@@ -10,6 +10,8 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
+import { ProjectRenameDialog } from "./ProjectRenameDialog";
+import { SessionInfoPanel } from "./SessionInfoPanel";
 import { SessionSidebar } from "./SessionSidebar";
 import { StatusBar } from "./StatusBar";
 import { WORKSPACE_VIEWS } from "./views/AppViews";
@@ -27,7 +29,6 @@ import { ToastHost } from "./ToastHost";
 import type { GlobalSearchAction, GlobalSearchItem } from "@/lib/global-search";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useI18n } from "@/i18n";
-import { copyText } from "@/lib/clipboard";
 import { getFileName } from "@/lib/file-paths";
 import { getSessionDisplayTitle } from "@/lib/session-list";
 import { loadOpenProjects, saveOpenProjects, type OpenProject } from "@/lib/projects";
@@ -50,7 +51,6 @@ import type { ChatInputHandle } from "./ChatInput";
 import type { SessionStatsInfo } from "@/lib/pi-types";
 import type { ChannelsSnapshot } from "@shared/channel-types";
 
-type SessionCopyField = "file" | "id";
 const EXPLORER_TAB_ID = "explorer";
 
 const PANEL_ICON = {
@@ -133,7 +133,7 @@ export function AppShell() {
       .then((result) => setHomeDir(result.home))
       .catch(() => undefined);
   }, []);
-  const { language, t } = useI18n();
+  const { t } = useI18n();
   const isMobile = useIsMobile();
   const [selectedSession, setSelectedSession] = useState<SessionInfo | null>(null);
   // When user clicks +, we only store the cwd — no fake session id
@@ -192,22 +192,6 @@ export function AppShell() {
   const handleSessionStatsChange = useCallback((stats: SessionStatsInfo | null) => {
     setSessionStats(stats);
   }, []);
-  const [copiedSessionField, setCopiedSessionField] = useState<SessionCopyField | null>(null);
-  const sessionCopyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const handleCopySessionField = useCallback((field: SessionCopyField, value: string) => {
-    void copyText(value).then(() => {
-      if (sessionCopyTimerRef.current) clearTimeout(sessionCopyTimerRef.current);
-      setCopiedSessionField(field);
-      sessionCopyTimerRef.current = setTimeout(() => setCopiedSessionField(null), 1400);
-    });
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (sessionCopyTimerRef.current) clearTimeout(sessionCopyTimerRef.current);
-    };
-  }, []);
-
   // Context usage — populated by ChatWindow, displayed in top bar
   const [contextUsage, setContextUsage] = useState<{
     percent: number | null;
@@ -1368,242 +1352,7 @@ export function AppShell() {
                   }}
                 >
                   {activeTopPanel === "session" && (
-                    <div
-                      className="session-info-popover"
-                      style={{
-                        background: "var(--bg-panel)",
-                        borderBottom: "1px solid var(--border)",
-                        boxShadow: "var(--shadow-md)",
-                        padding: "12px 16px",
-                      }}
-                    >
-                      {sessionStats ? (
-                        (() => {
-                          const sessionRows = [
-                            ...(sessionStats.sessionName
-                              ? [{ label: t("sessionName", "Name"), value: sessionStats.sessionName, copyField: null }]
-                              : []),
-                            {
-                              label: t("sessionFile", "File"),
-                              value: sessionStats.sessionFile ?? t("inMemory", "In-memory"),
-                              copyField: "file" as const,
-                            },
-                            { label: t("sessionId", "ID"), value: sessionStats.sessionId, copyField: "id" as const },
-                          ];
-                          const messageRows = [
-                            [t("user", "User"), sessionStats.userMessages.toLocaleString(language)],
-                            [t("assistant", "Assistant"), sessionStats.assistantMessages.toLocaleString(language)],
-                            [t("toolCalls", "Tool Calls"), sessionStats.toolCalls.toLocaleString(language)],
-                            [t("toolResults", "Tool Results"), sessionStats.toolResults.toLocaleString(language)],
-                            [t("total", "Total"), sessionStats.totalMessages.toLocaleString(language)],
-                          ];
-                          const tokenRows = [
-                            [t("usageInput", "Input"), sessionStats.tokens.input.toLocaleString(language)],
-                            [t("usageOutput", "Output"), sessionStats.tokens.output.toLocaleString(language)],
-                            ...(sessionStats.tokens.cacheRead > 0
-                              ? [[t("cacheRead", "Cache Read"), sessionStats.tokens.cacheRead.toLocaleString(language)]]
-                              : []),
-                            ...(sessionStats.tokens.cacheWrite > 0
-                              ? [
-                                  [
-                                    t("cacheWrite", "Cache Write"),
-                                    sessionStats.tokens.cacheWrite.toLocaleString(language),
-                                  ],
-                                ]
-                              : []),
-                            [t("total", "Total"), sessionStats.tokens.total.toLocaleString(language)],
-                          ];
-                          const ctx = contextUsage ?? sessionStats.contextUsage;
-                          const formatCompact = (n: number) =>
-                            n >= 1_000_000
-                              ? `${(n / 1_000_000).toFixed(1)}M`
-                              : n >= 1000
-                                ? `${(n / 1000).toFixed(0)}k`
-                                : String(n);
-                          const extraTokenRows = [
-                            ...(sessionStats.cost > 0
-                              ? [[t("usageCost", "Cost"), `$${sessionStats.cost.toFixed(4)}`]]
-                              : []),
-                            ...(ctx?.contextWindow
-                              ? [
-                                  [
-                                    t("usageContext", "Context"),
-                                    `${ctx.percent !== null ? `${ctx.percent.toFixed(1)}%` : "?"} / ${formatCompact(ctx.contextWindow)}`,
-                                  ],
-                                ]
-                              : []),
-                          ];
-                          const section = (
-                            title: string,
-                            sectionRows: string[][],
-                            valueAlign: "left" | "right" = "left",
-                            compact = false,
-                          ) => (
-                            <div style={{ minWidth: 0 }}>
-                              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text)", marginBottom: 6 }}>
-                                {title}
-                              </div>
-                              <div
-                                style={{
-                                  display: "grid",
-                                  gridTemplateColumns: compact ? "max-content max-content" : "auto minmax(0, 1fr)",
-                                  columnGap: compact ? 14 : 12,
-                                  rowGap: 4,
-                                  justifyContent: compact ? "start" : undefined,
-                                }}
-                              >
-                                {sectionRows.map(([label, value]) => (
-                                  <div key={`${title}:${label}`} style={{ display: "contents" }}>
-                                    <div style={{ color: "var(--text-dim)", whiteSpace: "nowrap" }}>{label}</div>
-                                    <div
-                                      style={{
-                                        color: "var(--text-muted)",
-                                        minWidth: 0,
-                                        overflowWrap: compact ? "normal" : "anywhere",
-                                        textAlign: valueAlign,
-                                        whiteSpace: valueAlign === "right" ? "nowrap" : "normal",
-                                      }}
-                                    >
-                                      {value}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          );
-                          const copyButton = (field: SessionCopyField, value: string) => {
-                            const copied = copiedSessionField === field;
-                            return (
-                              <button
-                                type="button"
-                                title={
-                                  copied
-                                    ? t("copied", "Copied")
-                                    : field === "file"
-                                      ? t("copyFilePath", "Copy file path")
-                                      : t("copySessionId", "Copy session ID")
-                                }
-                                onClick={() => handleCopySessionField(field, value)}
-                                style={{
-                                  alignSelf: "start",
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  width: 22,
-                                  height: 22,
-                                  marginTop: -2,
-                                  color: copied ? "var(--accent)" : "var(--text-dim)",
-                                  background: "transparent",
-                                  border: "1px solid var(--border)",
-                                  borderRadius: "var(--radius-sm)",
-                                  cursor: "pointer",
-                                  flex: "0 0 auto",
-                                  transition: "color 0.12s, border-color 0.12s, background 0.12s",
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.color = "var(--accent)";
-                                  e.currentTarget.style.borderColor = "var(--accent)";
-                                  e.currentTarget.style.background = "var(--bg-hover)";
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.color = copied ? "var(--accent)" : "var(--text-dim)";
-                                  e.currentTarget.style.borderColor = "var(--border)";
-                                  e.currentTarget.style.background = "transparent";
-                                }}
-                              >
-                                {copied ? (
-                                  <svg
-                                    width="12"
-                                    height="12"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    aria-hidden="true"
-                                  >
-                                    <polyline points="20 6 9 17 4 12" />
-                                  </svg>
-                                ) : (
-                                  <svg
-                                    width="12"
-                                    height="12"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    aria-hidden="true"
-                                  >
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                                  </svg>
-                                )}
-                              </button>
-                            );
-                          };
-                          const sessionInfoSection = (
-                            <div style={{ minWidth: 0 }}>
-                              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text)", marginBottom: 6 }}>
-                                {t("sessionInfo", "Session Info")}
-                              </div>
-                              <div
-                                style={{
-                                  display: "grid",
-                                  gridTemplateColumns: "auto minmax(0, 1fr) auto",
-                                  columnGap: 12,
-                                  rowGap: 8,
-                                  alignItems: "start",
-                                }}
-                              >
-                                {sessionRows.map((row) => (
-                                  <div key={`session-info:${row.label}`} style={{ display: "contents" }}>
-                                    <div style={{ color: "var(--text-dim)", whiteSpace: "nowrap" }}>{row.label}</div>
-                                    <div
-                                      style={{
-                                        color: "var(--text-muted)",
-                                        minWidth: 0,
-                                        overflowWrap: "anywhere",
-                                        wordBreak: "break-word",
-                                        whiteSpace: "normal",
-                                      }}
-                                    >
-                                      {row.value}
-                                    </div>
-                                    <div>{row.copyField ? copyButton(row.copyField, row.value) : null}</div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          );
-
-                          return (
-                            <div
-                              style={{
-                                display: "grid",
-                                gridTemplateColumns: isMobile
-                                  ? "1fr"
-                                  : "minmax(360px, 1.7fr) minmax(140px, 0.55fr) minmax(190px, 0.75fr)",
-                                gap: isMobile ? 16 : 24,
-                                fontSize: 12,
-                                lineHeight: 1.5,
-                                fontFamily: "var(--font-mono)",
-                              }}
-                            >
-                              {sessionInfoSection}
-                              {section(t("messages", "Messages"), messageRows)}
-                              {section(t("tokens", "Tokens"), [...tokenRows, ...extraTokenRows], "right", true)}
-                            </div>
-                          );
-                        })()
-                      ) : (
-                        <div style={{ fontSize: 12, color: "var(--text-muted)", fontStyle: "italic" }}>
-                          {t("loadSessionInfoHint", "Send a message or run /session to load session info")}
-                        </div>
-                      )}
-                    </div>
+                    <SessionInfoPanel stats={sessionStats} contextUsage={contextUsage} isMobile={isMobile} />
                   )}
                 </div>
               )}
@@ -2056,95 +1805,13 @@ export function AppShell() {
       </button>
       <WindowControls />
       {renameProjectTarget && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 900,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "var(--scrim)",
-          }}
-          onClick={() => setRenameProjectTarget(null)}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-label={t("renameProjectTitle", "Rename project")}
-            style={{
-              width: 360,
-              maxWidth: "calc(100vw - 40px)",
-              background: "var(--bg-panel)",
-              border: "1px solid var(--border)",
-              borderRadius: "var(--radius-lg)",
-              padding: 18,
-              boxShadow: "var(--shadow-lg)",
-            }}
-          >
-            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)", marginBottom: 4 }}>
-              {t("renameProjectTitle", "Rename project")}
-            </div>
-            <div style={{ fontSize: 11.5, color: "var(--text-dim)", marginBottom: 12, wordBreak: "break-all" }}>
-              {renameProjectTarget.root}
-            </div>
-            <input
-              ref={renameProjectInputRef}
-              value={renameProjectValue}
-              onChange={(e) => setRenameProjectValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleCommitRenameProject();
-                if (e.key === "Escape") setRenameProjectTarget(null);
-              }}
-              placeholder={t("renameProjectPlaceholder", "Name (empty restores the folder name)")}
-              aria-label={t("renameProjectTitle", "Rename project")}
-              style={{
-                width: "100%",
-                padding: "8px 10px",
-                border: "1px solid var(--border)",
-                borderRadius: "var(--radius-sm)",
-                background: "var(--bg)",
-                color: "var(--text)",
-                fontSize: 13,
-                outline: "none",
-                boxSizing: "border-box",
-              }}
-            />
-            <div style={{ display: "flex", gap: 8, marginTop: 14, justifyContent: "flex-end" }}>
-              <button
-                type="button"
-                onClick={() => setRenameProjectTarget(null)}
-                style={{
-                  padding: "7px 14px",
-                  background: "var(--bg-hover)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "var(--radius-sm)",
-                  color: "var(--text-muted)",
-                  fontSize: 12,
-                  cursor: "pointer",
-                }}
-              >
-                {t("cancel", "Cancel")}
-              </button>
-              <button
-                type="button"
-                onClick={handleCommitRenameProject}
-                style={{
-                  padding: "7px 14px",
-                  background: "var(--accent)",
-                  border: "none",
-                  borderRadius: "var(--radius-sm)",
-                  color: "var(--on-accent)",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
-                {t("rename", "Rename")}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ProjectRenameDialog
+          root={renameProjectTarget.root}
+          value={renameProjectValue}
+          onValueChange={setRenameProjectValue}
+          onCommit={handleCommitRenameProject}
+          onCancel={() => setRenameProjectTarget(null)}
+        />
       )}
       <ToastHost />
 
