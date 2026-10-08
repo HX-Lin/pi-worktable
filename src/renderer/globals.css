@@ -205,6 +205,125 @@ html.dark {
   --shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.58);
 }
 
+/* ---------------------------------------------------------------------------
+ * 主题库：每个主题只覆盖第 1 节基础色板 + 语义色 + 阴影，布局与表面全部推导。
+ * 这些规则必须排在 html.dark / html.niri 之后（同优先级，靠顺序取胜）。
+ * 每个主题都带 .dark，所以第 2 节的透明度旋钮沿用深色档。
+ * ------------------------------------------------------------------------- */
+html.theme-nord {
+  --bg-color: #2e3440;
+  --panel-color: #3b4252;
+  --hover-color: #434c5e;
+  --selected-color: #4c566a;
+  --border-color: #4c566a;
+  --border-soft-color: #434c5e;
+  --text-color: #eceff4;
+  --text-muted-color: #d8dee9;
+  --text-dim-color: #aebacb;
+  --text-faint-color: #8f9bad;
+  --accent-color: #88c0d0;
+  --accent-hover-color: #8fbcbb;
+  --on-accent: #2e3440;
+  --tool-bg-color: #242933;
+  --tool-fg-color: #d8dee9;
+  --user-bg-color: #434c5e;
+  --user-fg-color: #eceff4;
+  --assistant-bg-color: #3b4252;
+  --code-bg: #272c36;
+  --code-text: #d8dee9;
+  --red: #bf616a;
+  --green: #a3be8c;
+  --amber: #ebcb8b;
+  --blue: #81a1c1;
+}
+
+html.theme-gruvbox {
+  --bg-color: #282828;
+  --panel-color: #32302f;
+  --hover-color: #3c3836;
+  --selected-color: #504945;
+  --border-color: #504945;
+  --border-soft-color: #3c3836;
+  --text-color: #ebdbb2;
+  --text-muted-color: #d5c4a1;
+  --text-dim-color: #bdae93;
+  --text-faint-color: #a89984;
+  --accent-color: #fe8019;
+  --accent-hover-color: #fabd2f;
+  --on-accent: #282828;
+  --tool-bg-color: #1d2021;
+  --tool-fg-color: #d5c4a1;
+  --user-bg-color: #3c3836;
+  --user-fg-color: #fbf1c7;
+  --assistant-bg-color: #32302f;
+  --code-bg: #1d2021;
+  --code-text: #ebdbb2;
+  --red: #fb4934;
+  --green: #b8bb26;
+  --amber: #fabd2f;
+  --blue: #83a598;
+}
+
+html.theme-tokyo {
+  --bg-color: #1a1b26;
+  --panel-color: #1f2335;
+  --hover-color: #292e42;
+  --selected-color: #2f3549;
+  --border-color: #3b4261;
+  --border-soft-color: #292e42;
+  --text-color: #c0caf5;
+  --text-muted-color: #a9b1d6;
+  --text-dim-color: #9aa5ce;
+  --text-faint-color: #737aa2;
+  --accent-color: #7aa2f7;
+  --accent-hover-color: #8db0ff;
+  --tool-bg-color: #16161e;
+  --tool-fg-color: #a9b1d6;
+  --user-bg-color: #292e42;
+  --user-fg-color: #c0caf5;
+  --assistant-bg-color: #1f2335;
+  --code-bg: #16161e;
+  --code-text: #c0caf5;
+  --red: #f7768e;
+  --green: #9ece6a;
+  --amber: #e0af68;
+  --blue: #7aa2f7;
+}
+
+html.theme-rose {
+  --bg-color: #fff1f2;
+  --panel-color: #ffffff;
+  --hover-color: #ffe4e6;
+  --selected-color: #ffe4e6;
+  --border-color: #fecdd3;
+  --border-soft-color: #ffe4e6;
+  --text-color: #4c0519;
+  --text-muted-color: #881337;
+  --text-dim-color: #9f1239;
+  --text-faint-color: #be185d;
+  --accent-color: #e11d48;
+  --accent-hover-color: #be123c;
+  --on-accent: #ffffff;
+  --tool-bg-color: #4c0519;
+  --tool-fg-color: #ffe4e6;
+  --user-bg-color: #4c0519;
+  --user-fg-color: #fff1f2;
+  --assistant-bg-color: #ffffff;
+  --code-bg: #ffe4e6;
+  --code-text: #4c0519;
+  --red: #dc2626;
+  --green: #15803d;
+  --amber: #b45309;
+  --blue: #2563eb;
+}
+
+/* 浅色主题要浅色滚动条与阴影（dark 基类被移除时回到 :root 档）。 */
+html.theme-rose {
+  --shadow-sm: 0 1px 3px rgba(76, 5, 25, 0.08);
+  --shadow-md: 0 8px 24px rgba(76, 5, 25, 0.12);
+  --shadow-lg: 0 18px 48px rgba(76, 5, 25, 0.16);
+}
+
 /* niri (Linux)：深石墨蓝 + 橙色强调，磨砂玻璃。
    合成器负责模糊与圆角（niri 的 background-effect { xray true; blur true } 模糊壁纸、
    geometry-corner-radius 给窗口圆角）；应用只负责画半透明表面，文字保持不透明。

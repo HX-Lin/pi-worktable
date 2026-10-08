@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { useTheme, type Theme } from "@/hooks/useTheme";
+import { THEME_CHOICES, useTheme } from "@/hooks/useTheme";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useSettingsCounts } from "@/hooks/useSettingsCounts";
 import { useI18n, type AppLanguage } from "@/i18n";
@@ -1047,8 +1047,8 @@ function GeneralSettings({
 }: {
   language: AppLanguage;
   onLanguageChange: (language: AppLanguage) => void;
-  theme: Theme;
-  onThemeChange: (theme: Theme) => void;
+  theme: string;
+  onThemeChange: (theme: string) => void;
 }) {
   const { t } = useI18n();
   const [backgroundMode, setBackgroundMode] = useState(true);
@@ -1263,21 +1263,51 @@ function GeneralSettings({
         <p style={{ margin: "6px 0 16px", fontSize: 12, lineHeight: 1.6, color: "var(--text-dim)" }}>
           {t("appearanceDescription", "Choose the color mode used by the app.")}
         </p>
-        <SettingRow label={t("theme", "Theme")} controlId={themeControlId}>
-          <select
-            id={themeControlId}
-            value={theme}
-            onChange={(event) => onThemeChange(event.target.value as Theme)}
-            style={selectStyle}
-          >
-            <option value="light">{t("light", "Light")}</option>
-            <option value="dark">{t("dark", "Dark")}</option>
-            <option value="niri" disabled={window.piBridge?.platform !== "linux"}>
-              {t("themeNiri", "niri")}
-              {window.piBridge?.platform !== "linux" ? " — Linux only" : ""}
-            </option>
-          </select>
-        </SettingRow>
+        <div
+          id={themeControlId}
+          role="radiogroup"
+          aria-label={t("theme", "Theme")}
+          style={{ display: "flex", flexWrap: "wrap", gap: 8 }}
+        >
+          {THEME_CHOICES.map((choice) => {
+            const active = theme === choice.id;
+            const linuxOnly = choice.id === "niri" && window.piBridge?.platform !== "linux";
+            return (
+              <button
+                key={choice.id}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                disabled={linuxOnly}
+                title={linuxOnly ? `${choice.labelEn} — Linux only` : choice.labelEn}
+                onClick={() => onThemeChange(choice.id)}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 6,
+                  width: 104,
+                  padding: 8,
+                  background: active ? "var(--accent-soft)" : "var(--panel-color)",
+                  border: `1px solid ${active ? "var(--accent)" : "var(--border)"}`,
+                  borderRadius: "var(--radius-md)",
+                  cursor: linuxOnly ? "not-allowed" : "pointer",
+                  opacity: linuxOnly ? 0.5 : 1,
+                  textAlign: "left",
+                  font: "inherit",
+                }}
+              >
+                <span style={{ display: "flex", height: 22, borderRadius: 4, overflow: "hidden" }}>
+                  {choice.swatch.map((color) => (
+                    <span key={color} style={{ flex: 1, background: color }} />
+                  ))}
+                </span>
+                <span style={{ fontSize: 11.5, color: active ? "var(--accent)" : "var(--text)" }}>
+                  {language === "zh-CN" ? choice.label : choice.labelEn}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </section>
     </div>
   );
