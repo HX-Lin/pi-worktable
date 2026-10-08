@@ -3,7 +3,7 @@ import { Check, Field, NumInput, SecretTextInput, Select, SectionTitle, TextInpu
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useI18n } from "@/i18n";
 import { replaceModelEntry, type ModelEntry, type ModelsJson, type ProviderEntry } from "@/lib/models-config-state";
-import { call } from "@/lib/api-client";
+import { call, subscribeAuthLogin } from "@/lib/api-client";
 // Color icons (have their own fill colors — no background needed)
 import AnthropicIcon from "@lobehub/icons/es/Anthropic/components/Mono";
 import OpenAIIcon from "@lobehub/icons/es/OpenAI/components/Mono";
@@ -479,33 +479,20 @@ function ModelDetail({
     if (!model.id.trim() || testState.phase === "testing") return;
     setTestState({ phase: "testing" });
     try {
-      const res = await fetch("/api/models-config/test", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ providerName, provider, model }),
-      });
-      const d = (await res.json()) as {
-        ok?: boolean;
-        error?: string;
-        latencyMs?: number;
-        status?: number;
-        responseText?: string;
-      };
-      if (!res.ok || !d.ok) {
+      const d = await call("modelsConfig.test", { providerName, provider, model });
+      const latencyMs = typeof d.latencyMs === "number" ? d.latencyMs : undefined;
+      const status = typeof d.status === "number" ? d.status : undefined;
+      const responseText = typeof d.responseText === "string" ? d.responseText : undefined;
+      if (!d.ok) {
         setTestState({
           phase: "error",
-          message: d.error ?? `HTTP ${res.status}`,
-          latencyMs: d.latencyMs,
-          status: d.status,
+          message: d.error ?? "Model test failed",
+          latencyMs,
+          status,
         });
         return;
       }
-      setTestState({
-        phase: "success",
-        latencyMs: d.latencyMs,
-        status: d.status,
-        responseText: d.responseText,
-      });
+      setTestState({ phase: "success", latencyMs, status, responseText });
     } catch (e) {
       setTestState({ phase: "error", message: e instanceof Error ? e.message : String(e) });
     }
@@ -702,7 +689,8 @@ function ModelDetail({
 function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefresh: () => void }) {
   const [loginState, setLoginState] = useState<OAuthLoginState>({ phase: "idle" });
   const [inputValue, setInputValue] = useState("");
-  const eventSourceRef = useRef<EventSource | null>(null);
+  /** Cancels the in-flight login stream (identity-checked against the current attempt). */
+  const loginStreamRef = useRef<(() => void) | null>(null);
   const loginAttemptRef = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -717,16 +705,16 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
     loginAttemptRef.current += 1;
     setLoginState({ phase: "idle" });
     setInputValue("");
-    eventSourceRef.current?.close();
-    eventSourceRef.current = null;
+    loginStreamRef.current?.();
+    loginStreamRef.current = null;
     void call("auth.loginCancel", { provider: provider.id }).catch(() => {});
   }, [provider.id]);
 
   useEffect(() => {
     return () => {
       loginAttemptRef.current += 1;
-      eventSourceRef.current?.close();
-      eventSourceRef.current = null;
+      loginStreamRef.current?.();
+      loginStreamRef.current = null;
       void call("auth.loginCancel", { provider: provider.id }).catch(() => {});
     };
   }, [provider.id]);
@@ -734,8 +722,8 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
   const handleLogin = useCallback(async () => {
     const attempt = loginAttemptRef.current + 1;
     loginAttemptRef.current = attempt;
-    eventSourceRef.current?.close();
-    eventSourceRef.current = null;
+    loginStreamRef.current?.();
+    loginStreamRef.current = null;
     setLoginState({ phase: "connecting" });
     setInputValue("");
 
@@ -750,25 +738,20 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
     }
     if (loginAttemptRef.current !== attempt) return;
 
-    const es = new EventSource(`/api/auth/login/${encodeURIComponent(provider.id)}`);
-    eventSourceRef.current = es;
+    // The stream's unsubscribe doubles as the "this attempt is over" token.
+    let unsubscribe: (() => void) | null = null;
+    let ended = false;
+    const endStream = () => {
+      ended = true;
+      unsubscribe?.();
+      unsubscribe = null;
+      if (loginStreamRef.current === endStream) loginStreamRef.current = null;
+    };
+    loginStreamRef.current = endStream;
+    const stale = () => ended || loginAttemptRef.current !== attempt;
 
-    es.onmessage = (e) => {
-      if (eventSourceRef.current !== es || loginAttemptRef.current !== attempt) return;
-      const data = JSON.parse(e.data) as {
-        type: string;
-        url?: string;
-        instructions?: string | null;
-        token?: string;
-        message?: string;
-        placeholder?: string | null;
-        userCode?: string;
-        verificationUri?: string;
-        intervalSeconds?: number | null;
-        expiresInSeconds?: number | null;
-        options?: { id: string; label: string }[];
-        warning?: { code: "MODEL_SYNC_FAILED"; message: string };
-      };
+    void subscribeAuthLogin(provider.id, (data) => {
+      if (stale()) return;
       if (data.type === "auth") {
         setLoginState({ phase: "auth", url: data.url!, instructions: data.instructions ?? null, token: data.token! });
         // Single open path (ISSUE-008): prefer desktop openExternal
@@ -804,36 +787,39 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
       } else if (data.type === "progress") {
         setLoginState({ phase: "progress", message: data.message! });
       } else if (data.type === "success") {
-        es.close();
-        eventSourceRef.current = null;
+        endStream();
         setLoginState({
           phase: "success",
           ...(data.warning ? { message: data.warning.message, warning: true } : {}),
         });
         onRefresh();
       } else if (data.type === "error") {
-        es.close();
-        eventSourceRef.current = null;
+        endStream();
         setLoginState({ phase: "error", message: data.message! });
       } else if (data.type === "cancelled") {
-        es.close();
-        eventSourceRef.current = null;
+        endStream();
         setLoginState({ phase: "idle" });
       }
-    };
-    es.onerror = (event) => {
-      if (eventSourceRef.current !== es || loginAttemptRef.current !== attempt) return;
-      es.close();
-      eventSourceRef.current = null;
-      const message = event instanceof ErrorEvent && event.message ? event.message : "Connection lost";
-      setLoginState((prev) => (prev.phase === "success" ? prev : { phase: "error", message }));
-    };
+    })
+      .then((off) => {
+        unsubscribe = off;
+        if (ended) off();
+      })
+      .catch((error: unknown) => {
+        if (stale()) return;
+        endStream();
+        setLoginState((prev) =>
+          prev.phase === "success"
+            ? prev
+            : { phase: "error", message: error instanceof Error ? error.message : "Connection lost" },
+        );
+      });
   }, [provider.id, onRefresh]);
 
   const handleCancelLogin = useCallback(() => {
     loginAttemptRef.current += 1;
-    eventSourceRef.current?.close();
-    eventSourceRef.current = null;
+    loginStreamRef.current?.();
+    loginStreamRef.current = null;
     setLoginState({ phase: "idle" });
     setInputValue("");
     void call("auth.loginCancel", { provider: provider.id }).catch(() => {});
@@ -841,18 +827,11 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
 
   const handleLogout = useCallback(async () => {
     try {
-      const response = await fetch(`/api/auth/logout/${encodeURIComponent(provider.id)}`, { method: "POST" });
-      const result = (await response.json().catch(() => ({}))) as {
-        warning?: { code: "MODEL_SYNC_FAILED"; message: string };
-        error?: string;
-      };
-      if (!response.ok || result.error) {
-        setLoginState({ phase: "error", message: result.error ?? `HTTP ${response.status}` });
-        return;
-      }
+      const result = await call("auth.logout", { provider: provider.id });
+      const warning = result.warning;
       setLoginState(
-        result.warning
-          ? { phase: "success", message: result.warning.message, warning: true }
+        warning
+          ? { phase: "success", message: warning.message, warning: true }
           : { phase: "success", message: "Disconnected successfully." },
       );
       onRefresh();
@@ -866,16 +845,7 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
       if (!code.trim()) return;
       setLoginState({ phase: "progress", message: "Verifying…" });
       try {
-        const res = await fetch(`/api/auth/login/${encodeURIComponent(provider.id)}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token, code: code.trim() }),
-        });
-        if (!res.ok) {
-          const d = (await res.json().catch(() => ({}))) as { error?: string };
-          setLoginState({ phase: "error", message: d.error ?? `Server error ${res.status}` });
-          return;
-        }
+        await call("auth.loginSubmit", { provider: provider.id, token, code: code.trim() });
         setInputValue("");
         // Success path: the auth progress stream emits "success" and updates state.
       } catch (e) {
@@ -889,15 +859,7 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
     async (token: string, value: string) => {
       setLoginState({ phase: "progress", message: "Continuing…" });
       try {
-        const res = await fetch(`/api/auth/login/${encodeURIComponent(provider.id)}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token, code: value }),
-        });
-        if (!res.ok) {
-          const d = (await res.json().catch(() => ({}))) as { error?: string };
-          setLoginState({ phase: "error", message: d.error ?? `Server error ${res.status}` });
-        }
+        await call("auth.loginSubmit", { provider: provider.id, token, code: value });
       } catch (e) {
         setLoginState({ phase: "error", message: e instanceof Error ? e.message : "Network error" });
       }
@@ -1165,27 +1127,14 @@ function ApiKeyDetail({ provider, onRefresh }: { provider: ApiKeyProvider; onRef
     setWarning(null);
     setSavedOk(false);
     try {
-      const res = await fetch(`/api/auth/api-key/${encodeURIComponent(provider.id)}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ apiKey: apiKey.trim() }),
-      });
-      const d = (await res.json()) as {
-        ok?: boolean;
-        warning?: { code: "MODEL_SYNC_FAILED"; message: string };
-        error?: string;
-      };
-      if (!res.ok || d.error) {
-        setError(d.error ?? `HTTP ${res.status}`);
-      } else {
-        setApiKey("");
-        setSavedOk(true);
-        setWarning(d.warning?.message ?? null);
-        setTimeout(() => setSavedOk(false), 2000);
-        onRefresh();
-      }
+      const d = await call("auth.setApiKey", { provider: provider.id, key: apiKey.trim() });
+      setApiKey("");
+      setSavedOk(true);
+      setWarning(d.warning?.message ?? null);
+      setTimeout(() => setSavedOk(false), 2000);
+      onRefresh();
     } catch (e) {
-      setError(String(e));
+      setError(e instanceof Error ? e.message : String(e));
     } finally {
       setSaving(false);
     }
@@ -1196,19 +1145,11 @@ function ApiKeyDetail({ provider, onRefresh }: { provider: ApiKeyProvider; onRef
     setError(null);
     setWarning(null);
     try {
-      const res = await fetch(`/api/auth/api-key/${encodeURIComponent(provider.id)}`, { method: "DELETE" });
-      const d = (await res.json()) as {
-        ok?: boolean;
-        warning?: { code: "MODEL_SYNC_FAILED"; message: string };
-        error?: string;
-      };
-      if (!res.ok || d.error) setError(d.error ?? `HTTP ${res.status}`);
-      else {
-        setWarning(d.warning?.message ?? null);
-        onRefresh();
-      }
+      const d = await call("auth.deleteApiKey", { provider: provider.id });
+      setWarning(d.warning?.message ?? null);
+      onRefresh();
     } catch (e) {
-      setError(String(e));
+      setError(e instanceof Error ? e.message : String(e));
     } finally {
       setRemoving(false);
     }
@@ -1730,16 +1671,14 @@ export function ModelsConfig({
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const loadOAuthProviders = useCallback(() => {
-    fetch("/api/auth/providers")
-      .then((r) => r.json())
-      .then((d: { providers: OAuthProvider[] }) => setOauthProviders(d.providers))
+    void call("auth.providers")
+      .then((d) => setOauthProviders(d.providers as unknown as OAuthProvider[]))
       .catch(() => {});
   }, []);
 
   const loadApiKeyProviders = useCallback(() => {
-    fetch("/api/auth/all-providers")
-      .then((r) => r.json())
-      .then((d: { providers: ApiKeyProvider[] }) => setApiKeyProviders(d.providers))
+    void call("auth.allProviders")
+      .then((d) => setApiKeyProviders(d.providers as unknown as ApiKeyProvider[]))
       .catch(() => {});
   }, []);
 
@@ -1749,17 +1688,8 @@ export function ModelsConfig({
   useEffect(() => {
     setLoadFailed(false);
     setConfigLoaded(false);
-    fetch("/api/models-config")
-      .then(async (r) => {
-        // ISSUE-009: only accept successful loads
-        if (!r.ok) {
-          const body = (await r.json().catch(() => ({}))) as { error?: string };
-          throw new Error(body.error ?? `HTTP ${r.status}`);
-        }
-        return r.json() as Promise<ModelsJson & { error?: string }>;
-      })
+    void call("modelsConfig.get")
       .then((d) => {
-        if (d.error) throw new Error(d.error);
         const normalized = d.providers ? d : { ...d, providers: {} };
         setConfig(normalized);
         setConfigLoaded(true);
@@ -1858,20 +1788,12 @@ export function ModelsConfig({
     setSaveError(null);
     setSavedOk(false);
     try {
-      const res = await fetch("/api/models-config", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(config),
-      });
-      const d = (await res.json()) as { success?: boolean; error?: string };
-      if (!res.ok || d.error) setSaveError(d.error ?? `HTTP ${res.status}`);
-      else {
-        setSavedOk(true);
-        onChanged?.();
-        setTimeout(() => setSavedOk(false), 2000);
-      }
+      await call("modelsConfig.set", config);
+      setSavedOk(true);
+      onChanged?.();
+      setTimeout(() => setSavedOk(false), 2000);
     } catch (e) {
-      setSaveError(String(e));
+      setSaveError(e instanceof Error ? e.message : String(e));
     } finally {
       setSaving(false);
     }
