@@ -24,7 +24,6 @@ import { QuickChannelBinding } from "./channels/QuickChannelBinding";
 import { useWorktrees } from "./session-sidebar/useWorktrees";
 import { useTheme } from "@/hooks/useTheme";
 import { GlobalSearch } from "./GlobalSearch";
-import { SubagentsPanel } from "./SubagentsPanel";
 import { ToastHost } from "./ToastHost";
 import type { GlobalSearchAction, GlobalSearchItem } from "@/lib/global-search";
 import { useIsMobile } from "@/hooks/useIsMobile";
@@ -54,10 +53,6 @@ import type { ChannelsSnapshot } from "@shared/channel-types";
 
 type SessionCopyField = "file" | "id";
 const EXPLORER_TAB_ID = "explorer";
-const TASKS_TAB_ID = "tasks";
-const MEMORY_TAB_ID = "memory";
-const SUBAGENTS_TAB_ID = "subagents";
-const GIT_TAB_ID = "git";
 
 const PANEL_ICON = {
   width: 15,
@@ -95,12 +90,10 @@ function PanelIconTasks() {
     </svg>
   );
 }
-function PanelIconAgents() {
+function PanelIconChat() {
   return (
     <svg {...PANEL_ICON} aria-hidden="true">
-      <circle cx="9" cy="8" r="3" />
-      <path d="M3 20a6 6 0 0 1 12 0" />
-      <path d="M16 6a3 3 0 0 1 0 6M18 20a6 6 0 0 0-3-5.2" />
+      <path d="M21 12a8 8 0 0 1-8 8H7l-4 3v-7a8 8 0 0 1 8-8h2a8 8 0 0 1 8 4Z" />
     </svg>
   );
 }
@@ -275,6 +268,10 @@ export function AppShell() {
   // Right panel — file tabs only
   const [fileTabs, setFileTabs] = useState<Tab[]>([]);
   const [activeFileTabId, setActiveFileTabId] = useState<string | null>(EXPLORER_TAB_ID);
+  // Project-scoped work (git, tasks, memory) is a full view next to the
+  // conversation rather than a tab in the file dock: it is wider than a 340px
+  // panel, and it is where you go to *work*, not to look something up.
+  const [activeView, setActiveView] = useState<"chat" | "git" | "tasks" | "memory">("chat");
   const [rightPanelOpen, setRightPanelOpen] = useState(false);
   const [rightPanelBounds, setRightPanelBounds] = useState(() =>
     getRightPanelWidthBounds(window.innerWidth, sidebarOpen),
@@ -853,20 +850,19 @@ export function AppShell() {
           break;
         }
         case "panel-files":
-        case "panel-git":
-        case "panel-tasks":
-        case "panel-memory": {
-          const tabId = {
-            "panel-files": EXPLORER_TAB_ID,
-            "panel-git": GIT_TAB_ID,
-            "panel-tasks": TASKS_TAB_ID,
-            "panel-memory": MEMORY_TAB_ID,
-            "panel-subagents": SUBAGENTS_TAB_ID,
-          }[item.action.id];
-          setActiveFileTabId(tabId);
+          setActiveView("chat");
+          setActiveFileTabId(EXPLORER_TAB_ID);
           openRightPanel();
           break;
-        }
+        case "panel-git":
+          setActiveView("git");
+          break;
+        case "panel-tasks":
+          setActiveView("tasks");
+          break;
+        case "panel-memory":
+          setActiveView("memory");
+          break;
         case "toggle-theme":
           toggleTheme();
           break;
@@ -908,13 +904,7 @@ export function AppShell() {
 
   const activeFileTab = fileTabs.find((t) => t.id === activeFileTabId) ?? null;
   // Project-scoped panels live in an icon rail; opened files follow the divider.
-  const panelTabs = [
-    { id: EXPLORER_TAB_ID, label: t("explorer", "Explorer"), icon: <PanelIconExplorer /> },
-    { id: GIT_TAB_ID, label: t("git", "Git"), icon: <PanelIconGit /> },
-    { id: TASKS_TAB_ID, label: t("tasksTitle", "Tasks"), icon: <PanelIconTasks /> },
-    { id: SUBAGENTS_TAB_ID, label: t("subagentsTitle", "Subagents"), icon: <PanelIconAgents /> },
-    { id: MEMORY_TAB_ID, label: t("memoryTitle", "Memory"), icon: <PanelIconMemory /> },
-  ];
+  const panelTabs = [{ id: EXPLORER_TAB_ID, label: t("explorer", "Explorer"), icon: <PanelIconExplorer /> }];
   const explorerCwd = activeCwd ?? selectedSession?.cwd ?? newSessionCwd;
   // Custom titlebar controls are shown on Linux/Windows (native decorations may
   // be absent); macOS keeps its native traffic lights.
@@ -1133,6 +1123,59 @@ export function AppShell() {
               paddingRight: showWindowControls && !rightPanelOpen ? windowControlsWidth : 0,
             }}
           >
+            <div
+              role="tablist"
+              aria-label={t("views", "Views")}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+                padding: 3,
+                margin: "0 6px 0 0",
+                background: "var(--control-chip-bg)",
+                border: "1px solid var(--control-chip-border)",
+                borderRadius: "var(--radius-md)",
+              }}
+            >
+              {(
+                [
+                  { id: "chat", label: t("chat", "Chat"), icon: <PanelIconChat /> },
+                  { id: "git", label: t("git", "Git"), icon: <PanelIconGit /> },
+                  { id: "tasks", label: t("tasksTitle", "Tasks"), icon: <PanelIconTasks /> },
+                  { id: "memory", label: t("memoryTitle", "Memory"), icon: <PanelIconMemory /> },
+                ] as const
+              ).map((view) => {
+                const active = activeView === view.id;
+                return (
+                  <button
+                    key={view.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    title={view.label}
+                    aria-label={view.label}
+                    onClick={() => setActiveView(view.id)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 5,
+                      height: 22,
+                      padding: "0 8px",
+                      border: "none",
+                      borderRadius: "var(--radius-sm)",
+                      background: active ? "var(--accent-soft)" : "transparent",
+                      color: active ? "var(--accent)" : "var(--control-chip-fg)",
+                      cursor: "pointer",
+                      fontSize: 11.5,
+                    }}
+                  >
+                    {view.icon}
+                    {!isMobile && <span>{view.label}</span>}
+                  </button>
+                );
+              })}
+            </div>
+
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
@@ -1762,6 +1805,32 @@ export function AppShell() {
               </div>
             )}
             <div style={{ flex: 1, minHeight: 0, overflow: "hidden", position: "relative" }}>
+              {/* The conversation stays mounted so its stream survives a look at
+                  git or the task board; the view is drawn over it. */}
+              {activeView !== "chat" && (
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    zIndex: 6,
+                    display: "flex",
+                    flexDirection: "column",
+                    background: "var(--bg)",
+                  }}
+                >
+                  <div style={{ flex: 1, minHeight: 0 }}>
+                    {activeView === "git" && (
+                      <GitPanel
+                        cwd={explorerCwd}
+                        refreshKey={explorerRefreshKey}
+                        onOpenFile={(path) => handleOpenFile(path, path.split("/").pop() ?? path)}
+                      />
+                    )}
+                    {activeView === "tasks" && <TaskBoard cwd={explorerCwd} />}
+                    {activeView === "memory" && <MemoryPanel cwd={explorerCwd} />}
+                  </div>
+                </div>
+              )}
               {showChat ? (
                 <SessionProfiler key={sessionKey} id="ChatWindow">
                   <ChatWindow
@@ -2000,22 +2069,6 @@ export function AppShell() {
           {/* Explorer / Terminal / file content - mounted persistently so a
               running terminal survives tab switches (display toggled). */}
           <div style={{ flex: 1, overflow: "hidden" }}>
-            <div style={{ height: "100%", display: activeFileTabId === TASKS_TAB_ID ? "block" : "none" }}>
-              <TaskBoard cwd={explorerCwd} />
-            </div>
-            <div style={{ height: "100%", display: activeFileTabId === SUBAGENTS_TAB_ID ? "block" : "none" }}>
-              <SubagentsPanel />
-            </div>
-            <div style={{ height: "100%", display: activeFileTabId === MEMORY_TAB_ID ? "block" : "none" }}>
-              <MemoryPanel cwd={explorerCwd} />
-            </div>
-            <div style={{ height: "100%", display: activeFileTabId === GIT_TAB_ID ? "block" : "none" }}>
-              <GitPanel
-                cwd={explorerCwd}
-                refreshKey={explorerRefreshKey}
-                onOpenFile={(path) => handleOpenFile(path, path.split("/").pop() ?? path)}
-              />
-            </div>
             <div style={{ height: "100%", display: activeFileTabId === EXPLORER_TAB_ID ? "block" : "none" }}>
               {explorerCwd ? (
                 <div style={{ height: "100%", overflowY: "auto", overflowX: "hidden", paddingTop: 4 }}>

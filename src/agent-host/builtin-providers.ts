@@ -19,6 +19,7 @@ import { JEV_ROUTING_EXTENSION } from "./jev/routing/extension";
 import { SUBAGENT_EXTENSION } from "./subagent/extension";
 import { MEMORY_EXTENSION } from "./memory/extension";
 import { TASKS_EXTENSION } from "./tasks/extension";
+import { ASK_USER_QUESTION_EXTENSION } from "./ask-user-question/extension";
 
 export const BUILTIN_PROVIDER_EXTENSIONS: InlineExtension[] = [JEV_PROVIDER_EXTENSION];
 
@@ -56,6 +57,7 @@ export const BUILTIN_SESSION_EXTENSIONS: InlineExtension[] = [
   SUBAGENT_EXTENSION,
   TASKS_EXTENSION,
   MEMORY_EXTENSION,
+  ASK_USER_QUESTION_EXTENSION,
 ];
 
 /** Register app-bundled providers on a host-level runtime used by auth APIs. */
