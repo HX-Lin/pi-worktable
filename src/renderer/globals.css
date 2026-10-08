@@ -134,6 +134,7 @@
   /* 浮在壁纸上的控件（模型/思考/权限/工具/仓库按钮、待办条）用实底，
      半透明底在清晰照片上等于没有边界，按键看不出来。 */
   --control-chip-bg: color-mix(in srgb, var(--panel-color) 92%, transparent);
+  --control-chip-bg-hover: color-mix(in srgb, var(--panel-color) 99%, transparent);
   --control-chip-border: var(--border-color);
   --control-chip-fg: var(--text-color);
   --control-bg: var(--bg-panel);
@@ -242,13 +243,15 @@ html.niri {
   --card-alpha: 18%;
   --user-alpha: 30%;
   --tool-alpha: 24%;
-  --chip-alpha: 8%;
+  /* hover 只是一层白色薄雾：8% 在照片上等于看不见，提到 14% 才有"摸到了"的反馈 */
+  --chip-alpha: 14%;
   --input-alpha: 26%;
   /* 选中态在深色主题下是橙色低透，不能跟着 chip 的白色 9% 走 */
   --bg-selected: rgba(251, 146, 60, 0.24);
   --menu-bg: #1a1d27;
   /* 实底深色芯片 + 亮字：无论壁纸哪一块是亮是暗，按键都清楚。 */
   --control-chip-bg: #171a23;
+  --control-chip-bg-hover: #232733;
   --control-chip-border: rgba(255, 255, 255, 0.18);
   --control-chip-fg: #eceef4;
 }

@@ -859,21 +859,22 @@ export function AppShell() {
             alignItems: "center",
             justifyContent: "center",
             gap: 7,
-            background: "none",
-            border: "none",
+            /* 左下角这颗直接压在壁纸上：透明底在照片上等于没有按钮。 */
+            background: "var(--control-chip-bg)",
+            border: "1px solid var(--control-chip-border)",
             borderRadius: "var(--radius-md)",
-            color: "var(--text-muted)",
+            color: "var(--control-chip-fg)",
             cursor: "pointer",
             fontSize: 12,
             transition: "background 0.12s, color 0.12s",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = "var(--bg-hover)";
-            e.currentTarget.style.color = "var(--text)";
+            e.currentTarget.style.background = "var(--control-chip-bg-hover)";
+            e.currentTarget.style.color = "var(--accent)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = "none";
-            e.currentTarget.style.color = "var(--text-muted)";
+            e.currentTarget.style.background = "var(--control-chip-bg)";
+            e.currentTarget.style.color = "var(--control-chip-fg)";
           }}
         >
           <svg
@@ -1033,22 +1034,25 @@ export function AppShell() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: 36,
-                height: 36,
+                margin: 4,
+                height: 28,
+                width: 28,
                 padding: 0,
-                background: "none",
-                border: "none",
-                borderRight: "1px solid var(--border)",
-                color: "var(--text-muted)",
+                background: "var(--control-chip-bg)",
+                border: "1px solid var(--control-chip-border)",
+                borderRadius: "var(--radius-sm)",
+                color: "var(--control-chip-fg)",
                 cursor: "pointer",
                 flexShrink: 0,
                 transition: "color 0.12s",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.color = "var(--text)";
+                e.currentTarget.style.color = "var(--accent)";
+                e.currentTarget.style.background = "var(--control-chip-bg-hover)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.color = "var(--text-muted)";
+                e.currentTarget.style.color = "var(--control-chip-fg)";
+                e.currentTarget.style.background = "var(--control-chip-bg)";
               }}
             >
               {sidebarOpen ? (
@@ -1729,7 +1733,17 @@ export function AppShell() {
             <div
               role="tablist"
               aria-label={t("projectPanels", "Project panels")}
-              style={{ display: "flex", alignItems: "center", gap: 2, padding: "0 6px", flexShrink: 0 }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+                padding: 3,
+                margin: "0 6px",
+                flexShrink: 0,
+                background: "var(--control-chip-bg)",
+                border: "1px solid var(--control-chip-border)",
+                borderRadius: "var(--radius-md)",
+              }}
             >
               {panelTabs.map((panel) => {
                 const active = activeFileTabId === panel.id;
@@ -1797,19 +1811,19 @@ export function AppShell() {
                   padding: 0,
                   marginRight: 2,
                   flexShrink: 0,
-                  background: "none",
-                  border: "none",
-                  color: "var(--text-dim)",
+                  background: "var(--control-chip-bg)",
+                  border: "1px solid var(--control-chip-border)",
+                  color: "var(--control-chip-fg)",
                   cursor: "pointer",
                   borderRadius: "var(--radius-sm)",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.color = "var(--text)";
-                  e.currentTarget.style.background = "var(--bg-hover)";
+                  e.currentTarget.style.color = "var(--accent)";
+                  e.currentTarget.style.background = "var(--control-chip-bg-hover)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.color = "var(--text-dim)";
-                  e.currentTarget.style.background = "none";
+                  e.currentTarget.style.color = "var(--control-chip-fg)";
+                  e.currentTarget.style.background = "var(--control-chip-bg)";
                 }}
               >
                 <svg
