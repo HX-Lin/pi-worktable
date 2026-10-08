@@ -20,7 +20,16 @@ const channelManager = read("src/agent-host/channels/channel-manager.ts");
 const channelMediaStore = read("src/agent-host/channels/media-store.ts");
 const channelOutboundFiles = read("src/agent-host/channels/outbound-files.ts");
 const channelPiBridge = read("src/agent-host/channels/pi-session-bridge.ts");
-const rpcManager = read("src/agent-host/rpc-manager.ts");
+// The session layer is split across these modules; the invariants below assert
+// behaviour of the layer as a whole, so read them together.
+const rpcManager = [
+  "src/agent-host/rpc-manager.ts",
+  "src/agent-host/session-wrapper.ts",
+  "src/agent-host/session-registry.ts",
+  "src/agent-host/running-status.ts",
+]
+  .map(read)
+  .join("\n");
 const channelContract = read("src/contract/api.ts");
 const desktopContract = read("src/contract/desktop.ts");
 const desktopIpc = read("src/main/ipc.ts");
