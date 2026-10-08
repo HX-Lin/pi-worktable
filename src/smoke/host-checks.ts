@@ -1,4 +1,6 @@
 import type { BrowserWindow } from "electron";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "path";
 import type { HostManager } from "../main/host-manager";
 import { appendMainLog } from "../main/logger";
@@ -186,6 +188,45 @@ export async function runSmokeHostChecks(
       fs.rmSync(worktreeParent, { recursive: true, force: true });
     }
 
+    // Project-scoped capabilities: the board, the memory, repository operations
+    // and voice all go through the host, so exercise them there rather than only
+    // in unit tests.
+    const projectDir = mkdtempSync(path.join(tmpdir(), "pi-smoke-project-"));
+    try {
+      const tasks = await call<{ tasks: Array<{ id: string; status: string }> }>("tasks.list", { cwd: projectDir });
+      if (tasks.tasks.length !== 0) throw new Error("smoke: a fresh project must have an empty task board");
+      const added = await call<{ task: { id: string } }>("tasks.add", { cwd: projectDir, title: "smoke task" });
+      const moved = await call<{ task: { status: string } }>("tasks.update", {
+        cwd: projectDir,
+        id: added.task.id,
+        status: "done",
+      });
+      if (moved.task.status !== "done") throw new Error("smoke: task status did not persist");
+      await call("tasks.remove", { cwd: projectDir, id: added.task.id });
+
+      const memory = await call<{ entries: unknown[] }>("memory.list", { cwd: projectDir });
+      if (memory.entries.length !== 0) throw new Error("smoke: a fresh project must have no memory");
+      const remembered = await call<{ entry: { id: string } }>("memory.add", {
+        cwd: projectDir,
+        text: "smoke fact",
+        tag: "smoke",
+      });
+      await call("memory.remove", { cwd: projectDir, id: remembered.entry.id });
+
+      const agents = await call<{ agents: unknown[] }>("agents.list", { scope: "user" });
+      if (!Array.isArray(agents.agents)) throw new Error("smoke: agents.list must return an array");
+
+      const branches = await call<{ branches: string[] }>("git.branches", { path: process.cwd() });
+      if (!Array.isArray(branches.branches)) throw new Error("smoke: git.branches must return an array");
+      const diff = await call<{ files: string[] }>("git.diff", { path: process.cwd(), staged: true });
+      if (!Array.isArray(diff.files)) throw new Error("smoke: git.diff must list files");
+
+      const voice = await call<{ provider: string; model: string }>("voice.config");
+      if (!voice.provider || !voice.model) throw new Error("smoke: voice.config must name a provider and model");
+    } finally {
+      rmSync(projectDir, { recursive: true, force: true });
+    }
+
     const smokeWindow = createWindow((message) => {
       if (/Content Security Policy/i.test(message)) rendererSecurityViolation = message;
     });
@@ -223,15 +264,12 @@ export async function runSmokeHostChecks(
                 if (!channelsButton) throw new Error("Channels settings tab is unavailable");
                 channelsButton.click();
                 const channelDeadline = Date.now() + 3000;
-                let weixinConnectButton;
-                let telegramConnectButton;
-                while ((!weixinConnectButton || !telegramConnectButton) && Date.now() < channelDeadline) {
-                  weixinConnectButton = findButton("Connect WeChat") || findButton("连接微信");
-                  telegramConnectButton = findButton("Connect Telegram") || findButton("连接 Telegram");
-                  if (!weixinConnectButton || !telegramConnectButton) await new Promise((wait) => setTimeout(wait, 25));
+                let feishuConnectButton;
+                while (!feishuConnectButton && Date.now() < channelDeadline) {
+                  feishuConnectButton = findButton("Connect Feishu") || findButton("连接飞书");
+                  if (!feishuConnectButton) await new Promise((wait) => setTimeout(wait, 25));
                 }
-                if (!weixinConnectButton) throw new Error("WeChat settings UI is unavailable");
-                if (!telegramConnectButton) throw new Error("Telegram settings UI is unavailable");
+                if (!feishuConnectButton) throw new Error("Feishu settings UI is unavailable");
                 if (typeof window.piBridge.setChannelCredential !== "function") {
                   throw new Error("Write-only channel credential bridge is unavailable");
                 }
@@ -244,7 +282,9 @@ export async function runSmokeHostChecks(
                 if (activityToggle.getAttribute("aria-expanded") !== "true") {
                   throw new Error("Recent channel activity cannot be expanded");
                 }
-                const status = await fetch(${JSON.stringify(`/api/git-status?cwd=${encodeURIComponent(process.cwd())}`)}).then((response) => response.json());
+                // The renderer reaches Main through the preload bridge (the RPC
+                // client is not global), so a bridge round-trip is the check.
+                const toolchainState = await window.piBridge.getToolchainState();
                 const token = "pi-html-preview-smoke-" + Math.random().toString(36).slice(2);
                 const previewUrl = await window.piBridge.createHtmlPreview(
                   "<!doctype html><img id='asset' src='./icon.png'><script>addEventListener('load',()=>{if(asset.naturalWidth)parent.postMessage(" + JSON.stringify(token) + ",'*')})<\\/script>",
@@ -276,9 +316,9 @@ export async function runSmokeHostChecks(
                 resolve({
                   bridge: typeof window.piBridge.saveBinaryFile === "function",
                   rendered: root.childElementCount > 0,
-                  gitStatus: typeof status.isGit === "boolean",
+                  bridgeRoundTrip: Boolean(toolchainState && typeof toolchainState === "object"),
                   htmlPreview: previewRendered,
-                  channelSettings: Boolean(weixinConnectButton && telegramConnectButton),
+                  channelSettings: Boolean(feishuConnectButton),
                   channelCredentialWrite: typeof window.piBridge.setChannelCredential === "function",
                 });
                 return;
@@ -295,7 +335,7 @@ export async function runSmokeHostChecks(
       `)) as {
         bridge?: boolean;
         rendered?: boolean;
-        gitStatus?: boolean;
+        bridgeRoundTrip?: boolean;
         htmlPreview?: boolean;
         channelSettings?: boolean;
         channelCredentialWrite?: boolean;
@@ -303,7 +343,7 @@ export async function runSmokeHostChecks(
       if (
         !rendererResult.bridge ||
         !rendererResult.rendered ||
-        !rendererResult.gitStatus ||
+        !rendererResult.bridgeRoundTrip ||
         !rendererResult.htmlPreview ||
         !rendererResult.channelSettings ||
         !rendererResult.channelCredentialWrite
@@ -317,7 +357,7 @@ export async function runSmokeHostChecks(
       if (!smokeWindow.isDestroyed()) smokeWindow.destroy();
     }
     appendMainLog(
-      `smoke: renderer/RPC/session/worktree/git/watch/download/skills/channels/toolchain revision=${acknowledgedRevision} checks passed`,
+      `smoke: renderer/RPC/session/worktree/git/tasks/memory/agents/voice/watch/download/channels/toolchain revision=${acknowledgedRevision} checks passed`,
     );
   } finally {
     for (const entry of pending.values()) {
