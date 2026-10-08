@@ -13,6 +13,7 @@ import {
 import { SessionSidebar } from "./SessionSidebar";
 import { ChatWindow } from "./ChatWindow";
 import { FileExplorer } from "./FileExplorer";
+import { MemoryPanel } from "./MemoryPanel";
 import { TaskBoard } from "./TaskBoard";
 import { FileViewer } from "./FileViewer";
 import { WindowControls } from "./WindowControls";
@@ -48,6 +49,7 @@ import type { ChannelsSnapshot } from "@shared/channel-types";
 type SessionCopyField = "file" | "id";
 const EXPLORER_TAB_ID = "explorer";
 const TASKS_TAB_ID = "tasks";
+const MEMORY_TAB_ID = "memory";
 const EMPTY_CHANNELS: ChannelsSnapshot = { accounts: [], statuses: [], pairings: [], bindings: [], activities: [] };
 
 function initialRightPanelPreferredWidth(): number {
@@ -1722,6 +1724,42 @@ export function AppShell() {
               </svg>
               {t("tasksTitle", "Tasks")}
             </button>
+            <button
+              type="button"
+              onClick={() => setActiveFileTabId(MEMORY_TAB_ID)}
+              aria-pressed={activeFileTabId === MEMORY_TAB_ID}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                height: 36,
+                padding: "0 12px",
+                flexShrink: 0,
+                background: activeFileTabId === MEMORY_TAB_ID ? "var(--bg)" : "var(--bg-panel)",
+                border: "none",
+                borderRight: "1px solid var(--border)",
+                color: activeFileTabId === MEMORY_TAB_ID ? "var(--text)" : "var(--text-muted)",
+                cursor: "pointer",
+                fontSize: 12,
+                fontWeight: activeFileTabId === MEMORY_TAB_ID ? 500 : 400,
+              }}
+            >
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M12 3a4 4 0 0 0-4 4v1a3 3 0 0 0 0 6v1a4 4 0 0 0 8 0v-1a3 3 0 0 0 0-6V7a4 4 0 0 0-4-4Z" />
+                <path d="M12 3v18" />
+              </svg>
+              {t("memoryTitle", "Memory")}
+            </button>
             <div style={{ flex: 1, overflow: "hidden", display: "flex", alignItems: "center", minWidth: 0 }}>
               <div style={{ flex: 1, overflow: "hidden", minWidth: 0 }}>
                 <TabBar
@@ -1785,6 +1823,9 @@ export function AppShell() {
           <div style={{ flex: 1, overflow: "hidden" }}>
             <div style={{ height: "100%", display: activeFileTabId === TASKS_TAB_ID ? "block" : "none" }}>
               <TaskBoard cwd={explorerCwd} />
+            </div>
+            <div style={{ height: "100%", display: activeFileTabId === MEMORY_TAB_ID ? "block" : "none" }}>
+              <MemoryPanel cwd={explorerCwd} />
             </div>
             <div style={{ height: "100%", display: activeFileTabId === EXPLORER_TAB_ID ? "block" : "none" }}>
               {explorerCwd ? (

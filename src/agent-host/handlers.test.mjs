@@ -133,6 +133,26 @@ test("environment credentials are never reported as app-managed provider connect
   assert.deepEqual(describeApiKeyProviderAuth({ configured: true, source: "runtime" }), { configured: true });
 });
 
+test("memory handlers drive the project memory", async (t) => {
+  const project = mkdtempSync(path.join(tmpdir(), "pi-project-memory-"));
+  t.after(() => rmSync(project, { recursive: true, force: true }));
+
+  const { handlers } = await captureHandlers();
+  assert.deepEqual(await handlers["memory.list"]({ cwd: project }), { entries: [] });
+
+  const { entry } = await handlers["memory.add"]({ cwd: project, text: "Run typecheck first", tag: "build" });
+  assert.equal(entry.tag, "build");
+
+  const updated = await handlers["memory.update"]({ cwd: project, id: entry.id, text: "Run typecheck and lint" });
+  assert.equal(updated.entry.text, "Run typecheck and lint");
+
+  assert.deepEqual(await handlers["memory.remove"]({ cwd: project, id: entry.id }), { ok: true });
+  assert.deepEqual((await handlers["memory.list"]({ cwd: project })).entries, []);
+
+  await assert.rejects(async () => handlers["memory.add"]({ cwd: project, text: "  " }), /text/);
+  await assert.rejects(async () => handlers["memory.update"]({ cwd: project, id: "missing" }), /not found/i);
+});
+
 test("task handlers drive the project board", async (t) => {
   const project = mkdtempSync(path.join(tmpdir(), "pi-task-board-"));
   t.after(() => rmSync(project, { recursive: true, force: true }));

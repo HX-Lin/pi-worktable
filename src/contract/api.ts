@@ -1,6 +1,7 @@
 import type {
   AgentCommand,
   AgentInfo,
+  MemoryEntry,
   ProjectTask,
   TaskStatus,
   AgentEvent,
@@ -357,6 +358,15 @@ export interface Api {
     result: { task: ProjectTask };
   };
   "tasks.remove": { params: { cwd: string; id: string }; result: { ok: true } };
+
+  // Project memory (.pi/memory.json)
+  "memory.list": { params: { cwd: string }; result: { entries: MemoryEntry[] } };
+  "memory.add": { params: { cwd: string; text: string; tag?: string }; result: { entry: MemoryEntry } };
+  "memory.update": {
+    params: { cwd: string; id: string; text?: string; tag?: string };
+    result: { entry: MemoryEntry };
+  };
+  "memory.remove": { params: { cwd: string; id: string }; result: { ok: true } };
 
   // Agent definitions (subagent tool)
   "agents.list": {

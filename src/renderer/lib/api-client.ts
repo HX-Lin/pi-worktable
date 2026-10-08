@@ -378,6 +378,26 @@ export async function removeTask(cwd: string, id: string) {
   return call("tasks.remove", { cwd, id });
 }
 
+// ---------------------------------------------------------------------------
+// Project memory
+// ---------------------------------------------------------------------------
+
+export async function listMemory(cwd: string) {
+  return call("memory.list", { cwd });
+}
+
+export async function addMemory(cwd: string, text: string, tag?: string) {
+  return call("memory.add", { cwd, text, ...(tag ? { tag } : {}) });
+}
+
+export async function updateMemory(cwd: string, id: string, patch: { text?: string; tag?: string }) {
+  return call("memory.update", { cwd, id, ...patch });
+}
+
+export async function removeMemory(cwd: string, id: string) {
+  return call("memory.remove", { cwd, id });
+}
+
 export async function subscribeAuthLogin(provider: string, on: (ev: Streams["auth.login"]) => void) {
   return subscribe("auth.login", provider, on);
 }

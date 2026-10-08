@@ -190,6 +190,14 @@ export interface ProjectTask {
   sessionId?: string;
 }
 
+export interface MemoryEntry {
+  id: string;
+  text: string;
+  tag?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface AgentInfo {
   name: string;
   description: string;

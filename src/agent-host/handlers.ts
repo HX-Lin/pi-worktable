@@ -17,6 +17,7 @@ import { contextHandlers } from "./handlers/context";
 import { fileHandlers } from "./handlers/files";
 import { gitHandlers } from "./handlers/git";
 import { jevMcpHandlers } from "./handlers/jevMcp";
+import { memoryHandlers } from "./handlers/memory";
 import { modelHandlers } from "./handlers/models";
 import { pluginHandlers } from "./handlers/plugins";
 import { ensureSessionEvents } from "./handlers/session-events";
@@ -43,7 +44,8 @@ type ProvidedMethods =
   | keyof ReturnType<typeof channelHandlers>
   | keyof ReturnType<typeof modelHandlers>
   | keyof ReturnType<typeof pluginHandlers>
-  | keyof ReturnType<typeof taskHandlers>;
+  | keyof ReturnType<typeof taskHandlers>
+  | keyof ReturnType<typeof memoryHandlers>;
 
 type MissingMethods = Exclude<ApiMethod, ProvidedMethods>;
 type AssertNever<T extends never> = T;
@@ -94,6 +96,7 @@ export function registerHandlers(server: RpcServer): () => Promise<void> {
       modelHandlers(ctx),
       pluginHandlers(ctx),
       taskHandlers(ctx),
+      memoryHandlers(ctx),
     ),
   );
 
