@@ -1275,11 +1275,11 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
             style={{
               marginBottom: 8,
               padding: "5px 10px",
-              background: compactIsNearLimit ? "var(--amber-soft)" : "var(--bg-panel)",
-              border: `1px solid ${compactIsNearLimit ? "var(--amber-border)" : "var(--border)"}`,
+              background: compactIsNearLimit ? "var(--amber-soft)" : "var(--control-chip-bg)",
+              border: `1px solid ${compactIsNearLimit ? "var(--amber-border)" : "var(--control-chip-border)"}`,
               borderRadius: "var(--radius-sm)",
               fontSize: 12,
-              color: "var(--control-strong-fg)",
+              color: "var(--control-chip-fg)",
               display: "flex",
               alignItems: "center",
               gap: 8,
@@ -1693,10 +1693,10 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                     width: 32,
                     height: 32,
                     padding: 0,
-                    background: attachedImages.length ? "var(--accent-soft)" : "var(--bg-panel)",
-                    border: "1px solid var(--border)",
+                    background: attachedImages.length ? "var(--accent-soft)" : "var(--control-chip-bg)",
+                    border: "1px solid var(--control-chip-border)",
                     borderRadius: "var(--radius-md)",
-                    color: attachedImages.length ? "var(--accent)" : "var(--text-muted)",
+                    color: attachedImages.length ? "var(--accent)" : "var(--control-chip-fg)",
                     cursor: isStreaming ? "not-allowed" : "pointer",
                     opacity: isStreaming ? 0.5 : 1,
                     transition: "background 0.12s, color 0.12s",
@@ -1707,8 +1707,10 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                     e.currentTarget.style.color = attachedImages.length ? "var(--accent)" : "var(--text)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = attachedImages.length ? "var(--accent-soft)" : "var(--bg-panel)";
-                    e.currentTarget.style.color = attachedImages.length ? "var(--accent)" : "var(--text-muted)";
+                    e.currentTarget.style.background = attachedImages.length
+                      ? "var(--accent-soft)"
+                      : "var(--control-chip-bg)";
+                    e.currentTarget.style.color = attachedImages.length ? "var(--accent)" : "var(--control-chip-fg)";
                   }}
                 >
                   <svg
@@ -1749,10 +1751,10 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                         width: isMobile ? "100%" : undefined,
                         maxWidth: isMobile ? "100%" : 220,
                         overflow: "hidden",
-                        background: modelDropdownOpen ? "var(--bg-selected)" : "var(--bg-panel)",
-                        border: "1px solid var(--border)",
+                        background: modelDropdownOpen ? "var(--bg-selected)" : "var(--control-chip-bg)",
+                        border: "1px solid var(--control-chip-border)",
                         borderRadius: "var(--radius-md)",
-                        color: "var(--control-strong-fg)",
+                        color: "var(--control-chip-fg)",
                         cursor: isStreaming ? "not-allowed" : "pointer",
                         fontSize: 12,
                         opacity: isStreaming ? 0.5 : 1,
@@ -2034,10 +2036,10 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                           padding: isMobile ? 0 : "0 9px",
                           minWidth: 32,
                           height: 32,
-                          background: thinkingDropdownOpen ? "var(--bg-selected)" : "var(--bg-panel)",
-                          border: "1px solid var(--border)",
+                          background: thinkingDropdownOpen ? "var(--bg-selected)" : "var(--control-chip-bg)",
+                          border: "1px solid var(--control-chip-border)",
                           borderRadius: "var(--radius-md)",
-                          color: "var(--control-strong-fg)",
+                          color: "var(--control-chip-fg)",
                           cursor: isStreaming ? "not-allowed" : "pointer",
                           fontSize: 12,
                           opacity: isStreaming ? 0.5 : 1,
@@ -2197,10 +2199,10 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                           padding: isMobile ? 0 : "0 9px",
                           minWidth: 32,
                           height: 32,
-                          background: toolDropdownOpen ? "var(--bg-selected)" : "var(--bg-panel)",
-                          border: `1px solid ${toolPresetKey === "full" ? "var(--danger-border)" : "var(--border)"}`,
+                          background: toolDropdownOpen ? "var(--bg-selected)" : "var(--control-chip-bg)",
+                          border: `1px solid ${toolPresetKey === "full" ? "var(--danger-border)" : "var(--control-chip-border)"}`,
                           borderRadius: "var(--radius-md)",
-                          color: "var(--control-strong-fg)",
+                          color: "var(--control-chip-fg)",
                           cursor: isStreaming ? "not-allowed" : "pointer",
                           fontSize: 12,
                           opacity: isStreaming ? 0.5 : 1,
@@ -2333,10 +2335,10 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                         justifyContent: "center",
                         minWidth: 32,
                         height: 32,
-                        background: "var(--bg-panel)",
-                        border: "1px solid var(--border)",
+                        background: "var(--control-chip-bg)",
+                        border: "1px solid var(--control-chip-border)",
                         borderRadius: "var(--radius-md)",
-                        color: "var(--control-strong-fg)",
+                        color: "var(--control-chip-fg)",
                         cursor: "pointer",
                         flexShrink: 0,
                       }}
@@ -2654,10 +2656,10 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                             height: 38,
                             background: voice.recording
                               ? "color-mix(in srgb, var(--danger) 24%, transparent)"
-                              : "var(--bg-hover)",
-                            border: `1px solid ${voice.recording ? "var(--danger)" : "var(--border)"}`,
+                              : "var(--control-chip-bg)",
+                            border: `1px solid ${voice.recording ? "var(--danger)" : "var(--control-chip-border)"}`,
                             borderRadius: "var(--radius-md)",
-                            color: voice.recording ? "var(--danger)" : "var(--text-muted)",
+                            color: voice.recording ? "var(--danger)" : "var(--control-chip-fg)",
                             cursor: voice.transcribing ? "wait" : "pointer",
                           }}
                         >

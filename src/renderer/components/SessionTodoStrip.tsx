@@ -89,9 +89,9 @@ export function SessionTodoStrip({ cwd, sessionId, refreshKey = 0 }: Props) {
     <div
       style={{
         margin: "0 0 8px",
-        border: "1px solid var(--border)",
+        border: "1px solid var(--control-chip-border)",
         borderRadius: "var(--radius-md)",
-        background: "var(--bg-panel)",
+        background: "var(--control-chip-bg)",
         overflow: "hidden",
       }}
     >

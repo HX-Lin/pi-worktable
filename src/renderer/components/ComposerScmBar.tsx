@@ -111,9 +111,9 @@ export function ComposerScmBar({ cwd, refreshKey = 0, worktrees }: Props) {
     padding: "3px 8px",
     fontSize: 11,
     borderRadius: "var(--radius-sm)",
-    border: "1px solid var(--border)",
-    background: "var(--bg-panel)",
-    color: "var(--control-strong-fg)",
+    border: "1px solid var(--control-chip-border)",
+    background: "var(--control-chip-bg)",
+    color: "var(--control-chip-fg)",
     cursor: "pointer",
     flexShrink: 0,
   };
