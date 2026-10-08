@@ -1,5 +1,6 @@
 import type {
   AgentCommand,
+  AgentInfo,
   AgentEvent,
   CredentialMutationResult,
   DirEntry,
@@ -340,6 +341,16 @@ export interface Api {
   };
   "auth.loginCancel": {
     params: { provider: string };
+    result: { ok: true };
+  };
+
+  // Agent definitions (subagent tool)
+  "agents.list": {
+    params: { cwd?: string; scope?: "user" | "project" | "both" } | void;
+    result: { agents: AgentInfo[]; projectAgentsDir: string | null };
+  };
+  "agents.setModel": {
+    params: { filePath: string; model?: string | null };
     result: { ok: true };
   };
 

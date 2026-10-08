@@ -13,10 +13,10 @@ import {
   SessionManager,
   type ExtensionAPI,
   type InlineExtension,
-  type ModelRuntime,
 } from "@earendil-works/pi-coding-agent";
 import { BASE_SESSION_EXTENSIONS } from "../builtin-providers";
 import { withExtensionTools } from "../tool-activation";
+import { effectiveModelRef, formatModelRef, resolveAgentModel } from "./models";
 import type { AgentConfig } from "./agents";
 
 export interface SubagentUsage {
@@ -32,12 +32,16 @@ export interface SubagentResult {
   usage: SubagentUsage;
   /** Tool names the agent ran, in order. */
   tools: string[];
+  /** The model the subagent actually ran on ("provider/model-id"). */
+  model?: string;
 }
 
 export interface RunSubagentParams {
   agent: AgentConfig;
   task: string;
   cwd: string;
+  /** Overrides the agent definition's model for this run. */
+  model?: string;
   signal?: AbortSignal;
   /** Streamed progress lines (tool calls and assistant text so far). */
   onUpdate?: (text: string) => void;
@@ -53,19 +57,6 @@ function createAgentPromptExtension(systemPrompt: string): InlineExtension {
       }));
     },
   };
-}
-
-/** "provider/model-id" -> its two halves. */
-function splitModelRef(ref: string): { provider: string; modelId: string } | null {
-  const slash = ref.indexOf("/");
-  if (slash <= 0 || slash === ref.length - 1) return null;
-  return { provider: ref.slice(0, slash), modelId: ref.slice(slash + 1) };
-}
-
-function resolveModel(modelRuntime: ModelRuntime, ref: string) {
-  const parsed = splitModelRef(ref);
-  if (!parsed) return undefined;
-  return modelRuntime.getModel(parsed.provider, parsed.modelId);
 }
 
 function textOf(message: unknown): string {
@@ -84,6 +75,7 @@ function textOf(message: unknown): string {
 
 export async function runSubagent(params: RunSubagentParams): Promise<SubagentResult> {
   const { agent, task, cwd, signal, onUpdate } = params;
+  const requestedModel = effectiveModelRef(agent.model, params.model);
   const usage: SubagentUsage = { inputTokens: 0, outputTokens: 0, turns: 0 };
   const tools: string[] = [];
   let text = "";
@@ -100,13 +92,15 @@ export async function runSubagent(params: RunSubagentParams): Promise<SubagentRe
   const sessionManager = SessionManager.create(cwd, undefined);
   const { session } = await createAgentSessionFromServices({ services, sessionManager });
 
-  if (agent.model) {
-    const model = resolveModel(services.modelRuntime, agent.model);
-    if (!model) {
+  let usedModel: string | undefined;
+  if (requestedModel) {
+    const resolved = resolveAgentModel(services.modelRuntime, requestedModel);
+    if (!resolved.ok) {
       session.dispose();
-      return { ok: false, text: "", error: `Unknown model "${agent.model}"`, usage, tools };
+      return { ok: false, text: "", error: resolved.error, usage, tools };
     }
-    await session.setModel(model);
+    await session.setModel(resolved.model);
+    usedModel = formatModelRef(resolved.model);
   }
   if (agent.tools && agent.tools.length > 0) {
     session.setActiveToolsByName(withExtensionTools(session, agent.tools));
@@ -142,7 +136,7 @@ export async function runSubagent(params: RunSubagentParams): Promise<SubagentRe
 
   try {
     await session.prompt(task, { source: "rpc" });
-    return { ok: true, text, usage, tools };
+    return { ok: true, text, usage, tools, model: usedModel };
   } catch (error) {
     return {
       ok: false,
@@ -150,6 +144,7 @@ export async function runSubagent(params: RunSubagentParams): Promise<SubagentRe
       error: aborted ? "Subagent aborted" : error instanceof Error ? error.message : String(error),
       usage,
       tools,
+      model: usedModel,
     };
   } finally {
     signal?.removeEventListener("abort", onAbort);

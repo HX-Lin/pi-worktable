@@ -178,6 +178,16 @@ export interface ProviderStatus {
   [key: string]: unknown;
 }
 
+export interface AgentInfo {
+  name: string;
+  description: string;
+  source: "user" | "project";
+  filePath: string;
+  /** The model this agent runs on; unset means it inherits the caller's. */
+  model?: string;
+  tools?: string[];
+}
+
 export interface SkillInfo {
   name: string;
   description?: string;

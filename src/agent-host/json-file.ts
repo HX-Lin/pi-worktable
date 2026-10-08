@@ -22,12 +22,12 @@ export function readJsonFile<T>(filePath: string, fallback: T): T {
   }
 }
 
-/** Write JSON through a temp file, then rename it into place. */
-export function writeJsonFileAtomic(filePath: string, value: unknown, options: WriteJsonOptions = {}): void {
+/** Write text through a temp file, then rename it into place. */
+export function writeFileAtomic(filePath: string, text: string, options: WriteJsonOptions = {}): void {
   mkdirSync(path.dirname(filePath), { recursive: true });
   const temp = `${filePath}.${process.pid}.${Date.now()}.tmp`;
   const mode = options.mode ?? 0o644;
-  writeFileSync(temp, `${JSON.stringify(value, null, 2)}\n`, { encoding: "utf8", mode });
+  writeFileSync(temp, text, { encoding: "utf8", mode });
   try {
     renameSync(temp, filePath);
     if (options.mode !== undefined) {
@@ -45,4 +45,9 @@ export function writeJsonFileAtomic(filePath: string, value: unknown, options: W
     }
     throw error;
   }
+}
+
+/** Write JSON through the same atomic path. */
+export function writeJsonFileAtomic(filePath: string, value: unknown, options: WriteJsonOptions = {}): void {
+  writeFileAtomic(filePath, `${JSON.stringify(value, null, 2)}\n`, options);
 }

@@ -11,6 +11,7 @@ import { modelCatalogRefreshCoordinator } from "./model-runtime";
 import { writeInterruptedSnapshot } from "./resume-interrupted";
 import { subscribeRunningSessions } from "./rpc-manager";
 import { agentHandlers } from "./handlers/agent";
+import { agentHandlers as agentDefinitionHandlers } from "./handlers/agents";
 import { channelHandlers } from "./handlers/channels";
 import { contextHandlers } from "./handlers/context";
 import { fileHandlers } from "./handlers/files";
@@ -37,6 +38,7 @@ type ProvidedMethods =
   | keyof ReturnType<typeof contextHandlers>
   | keyof ReturnType<typeof gitHandlers>
   | keyof ReturnType<typeof agentHandlers>
+  | keyof ReturnType<typeof agentDefinitionHandlers>
   | keyof ReturnType<typeof channelHandlers>
   | keyof ReturnType<typeof modelHandlers>
   | keyof ReturnType<typeof pluginHandlers>;
@@ -85,6 +87,7 @@ export function registerHandlers(server: RpcServer): () => Promise<void> {
       contextHandlers(ctx),
       gitHandlers(ctx),
       agentHandlers(ctx),
+      agentDefinitionHandlers(ctx),
       channelHandlers(ctx),
       modelHandlers(ctx),
       pluginHandlers(ctx),

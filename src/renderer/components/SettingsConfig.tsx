@@ -7,6 +7,7 @@ import { JevConfig } from "./JevConfig";
 import { CapabilitiesPanel } from "./CapabilitiesPanel";
 import { McpConfig } from "./McpConfig";
 import { PluginsConfig } from "./PluginsConfig";
+import { AgentsConfig } from "./AgentsConfig";
 import { ToolchainsConfig } from "./ToolchainsConfig";
 import { ChannelsConfig } from "./channels/ChannelsConfig";
 import type { ChannelsSnapshot } from "@shared/channel-types";
@@ -15,7 +16,7 @@ import { APP_AUTHOR, APP_DISPLAY_NAME, APP_GITHUB_URL, APP_VERSION, PI_VERSION }
 import appIconUrl from "../../../build/icon.png";
 
 export type SettingsTab =
-  "general" | "capabilities" | "channels" | "models" | "tools" | "plugins" | "mcp" | "jev" | "about";
+  "general" | "capabilities" | "channels" | "models" | "agents" | "tools" | "plugins" | "mcp" | "jev" | "about";
 
 interface SettingsConfigProps {
   cwd: string | null;
@@ -70,6 +71,7 @@ export function SettingsConfig({
   const tabs: { id: SettingsTab; label: string }[] = [
     { id: "general", label: t("general", "General") },
     { id: "models", label: t("models", "Models") },
+    { id: "agents", label: t("agentsTitle", "Agents") },
     { id: "plugins", label: t("plugins", "Plugins") },
     { id: "capabilities", label: t("capabilitiesTitle", "Capabilities") },
     { id: "mcp", label: t("mcpTitle", "MCP") },
@@ -270,6 +272,7 @@ export function SettingsConfig({
               />
             )}
             {activeTab === "models" && <ModelsConfig embedded onClose={() => undefined} onChanged={onModelsChanged} />}
+            {activeTab === "agents" && <AgentsConfig cwd={cwd} />}
             {activeTab === "tools" && <ToolchainsConfig cwd={cwd} />}
             {activeTab === "channels" && <ChannelsConfig onSnapshotChange={onChannelsChanged} />}
             {activeTab === "plugins" &&
