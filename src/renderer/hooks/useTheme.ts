@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useSyncExternalStore } from "react";
+import { readStoredTheme, writeStoredTheme } from "@/lib/theme-storage";
 
 export type Theme = "light" | "dark" | "niri";
 
@@ -36,11 +37,7 @@ export function useTheme() {
   // Follow OS theme when the user has not forced a preference (or chose system)
   useEffect(() => {
     const storedTheme = (): string | null => {
-      try {
-        return localStorage.getItem("pi-theme");
-      } catch {
-        return null;
-      }
+      return readStoredTheme();
     };
     if (STORED_THEMES.has(storedTheme() ?? "")) return;
 
@@ -69,11 +66,7 @@ export function useTheme() {
       const el = document.documentElement;
       el.classList.toggle("dark", next !== "light");
       el.classList.toggle("niri", next === "niri");
-      try {
-        localStorage.setItem("pi-theme", next);
-      } catch {
-        // ignore storage errors (private mode, quota, etc.)
-      }
+      writeStoredTheme(next);
       // nativeTheme has no "niri"; drive system UI as dark.
       void window.piBridge?.setThemeSource?.(next === "light" ? "light" : "dark");
       listeners.forEach((cb) => cb());

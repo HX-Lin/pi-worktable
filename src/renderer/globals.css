@@ -223,7 +223,8 @@ html.niri {
   --user-bg-color: #2a2e3a;
   --user-fg-color: #f5f6fa;
   --assistant-bg-color: #1a1d27;
-  --code-bg: #0a0c11;
+  /* 代码块与工具卡在这类应用里占屏幕最大，跟着底色一起玻璃化，否则"看得到壁纸"只发生在缝隙里。 */
+  --code-bg: color-mix(in srgb, #0a0c11 72%, transparent);
   --code-text: #ccd0da;
   --red: #f87171;
   --green: #4ade80;

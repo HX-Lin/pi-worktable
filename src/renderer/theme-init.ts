@@ -1,6 +1,8 @@
+import { readStoredTheme } from "./lib/theme-storage";
+
 // Apply the persisted theme before React mounts without requiring inline script CSP.
 try {
-  const theme = localStorage.getItem("pi-theme");
+  const theme = readStoredTheme();
   if (theme === "dark") {
     document.documentElement.classList.add("dark");
   } else if (theme === "niri") {
