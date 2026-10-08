@@ -166,6 +166,18 @@ export async function subscribe<T extends StreamTopic>(
 // Convenience wrappers matching old HTTP routes
 // ---------------------------------------------------------------------------
 
+/**
+ * Flatten a failed RPC call into the body shape the REST shim used to return
+ * ({ error, code, ...detail }), so call sites that inspect `code`/`capability`
+ * keep working now that failures throw instead of returning a status.
+ */
+export function rpcErrorBody(error: unknown): Record<string, unknown> {
+  if (!error || typeof error !== "object") return { error: String(error) };
+  const e = error as { message?: string; code?: string; detail?: unknown };
+  const detail = e.detail && typeof e.detail === "object" ? (e.detail as Record<string, unknown>) : {};
+  return { ...detail, ...(e.message ? { error: e.message } : {}), ...(e.code ? { code: e.code } : {}) };
+}
+
 export async function listSessions() {
   return call("sessions.list");
 }

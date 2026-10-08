@@ -1,14 +1,9 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { getFileIcon, FolderIcon } from "./FileIcons";
-import { encodeFilePathForApi, getRelativeFilePath, joinFilePath } from "@/lib/file-paths";
+import { getRelativeFilePath, joinFilePath } from "@/lib/file-paths";
+import { call, listFiles } from "@/lib/api-client";
+import { useFileWatch } from "@/hooks/useFileWatch";
 import type { GitStatusResult } from "@shared/api-types";
-
-interface FileEntry {
-  name: string;
-  isDir: boolean;
-  size: number;
-  modified: string;
-}
 
 interface FileNode {
   name: string;
@@ -27,26 +22,14 @@ interface Props {
 }
 
 async function fetchEntries(dirPath: string): Promise<FileNode[]> {
-  const encoded = encodeFilePathForApi(dirPath);
-  const res = await fetch(`/api/files/${encoded}?type=list`);
-  if (!res.ok) {
-    let message = `Failed to load files (HTTP ${res.status})`;
-    try {
-      const data = (await res.json()) as { error?: string };
-      if (data.error) message = data.error;
-    } catch {
-      // ignore non-JSON error bodies
-    }
-    throw new Error(message);
-  }
-  const data = (await res.json()) as { entries?: FileEntry[] };
+  const data = await listFiles(dirPath);
   return (data.entries ?? []).map((e) => ({
     name: e.name,
     fullPath: joinFilePath(dirPath, e.name),
-    isDir: e.isDir,
-    size: e.size,
-    children: e.isDir ? [] : undefined,
-    loaded: !e.isDir,
+    isDir: e.type === "directory",
+    size: e.size ?? 0,
+    children: e.type === "directory" ? [] : undefined,
+    loaded: e.type !== "directory",
   }));
 }
 
@@ -339,7 +322,7 @@ export function FileExplorer({ cwd, onOpenFile, refreshKey, onAtMention }: Props
   const [error, setError] = useState<string | null>(null);
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
   const [gitStatus, setGitStatus] = useState<GitStatusResult | null>(null);
-  const [watching, setWatching] = useState(false);
+  const watchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [liveRefreshKey, setLiveRefreshKey] = useState(0);
   const prevCwdRef = useRef<string | null>(null);
   const loadGenerationRef = useRef(0);
@@ -359,11 +342,10 @@ export function FileExplorer({ cwd, onOpenFile, refreshKey, onAtMention }: Props
       if (showLoading) setLoading(true);
       setError(null);
       try {
-        const [entries, statusResponse] = await Promise.all([
+        const [entries, status] = await Promise.all([
           fetchEntries(cwd),
-          fetch(`/api/git-status?cwd=${encodeURIComponent(cwd)}`),
+          call("git.status", { path: cwd }).catch(() => null),
         ]);
-        const status = statusResponse.ok ? ((await statusResponse.json()) as GitStatusResult) : null;
         if (generation !== loadGenerationRef.current) return;
         setRoots(entries);
         setGitStatus(status);
@@ -388,26 +370,21 @@ export function FileExplorer({ cwd, onOpenFile, refreshKey, onAtMention }: Props
     void loadProject(cwdChanged);
   }, [cwd, refreshKey, loadProject]);
 
-  useEffect(() => {
-    setWatching(false);
-    const encoded = encodeFilePathForApi(cwd);
-    const events = new EventSource(`/api/files/${encoded}?type=watch`);
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    events.addEventListener("connected", () => setWatching(true));
-    events.addEventListener("change", () => {
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(() => {
-        setLiveRefreshKey((key) => key + 1);
-        void loadProject(false);
-      }, 200);
-    });
-    events.addEventListener("error", () => setWatching(false));
-    events.onerror = () => setWatching(false);
-    return () => {
-      if (timer) clearTimeout(timer);
-      events.close();
-    };
-  }, [cwd, loadProject]);
+  // Reload the tree when the directory changes on disk (debounced).
+  const watching = useFileWatch(cwd, undefined, () => {
+    if (watchTimerRef.current) clearTimeout(watchTimerRef.current);
+    watchTimerRef.current = setTimeout(() => {
+      setLiveRefreshKey((key) => key + 1);
+      void loadProject(false);
+    }, 200);
+  });
+
+  useEffect(
+    () => () => {
+      if (watchTimerRef.current) clearTimeout(watchTimerRef.current);
+    },
+    [],
+  );
 
   if (loading) {
     return <div style={{ padding: "8px 12px", fontSize: 11, color: "var(--text-dim)" }}>Loading files...</div>;

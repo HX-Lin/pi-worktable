@@ -2,9 +2,10 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { SyntaxHighlighter, vs, vscDarkPlus } from "@/lib/syntax-highlight";
 import { shouldHighlightCode } from "@/lib/code-highlight-policy";
 import { useTheme } from "@/hooks/useTheme";
+import { useFileWatch } from "@/hooks/useFileWatch";
 import { MarkdownBody } from "./MarkdownBody";
 import { DOCX_PREVIEW_MAX_BYTES, getFileExt, isAudioPath, isDocumentPreviewPath, isImagePath } from "@/lib/file-types";
-import { encodeFilePathForApi, getFileName, getParentFilePath, getRelativeFilePath } from "@/lib/file-paths";
+import { getFileName, getParentFilePath, getRelativeFilePath } from "@/lib/file-paths";
 
 interface Props {
   filePath: string;
@@ -16,21 +17,6 @@ interface FileData {
   content: string;
   language: string;
   size: number;
-}
-
-function getFileApiUrl(
-  filePath: string,
-  type: "read" | "download" | "meta" | "preview" | "watch",
-  sourceSessionId?: string | null,
-  params: Record<string, string | number | undefined> = {},
-): string {
-  const encoded = encodeFilePathForApi(filePath);
-  const searchParams = new URLSearchParams({ type });
-  if (sourceSessionId) searchParams.set("sessionId", sourceSessionId);
-  for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined) searchParams.set(key, String(value));
-  }
-  return `/api/files/${encoded}?${searchParams.toString()}`;
 }
 
 function DownloadLink({ filePath, sourceSessionId }: { filePath: string; sourceSessionId?: string | null }) {
@@ -397,27 +383,6 @@ function useBlobSrc(filePath: string, sourceSessionId?: string | null, bust = 0)
   }, [filePath, sourceSessionId, bust]);
 
   return { src, size, error, setError, setSize };
-}
-
-function useFileWatch(filePath: string, sourceSessionId: string | null | undefined, onChange: (size?: number) => void) {
-  const [watching, setWatching] = useState(false);
-  useEffect(() => {
-    setWatching(false);
-    const es = new EventSource(getFileApiUrl(filePath, "watch", sourceSessionId));
-    es.addEventListener("connected", () => setWatching(true));
-    es.addEventListener("change", (e) => {
-      try {
-        const d = JSON.parse((e as MessageEvent).data) as { size?: number };
-        onChange(typeof d.size === "number" ? d.size : undefined);
-      } catch {
-        onChange();
-      }
-    });
-    es.addEventListener("error", () => setWatching(false));
-    es.onerror = () => setWatching(false);
-    return () => es.close();
-  }, [filePath, sourceSessionId, onChange]);
-  return watching;
 }
 
 function ImageViewer({ filePath, cwd, sourceSessionId }: Props) {
@@ -828,7 +793,6 @@ function TextFileViewer({ filePath, cwd, sourceSessionId }: Props) {
   const [previewMode, setPreviewMode] = useState(false);
   const [viewMode, setViewMode] = useState<"source" | "diff">("source");
   const [wrapLines, setWrapLines] = useState(false);
-  const [watching, setWatching] = useState(false);
   const [changeCount, setChangeCount] = useState(0);
   // Inline editing — files open directly in an editable state.
   const [editing, setEditing] = useState(true);
@@ -838,7 +802,6 @@ function TextFileViewer({ filePath, cwd, sourceSessionId }: Props) {
   const [savedFlash, setSavedFlash] = useState(false);
   const editingRef = useRef(true);
   editingRef.current = editing;
-  const esRef = useRef<EventSource | null>(null);
 
   const loadGen = useRef(0);
 
@@ -916,43 +879,21 @@ function TextFileViewer({ filePath, cwd, sourceSessionId }: Props) {
     setViewMode("source");
     setWrapLines(false);
     setChangeCount(0);
-    setWatching(false);
-
-    if (esRef.current) {
-      esRef.current.close();
-      esRef.current = null;
-    }
 
     void fetchContent(filePath)
       .then(() => undefined)
       .finally(() => setLoading(false));
 
-    const es = new EventSource(getFileApiUrl(filePath, "watch", sourceSessionId));
-    esRef.current = es;
-
-    es.addEventListener("connected", () => {
-      setWatching(true);
-    });
-
-    es.addEventListener("change", () => {
-      if (editingRef.current) return; // never clobber an in-progress edit
-      void fetchContent(filePath, true);
-    });
-
-    es.addEventListener("error", () => {
-      setWatching(false);
-    });
-
-    es.onerror = () => {
-      setWatching(false);
-    };
-
     return () => {
       loadGen.current += 1;
-      es.close();
-      esRef.current = null;
     };
   }, [filePath, fetchContent, sourceSessionId]);
+
+  // Never clobber an in-progress edit when the file changes on disk.
+  const watching = useFileWatch(filePath, sourceSessionId, () => {
+    if (editingRef.current) return;
+    void fetchContent(filePath, true);
+  });
 
   if (loading) {
     return (

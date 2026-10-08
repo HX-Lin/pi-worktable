@@ -26,6 +26,7 @@ import {
 } from "@/lib/file-fuzzy";
 import { FolderIcon, getFileIcon } from "./FileIcons";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { fileIndex as fetchFileIndex } from "@/lib/api-client";
 import { useI18n } from "@/i18n";
 import { MAX_ATTACHED_IMAGES, shrinkImageFiles } from "@/lib/image-attachments";
 import type { ModelCatalogStatus } from "@contract/types";
@@ -564,12 +565,8 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
     const fetchCwd = cwd;
     const query = atQueryText;
     const timer = setTimeout(() => {
-      fetch(`/api/file-index?cwd=${encodeURIComponent(fetchCwd)}&q=${encodeURIComponent(query)}`)
-        .then((res) => {
-          if (!res.ok) throw new Error(`file search failed: ${res.status}`);
-          return res.json() as Promise<{ matches?: FileIndexEntry[] }>;
-        })
-        .then((data) => setAtServerResult({ cwd: fetchCwd, query, matches: data.matches ?? [] }))
+      void fetchFileIndex(fetchCwd, query)
+        .then((data) => setAtServerResult({ cwd: fetchCwd, query, matches: (data.matches ?? []) as FileIndexEntry[] }))
         .catch(() => {
           // Keep showing local matches; the next keystroke retries.
         });
@@ -605,11 +602,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
     fileIndexFetchingRef.current = cwd;
     const fetchCwd = cwd;
     setFileIndexLoading(true);
-    fetch(`/api/file-index?cwd=${encodeURIComponent(fetchCwd)}`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`file index failed: ${res.status}`);
-        return res.json() as Promise<{ files?: string[]; truncated?: boolean }>;
-      })
+    void fetchFileIndex(fetchCwd)
       .then((data) => {
         setFileIndex({ cwd: fetchCwd, entries: buildEntriesFromFiles(data.files ?? []), truncated: !!data.truncated });
         fileIndexMetaRef.current = { cwd: fetchCwd, fetchedAt: Date.now() };
