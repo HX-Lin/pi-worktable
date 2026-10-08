@@ -1364,14 +1364,22 @@ function ProjectRequired() {
   );
 }
 
+/**
+ * Selects keep an opaque surface and an explicit chevron: the popup list is
+ * drawn by the platform and ignores most theming, so the control itself must
+ * never be translucent (text over this theme's 8% background is unreadable),
+ * and the global `option` rule pins the list to the menu surface.
+ */
 const selectStyle: React.CSSProperties = {
   minWidth: 160,
   minHeight: 36,
   padding: "7px 30px 7px 10px",
-  border: "1px solid var(--border)",
+  border: "1px solid var(--control-chip-border)",
   borderRadius: "var(--radius-sm)",
-  background: "var(--bg)",
+  background: `var(--menu-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center`,
   color: "var(--text)",
   fontSize: 13,
   cursor: "pointer",
+  appearance: "none",
+  WebkitAppearance: "none",
 };

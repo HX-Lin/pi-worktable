@@ -11,11 +11,9 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { SessionSidebar } from "./SessionSidebar";
+import { WORKSPACE_VIEWS } from "./views/AppViews";
 import { ChatWindow } from "./ChatWindow";
 import { FileExplorer } from "./FileExplorer";
-import { GitPanel } from "./GitPanel";
-import { MemoryPanel } from "./MemoryPanel";
-import { TaskBoard } from "./TaskBoard";
 import { FileViewer } from "./FileViewer";
 import { WindowControls } from "./WindowControls";
 import { TabBar, type Tab } from "./TabBar";
@@ -65,32 +63,7 @@ const PANEL_ICON = {
   strokeLinejoin: "round",
 } as const;
 
-function PanelIconExplorer() {
-  return (
-    <svg {...PANEL_ICON} aria-hidden="true">
-      <path d="M3 5a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
-    </svg>
-  );
-}
-function PanelIconGit() {
-  return (
-    <svg {...PANEL_ICON} aria-hidden="true">
-      <circle cx="6" cy="6" r="2.5" />
-      <circle cx="6" cy="18" r="2.5" />
-      <circle cx="18" cy="9" r="2.5" />
-      <path d="M6 8.5v7M8.5 6h4A3.5 3.5 0 0 1 16 9.5V9" />
-    </svg>
-  );
-}
-function PanelIconTasks() {
-  return (
-    <svg {...PANEL_ICON} aria-hidden="true">
-      <rect x="3" y="4" width="18" height="16" rx="2" />
-      <path d="M8 9h8M8 13h8M8 17h4" />
-    </svg>
-  );
-}
-function PanelIconChat() {
+function ChatViewIcon() {
   return (
     <svg {...PANEL_ICON} aria-hidden="true">
       <path d="M21 12a8 8 0 0 1-8 8H7l-4 3v-7a8 8 0 0 1 8-8h2a8 8 0 0 1 8 4Z" />
@@ -98,11 +71,10 @@ function PanelIconChat() {
   );
 }
 
-function PanelIconMemory() {
+function PanelIconExplorer() {
   return (
     <svg {...PANEL_ICON} aria-hidden="true">
-      <path d="M12 3a4 4 0 0 0-4 4v1a3 3 0 0 0 0 6v1a4 4 0 0 0 8 0v-1a3 3 0 0 0 0-6V7a4 4 0 0 0-4-4Z" />
-      <path d="M12 3v18" />
+      <path d="M3 5a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
     </svg>
   );
 }
@@ -271,7 +243,7 @@ export function AppShell() {
   // Project-scoped work (git, tasks, memory) is a full view next to the
   // conversation rather than a tab in the file dock: it is wider than a 340px
   // panel, and it is where you go to *work*, not to look something up.
-  const [activeView, setActiveView] = useState<"chat" | "git" | "tasks" | "memory">("chat");
+  const [activeView, setActiveView] = useState<string>("chat");
   const [rightPanelOpen, setRightPanelOpen] = useState(false);
   const [rightPanelBounds, setRightPanelBounds] = useState(() =>
     getRightPanelWidthBounds(window.innerWidth, sidebarOpen),
@@ -1198,14 +1170,15 @@ export function AppShell() {
                 borderRadius: "var(--radius-md)",
               }}
             >
-              {(
-                [
-                  { id: "chat", label: t("chat", "Chat"), icon: <PanelIconChat /> },
-                  { id: "git", label: t("git", "Git"), icon: <PanelIconGit /> },
-                  { id: "tasks", label: t("tasksTitle", "Tasks"), icon: <PanelIconTasks /> },
-                  { id: "memory", label: t("memoryTitle", "Memory"), icon: <PanelIconMemory /> },
-                ] as const
-              ).map((view) => {
+              {[
+                { id: "chat", label: t("chat", "对话"), labelEn: "Chat", icon: <ChatViewIcon /> },
+                ...WORKSPACE_VIEWS.map((view) => ({
+                  id: view.id,
+                  label: t(`view_${view.id}`, view.label),
+                  labelEn: view.labelEn,
+                  icon: view.icon,
+                })),
+              ].map((view) => {
                 const active = activeView === view.id;
                 return (
                   <button
@@ -1213,7 +1186,7 @@ export function AppShell() {
                     type="button"
                     role="tab"
                     aria-selected={active}
-                    title={view.label}
+                    title={view.labelEn}
                     aria-label={view.label}
                     onClick={() => setActiveView(view.id)}
                     style={{
@@ -1810,30 +1783,30 @@ export function AppShell() {
             <div style={{ flex: 1, minHeight: 0, overflow: "hidden", position: "relative" }}>
               {/* The conversation stays mounted so its stream survives a look at
                   git or the task board; the view is drawn over it. */}
-              {activeView !== "chat" && (
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    zIndex: 6,
-                    display: "flex",
-                    flexDirection: "column",
-                    background: "var(--bg)",
-                  }}
-                >
-                  <div style={{ flex: 1, minHeight: 0 }}>
-                    {activeView === "git" && (
-                      <GitPanel
-                        cwd={explorerCwd}
-                        refreshKey={explorerRefreshKey}
-                        onOpenFile={(path) => handleOpenFile(path, path.split("/").pop() ?? path)}
-                      />
-                    )}
-                    {activeView === "tasks" && <TaskBoard cwd={explorerCwd} />}
-                    {activeView === "memory" && <MemoryPanel cwd={explorerCwd} />}
-                  </div>
-                </div>
-              )}
+              {activeView !== "chat" &&
+                (() => {
+                  const view = WORKSPACE_VIEWS.find((candidate) => candidate.id === activeView);
+                  if (!view) return null;
+                  return (
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        zIndex: 6,
+                        display: "flex",
+                        flexDirection: "column",
+                        background: "var(--bg)",
+                      }}
+                    >
+                      {view.render({
+                        cwd: explorerCwd,
+                        sessionId: sessionStats?.sessionId ?? selectedSession?.id ?? null,
+                        refreshKey: explorerRefreshKey,
+                        onOpenFile: handleOpenFile,
+                      })}
+                    </div>
+                  );
+                })()}
               {showChat ? (
                 <SessionProfiler key={sessionKey} id="ChatWindow">
                   <ChatWindow

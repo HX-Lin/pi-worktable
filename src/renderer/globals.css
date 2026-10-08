@@ -324,6 +324,25 @@ html.theme-rose {
   --shadow-lg: 0 18px 48px rgba(76, 5, 25, 0.16);
 }
 
+/* ---------------------------------------------------------------------------
+ * 原生下拉：列表由平台绘制，不吃我们的表面令牌，所以这里显式钉住不透明底 +
+ * 前景色。半透明主题下若用 var(--bg)（8% 不透明度）当底色，选项文字会直接看不见。
+ * ------------------------------------------------------------------------- */
+select {
+  color: var(--text);
+  background-color: var(--menu-bg);
+}
+
+select option,
+select optgroup {
+  background-color: var(--menu-bg);
+  color: var(--text);
+}
+
+select option:disabled {
+  color: var(--text-faint);
+}
+
 /* niri (Linux)：深石墨蓝 + 橙色强调，磨砂玻璃。
    合成器负责模糊与圆角（niri 的 background-effect { xray true; blur true } 模糊壁纸、
    geometry-corner-radius 给窗口圆角）；应用只负责画半透明表面，文字保持不透明。
