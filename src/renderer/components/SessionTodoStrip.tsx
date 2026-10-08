@@ -19,7 +19,7 @@ export function SessionTodoStrip({ cwd, sessionId, refreshKey = 0 }: Props) {
   const { t } = useI18n();
   const [collapsed, setCollapsed] = useState(false);
   const [draft, setDraft] = useState("");
-  const { tasks, visible, done, error, busyId, advance, add } = useSessionTodos({ cwd, sessionId, refreshKey });
+  const { tasks, visible, done, busyId, advance, add } = useSessionTodos({ cwd, sessionId, refreshKey });
 
   const submit = async () => {
     const title = draft.trim();
@@ -66,7 +66,6 @@ export function SessionTodoStrip({ cwd, sessionId, refreshKey = 0 }: Props) {
             {done}/{tasks.length} {t("sessionTodosDone", "done")}
           </span>
         </button>
-        {error && <span style={{ fontSize: 10, color: "var(--danger)" }}>{error}</span>}
       </div>
 
       {!collapsed && (

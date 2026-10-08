@@ -324,6 +324,22 @@ html.niri body::before {
   background: transparent;
 }
 
+/* Wallpaper dim + blur. The window is transparent, so this layer paints straight
+   over the desktop wallpaper, under the whole UI. Dimming the wallpaper — rather
+   than recolouring text or giving every control an opaque chip — is what keeps
+   text readable and the wallpaper recognisable at the same time. Driven by the
+   appearance sliders (lib/appearance-settings.ts). */
+html.niri body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--bg-color);
+  opacity: var(--wallpaper-dim, 0);
+  backdrop-filter: blur(var(--wallpaper-blur, 0px));
+}
+
 #root {
   height: 100%;
 }

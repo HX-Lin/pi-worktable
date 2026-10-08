@@ -1,3 +1,4 @@
+import { applyAppearanceSettings, loadAppearanceSettings } from "./lib/appearance-settings";
 import { readStoredTheme } from "./lib/theme-storage";
 
 // Apply the persisted theme before React mounts without requiring inline script CSP.
@@ -12,4 +13,12 @@ try {
   }
 } catch {
   // Storage can be unavailable in privacy-restricted renderer contexts.
+}
+
+// Wallpaper dim/blur are plain CSS variables the stylesheet reads, so they have to
+// be set before the first paint for the same reason the theme class is.
+try {
+  applyAppearanceSettings(loadAppearanceSettings());
+} catch {
+  // Never block startup on a cosmetic setting.
 }

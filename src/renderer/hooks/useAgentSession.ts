@@ -2050,6 +2050,7 @@ export function useAgentSession(opts: UseAgentSessionOptions) {
   return {
     // State
     data,
+    scrollToBottom,
     loading,
     error,
     activeLeafId,

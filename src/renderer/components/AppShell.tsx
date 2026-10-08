@@ -24,6 +24,7 @@ import { QuickChannelBinding } from "./channels/QuickChannelBinding";
 import { useWorktrees } from "./session-sidebar/useWorktrees";
 import { useTheme } from "@/hooks/useTheme";
 import { GlobalSearch } from "./GlobalSearch";
+import { ToastHost } from "./ToastHost";
 import type { GlobalSearchAction, GlobalSearchItem } from "@/lib/global-search";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useI18n } from "@/i18n";
@@ -2191,6 +2192,8 @@ export function AppShell() {
           </div>
         </div>
       )}
+      <ToastHost />
+
       <GlobalSearch
         open={searchOpen}
         onClose={() => setSearchOpen(false)}

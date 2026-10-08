@@ -1,7 +1,19 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useTheme, type Theme } from "@/hooks/useTheme";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { useSettingsCounts } from "@/hooks/useSettingsCounts";
 import { useI18n, type AppLanguage } from "@/i18n";
+import {
+  APPEARANCE_DEFAULTS,
+  applyAppearanceSettings,
+  loadAppearanceSettings,
+  saveAppearanceSettings,
+  WALLPAPER_BLUR_MAX,
+  WALLPAPER_BLUR_STEP,
+  WALLPAPER_DIM_MAX,
+  WALLPAPER_DIM_STEP,
+  type AppearanceSettings,
+} from "@/lib/appearance-settings";
 import { ModelsConfig } from "./ModelsConfig";
 import { JevConfig } from "./JevConfig";
 import { CapabilitiesPanel } from "./CapabilitiesPanel";
@@ -163,6 +175,10 @@ export function SettingsConfig({
       document.getElementById(`settings-tab-${activeTab}`)?.focus();
     }
   }, [activeTab, navigationRequestId]);
+
+  // Counts beside the rail entries, like the reference: how much is configured,
+  // without having to open each page.
+  const counts = useSettingsCounts({ enabled: true, cwd });
 
   // Rail entries mirror the reference layout: icon tile + label, one flat list.
   const tabs: { id: SettingsTab; label: string; icon: ReactNode; hue: string }[] = [
@@ -368,7 +384,26 @@ export function SettingsConfig({
                   >
                     {tab.icon}
                   </span>
-                  {!isMobile && tab.label}
+                  {!isMobile && (
+                    <>
+                      <span style={{ flex: 1, minWidth: 0 }}>{tab.label}</span>
+                      {counts[tab.id as keyof typeof counts] !== undefined && (
+                        <span
+                          style={{
+                            flexShrink: 0,
+                            padding: "1px 6px",
+                            borderRadius: 999,
+                            background: "var(--bg-subtle)",
+                            color: "var(--text-faint)",
+                            fontSize: 10.5,
+                            fontVariantNumeric: "tabular-nums",
+                          }}
+                        >
+                          {counts[tab.id as keyof typeof counts]}
+                        </span>
+                      )}
+                    </>
+                  )}
                 </button>
               );
             })}
@@ -1017,6 +1052,17 @@ function GeneralSettings({
 }) {
   const { t } = useI18n();
   const [backgroundMode, setBackgroundMode] = useState(true);
+  const [appearance, setAppearance] = useState<AppearanceSettings>(() => loadAppearanceSettings());
+  const updateAppearance = (next: AppearanceSettings) => {
+    setAppearance(next);
+    saveAppearanceSettings(next);
+    applyAppearanceSettings(next);
+  };
+  const appearanceSliderStyle: React.CSSProperties = {
+    width: 200,
+    accentColor: "var(--accent)",
+    cursor: "pointer",
+  };
   const languageControlId = useId();
   const voiceProviderControlId = useId();
   const voiceModelControlId = useId();
@@ -1036,6 +1082,9 @@ function GeneralSettings({
     border: "1px solid var(--border)",
   };
   const backgroundModeControlId = useId();
+  const appearanceDimControlId = useId();
+  const appearanceBlurControlId = useId();
+  const appearanceResetControlId = useId();
   const themeControlId = useId();
   useEffect(() => {
     void window.piBridge.getUiState().then((state) => setBackgroundMode(state.backgroundMode !== false));
@@ -1059,6 +1108,78 @@ function GeneralSettings({
             <option value="en-US">English</option>
             <option value="zh-CN">简体中文</option>
           </select>
+        </SettingRow>
+      </section>
+
+      <div style={{ height: 1, background: "var(--border)", maxWidth: 620, margin: "28px 0" }} />
+
+      <section style={{ maxWidth: 620 }}>
+        <h2 style={{ margin: 0, fontSize: 14, color: "var(--text)" }}>{t("wallpaperTitle", "Wallpaper")}</h2>
+        <p style={{ margin: "6px 0 16px", fontSize: 12, lineHeight: 1.6, color: "var(--text-dim)" }}>
+          {t(
+            "wallpaperDescription",
+            "Applies to the transparent theme, where the desktop wallpaper shows through the window. Dimming the wallpaper keeps text readable without hiding it.",
+          )}
+        </p>
+        <SettingRow label={t("wallpaperDim", "Dim")} controlId={appearanceDimControlId}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <input
+              id={appearanceDimControlId}
+              type="range"
+              min={0}
+              max={WALLPAPER_DIM_MAX}
+              step={WALLPAPER_DIM_STEP}
+              value={appearance.wallpaperDim}
+              onChange={(event) => updateAppearance({ ...appearance, wallpaperDim: Number(event.target.value) })}
+              style={appearanceSliderStyle}
+            />
+            <span
+              style={{
+                width: 38,
+                textAlign: "right",
+                fontSize: 12,
+                color: "var(--text-muted)",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {Math.round(appearance.wallpaperDim * 100)}%
+            </span>
+          </div>
+        </SettingRow>
+        <SettingRow label={t("wallpaperBlur", "Blur")} controlId={appearanceBlurControlId}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <input
+              id={appearanceBlurControlId}
+              type="range"
+              min={0}
+              max={WALLPAPER_BLUR_MAX}
+              step={WALLPAPER_BLUR_STEP}
+              value={appearance.wallpaperBlur}
+              onChange={(event) => updateAppearance({ ...appearance, wallpaperBlur: Number(event.target.value) })}
+              style={appearanceSliderStyle}
+            />
+            <span
+              style={{
+                width: 38,
+                textAlign: "right",
+                fontSize: 12,
+                color: "var(--text-muted)",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {appearance.wallpaperBlur}px
+            </span>
+          </div>
+        </SettingRow>
+        <SettingRow label={t("wallpaperReset", "Reset")} controlId={appearanceResetControlId}>
+          <button
+            id={appearanceResetControlId}
+            type="button"
+            onClick={() => updateAppearance({ ...APPEARANCE_DEFAULTS })}
+            style={{ ...selectStyle, cursor: "pointer" }}
+          >
+            {t("resetToDefaults", "Restore defaults")}
+          </button>
         </SettingRow>
       </section>
 

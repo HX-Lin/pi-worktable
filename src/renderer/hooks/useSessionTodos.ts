@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { addTask, listTasks, updateTask } from "@/lib/api-client";
+import { pushToast } from "@/lib/toast-store";
 import type { ProjectTask, TaskStatus } from "@contract/types";
 
 export const TASK_GLYPH: Record<TaskStatus, string> = { todo: "○", doing: "◐", blocked: "!", done: "✓" };
@@ -50,7 +51,9 @@ export function useSessionTodos({ cwd, sessionId, refreshKey = 0 }: Params) {
       setTasks(listed);
       setError(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      const message = e instanceof Error ? e.message : String(e);
+      setError(message);
+      pushToast({ level: "error", text: "Could not load this conversation's todos", detail: message });
     }
   }, [cwd, sessionId]);
 
@@ -89,7 +92,9 @@ export function useSessionTodos({ cwd, sessionId, refreshKey = 0 }: Params) {
         setTasks((current) => current.map((entry) => (entry.id === updated.id ? updated : entry)));
         notifyTodosChanged();
       } catch (e) {
-        setError(e instanceof Error ? e.message : String(e));
+        const message = e instanceof Error ? e.message : String(e);
+        setError(message);
+        pushToast({ level: "error", text: "Could not update that todo", detail: message });
       } finally {
         setBusyId(null);
       }

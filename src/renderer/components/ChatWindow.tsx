@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode, useMemo } from "react";
 import type {
   AgentMessage,
   AssistantContentBlock,
@@ -20,6 +20,7 @@ import { ContextMapPanel } from "./ContextMapPanel";
 import { SessionTodoStrip } from "./SessionTodoStrip";
 import { WorktreeSwitcher } from "./session-sidebar/WorktreeSwitcher";
 import type { WorktreesController } from "./session-sidebar/useWorktrees";
+import { ChatNavigator, type ChatNavigatorQuestion } from "./ChatNavigator";
 import { ChatTodoBlock } from "./ChatTodoBlock";
 import { MessageView } from "./MessageView";
 import { SessionProfiler } from "./SessionProfiler";
@@ -274,6 +275,7 @@ export function ChatWindow({
     messagesEndRef,
     liveContentEndRef,
     scrollContainerRef,
+    scrollToBottom,
     lastUserMsgRef,
     handleSend,
     handleAbort,
@@ -392,6 +394,33 @@ export function ChatWindow({
   // The map reads host state on demand; re-reading after each turn keeps the
   // tiles honest without polling while the panel is closed.
   const contextMapRefreshKey = messages.length + entryIds.length;
+
+  // Questions for the jump rail: user turns that actually carry text.
+  const questionTextOf = (message: AgentMessage): string => {
+    const content = (message as { content?: unknown }).content;
+    if (typeof content === "string") return content;
+    if (!Array.isArray(content)) return "";
+    return content
+      .map((block) => {
+        if (typeof block === "string") return block;
+        const typed = block as { type?: string; text?: string };
+        return typed.type === "text" && typeof typed.text === "string" ? typed.text : "";
+      })
+      .filter(Boolean)
+      .join("\n");
+  };
+
+  const navigatorQuestions = useMemo<ChatNavigatorQuestion[]>(
+    () =>
+      messages
+        .map((message, index) => ({ message, index }))
+        .filter(({ message }) => message.role === "user" && questionTextOf(message).trim().length > 0)
+        .map(({ message, index }) => ({
+          index,
+          text: questionTextOf(message).trim().split("\n")[0].slice(0, 80),
+        })),
+    [messages],
+  );
 
   const isEmptyNew = isNew && messages.length === 0 && !streamState.isStreaming && !agentRunning;
   const messageCwd = session?.cwd ?? newSessionCwd ?? undefined;
@@ -646,6 +675,19 @@ export function ChatWindow({
                 <NoticeShelf notices={notices} floating align="right" />
               </div>
             </div>
+            <ChatNavigator
+              containerRef={scrollContainerRef}
+              questions={navigatorQuestions}
+              onJump={(index) => {
+                const node = scrollContainerRef.current?.querySelector<HTMLElement>(
+                  `[data-message-index="${String(index)}"]`,
+                );
+                node?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              onBottom={() => {
+                scrollToBottom("smooth");
+              }}
+            />
             <div ref={scrollContainerRef} className="relative z-[1] flex-1 overflow-y-auto pt-4 [scrollbar-width:none]">
               <div style={{ padding: `0 ${CHAT_COLUMN_PADDING}px` }}>
                 <div style={{ maxWidth: "var(--chat-content-max-width)", margin: "0 auto" }}>
@@ -761,7 +803,8 @@ export function ChatWindow({
                       );
                       if (!isVisible || options.attachRef === false) return view;
                       return (
-                        <div key={`${keyPrefix}-${idx}`} ref={attachVisibleRef(idx)}>
+                        // data-message-index is the anchor the question rail jumps to.
+                        <div key={`${keyPrefix}-${idx}`} ref={attachVisibleRef(idx)} data-message-index={idx}>
                           {view}
                         </div>
                       );
