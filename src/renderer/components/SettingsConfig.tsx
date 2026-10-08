@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useTheme, type Theme } from "@/hooks/useTheme";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useI18n, type AppLanguage } from "@/i18n";
@@ -28,6 +28,101 @@ interface SettingsConfigProps {
   onModelsChanged: () => void;
   onPluginsReloaded: () => void;
   onChannelsChanged: (snapshot: ChannelsSnapshot) => void;
+}
+
+/** Rail icons: 14px strokes, all on the same grid so the tiles line up. */
+const iconProps = {
+  width: 14,
+  height: 14,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 1.9,
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+} as const;
+
+function IconSliders() {
+  return (
+    <svg {...iconProps} aria-hidden="true">
+      <path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" />
+      <circle cx="16" cy="6" r="2" />
+      <circle cx="10" cy="12" r="2" />
+      <circle cx="18" cy="18" r="2" />
+    </svg>
+  );
+}
+function IconChip() {
+  return (
+    <svg {...iconProps} aria-hidden="true">
+      <rect x="7" y="7" width="10" height="10" rx="2" />
+      <path d="M10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4" />
+    </svg>
+  );
+}
+function IconAgents() {
+  return (
+    <svg {...iconProps} aria-hidden="true">
+      <circle cx="9" cy="8" r="3" />
+      <path d="M3 20a6 6 0 0 1 12 0" />
+      <path d="M16 11h5M18.5 8.5v5" />
+    </svg>
+  );
+}
+function IconPuzzle() {
+  return (
+    <svg {...iconProps} aria-hidden="true">
+      <path d="M10 4a2 2 0 1 1 4 0v1h4v4h1a2 2 0 1 1 0 4h-1v4h-4v1a2 2 0 1 1-4 0v-1H6v-4H5a2 2 0 1 1 0-4h1V5h4Z" />
+    </svg>
+  );
+}
+function IconGauge() {
+  return (
+    <svg {...iconProps} aria-hidden="true">
+      <path d="M4 18a8 8 0 1 1 16 0" />
+      <path d="M12 18l4-5" />
+    </svg>
+  );
+}
+function IconPlug() {
+  return (
+    <svg {...iconProps} aria-hidden="true">
+      <path d="M9 3v5M15 3v5" />
+      <path d="M6 8h12v3a6 6 0 0 1-6 6 6 6 0 0 1-6-6Z" />
+      <path d="M12 17v4" />
+    </svg>
+  );
+}
+function IconShield() {
+  return (
+    <svg {...iconProps} aria-hidden="true">
+      <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6Z" />
+      <path d="M9 12l2 2 4-4" />
+    </svg>
+  );
+}
+function IconChat() {
+  return (
+    <svg {...iconProps} aria-hidden="true">
+      <path d="M4 5h16v11H9l-5 4Z" />
+      <path d="M8 9h8M8 12h5" />
+    </svg>
+  );
+}
+function IconWrench() {
+  return (
+    <svg {...iconProps} aria-hidden="true">
+      <path d="M15 4a5 5 0 0 0-4 8L4 19l1 1 7-7a5 5 0 0 0 8-4l-3 2-2-2 2-3a5 5 0 0 0-2-2Z" />
+    </svg>
+  );
+}
+function IconInfo() {
+  return (
+    <svg {...iconProps} aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v6M12 8h0" />
+    </svg>
+  );
 }
 
 export function SettingsConfig({
@@ -69,17 +164,18 @@ export function SettingsConfig({
     }
   }, [activeTab, navigationRequestId]);
 
-  const tabs: { id: SettingsTab; label: string }[] = [
-    { id: "general", label: t("general", "General") },
-    { id: "models", label: t("models", "Models") },
-    { id: "agents", label: t("agentsTitle", "Agents") },
-    { id: "plugins", label: t("plugins", "Plugins") },
-    { id: "capabilities", label: t("capabilitiesTitle", "Capabilities") },
-    { id: "mcp", label: t("mcpTitle", "MCP") },
-    { id: "jev", label: t("jevTitle", "Jev") },
-    { id: "channels", label: t("channels", "Channels") },
-    { id: "tools", label: t("developerTools", "Developer Tools") },
-    { id: "about", label: t("about", "About") },
+  // Rail entries mirror the reference layout: icon tile + label, one flat list.
+  const tabs: { id: SettingsTab; label: string; icon: ReactNode; hue: string }[] = [
+    { id: "general", label: t("general", "General"), icon: <IconSliders />, hue: "var(--text-muted)" },
+    { id: "models", label: t("models", "Models"), icon: <IconChip />, hue: "var(--blue)" },
+    { id: "agents", label: t("agentsTitle", "Agents"), icon: <IconAgents />, hue: "var(--accent)" },
+    { id: "plugins", label: t("plugins", "Plugins"), icon: <IconPuzzle />, hue: "var(--green)" },
+    { id: "capabilities", label: t("capabilitiesTitle", "Capabilities"), icon: <IconGauge />, hue: "var(--amber)" },
+    { id: "mcp", label: t("mcpTitle", "MCP"), icon: <IconPlug />, hue: "var(--blue)" },
+    { id: "jev", label: t("jevTitle", "Jev"), icon: <IconShield />, hue: "var(--red)" },
+    { id: "channels", label: t("channels", "Channels"), icon: <IconChat />, hue: "var(--green)" },
+    { id: "tools", label: t("developerTools", "Developer Tools"), icon: <IconWrench />, hue: "var(--text-muted)" },
+    { id: "about", label: t("about", "About"), icon: <IconInfo />, hue: "var(--text-muted)" },
   ];
 
   return (
@@ -199,7 +295,7 @@ export function SettingsConfig({
             aria-label={t("settings", "Settings")}
             aria-orientation="vertical"
             style={{
-              width: isMobile ? 112 : 168,
+              width: isMobile ? 56 : 200,
               display: "flex",
               flexDirection: "column",
               gap: 4,
@@ -238,21 +334,41 @@ export function SettingsConfig({
                   style={{
                     position: "relative",
                     width: "100%",
-                    minHeight: 40,
-                    padding: isMobile ? "8px 10px" : "8px 12px",
-                    border: `1px solid ${active ? "var(--accent)" : "transparent"}`,
-                    borderRadius: "var(--radius-sm)",
+                    minHeight: 38,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: isMobile ? 0 : 9,
+                    justifyContent: isMobile ? "center" : "flex-start",
+                    padding: isMobile ? "6px" : "5px 10px 5px 5px",
+                    border: "none",
+                    borderRadius: "var(--radius-md)",
                     background: active ? "var(--accent-soft)" : "transparent",
-                    color: active ? "var(--accent)" : "var(--text-muted)",
-                    fontSize: 12,
+                    color: active ? "var(--accent)" : "var(--text-dim)",
+                    fontSize: 13,
                     lineHeight: 1.35,
-                    fontWeight: active ? 650 : 500,
+                    fontWeight: active ? 600 : 400,
                     textAlign: "left",
                     cursor: "pointer",
                     overflowWrap: "anywhere",
                   }}
                 >
-                  {tab.label}
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      flexShrink: 0,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: 26,
+                      height: 26,
+                      borderRadius: "var(--radius-sm)",
+                      background: `color-mix(in srgb, ${active ? "var(--accent)" : tab.hue} 18%, transparent)`,
+                      color: active ? "var(--accent)" : tab.hue,
+                    }}
+                  >
+                    {tab.icon}
+                  </span>
+                  {!isMobile && tab.label}
                 </button>
               );
             })}
