@@ -103,7 +103,7 @@ const requiredMarkers = [
   ["src/contract/api.ts", '"models.refreshCancel"'],
   ["src/agent-host/credential-sync.ts", "recoverCommittedCredential"],
   ["src/renderer/lib/models-config-state.ts", "samplingParams"],
-  ["src/agent-host/rpc-manager.ts", "services.diagnostics"],
+  ["src/agent-host/session-registry.ts", "services.diagnostics"],
 ];
 for (const [relativePath, marker] of requiredMarkers) {
   if (!readFileSync(path.join(root, relativePath), "utf8").includes(marker)) {
