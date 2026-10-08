@@ -23,6 +23,8 @@ import { SettingsConfig, type SettingsTab } from "./SettingsConfig";
 import { QuickChannelBinding } from "./channels/QuickChannelBinding";
 import { useWorktrees } from "./session-sidebar/useWorktrees";
 import { useTheme } from "@/hooks/useTheme";
+import { GlobalSearch } from "./GlobalSearch";
+import type { GlobalSearchAction, GlobalSearchItem } from "@/lib/global-search";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useI18n } from "@/i18n";
 import { copyText } from "@/lib/clipboard";
@@ -161,6 +163,7 @@ export function AppShell() {
   const [sessionKey, setSessionKey] = useState(0);
   const [explorerRefreshKey, setExplorerRefreshKey] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState<SettingsTab>("general");
   const [settingsNavigationRequestId, setSettingsNavigationRequestId] = useState(0);
   const [channelSnapshot, setChannelSnapshot] = useState<ChannelsSnapshot>(EMPTY_CHANNELS);
@@ -328,6 +331,34 @@ export function AppShell() {
     window.addEventListener("resize", fitToWindow);
     return () => window.removeEventListener("resize", fitToWindow);
   }, [isMobile, sidebarOpen]);
+
+  // ⌘K / Ctrl+K：参考实现的命令面板入口。
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setSearchOpen((open) => !open);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  const searchActions = useMemo<GlobalSearchAction[]>(
+    () => [
+      { id: "new-session", detail: t("newSession", "New session") },
+      { id: "settings-general", detail: t("settings", "Settings") },
+      { id: "settings-models", detail: t("models", "Models") },
+      { id: "settings-agents", detail: t("agents", "Agents") },
+      { id: "settings-mcp", detail: t("mcpServers", "MCP servers") },
+      { id: "panel-files", detail: t("explorer", "Explorer") },
+      { id: "panel-git", detail: t("git", "Git") },
+      { id: "panel-tasks", detail: t("tasksTitle", "Tasks") },
+      { id: "panel-memory", detail: t("memoryTitle", "Memory") },
+      { id: "toggle-theme", detail: t("toggleTheme", "Toggle theme") },
+    ],
+    [t],
+  );
 
   const openRightPanel = useCallback(() => {
     const closeSidebar = isMobile || shouldCollapseSidebarForRightPanel(window.innerWidth);
@@ -778,6 +809,67 @@ export function AppShell() {
     [handleOpenFile, selectedSession?.id],
   );
 
+  /** Palette dispatch: every branch ends in the same action the UI would run. */
+  const handleGlobalSearchSelect = useCallback(
+    (item: GlobalSearchItem) => {
+      if (item.kind === "session" && item.session) {
+        handleSelectSession(item.session);
+        return;
+      }
+      if (item.kind === "file" && item.path && activeCwd) {
+        const absolute = activeCwd.endsWith("/") ? `${activeCwd}${item.path}` : `${activeCwd}/${item.path}`;
+        handleOpenFile(absolute, item.path);
+        return;
+      }
+      if (item.kind === "project" && item.root) {
+        activateProject(item.root);
+        return;
+      }
+      if (item.kind !== "action" || !item.action) return;
+      switch (item.action.id) {
+        case "new-session":
+          handleNewSession("", activeCwd ?? activeProjectRoot ?? "");
+          break;
+        case "settings-general":
+        case "settings-models":
+        case "settings-agents":
+        case "settings-mcp": {
+          setSettingsInitialTab(item.action.id.replace("settings-", "") as SettingsTab);
+          setSettingsNavigationRequestId((id) => id + 1);
+          setSettingsOpen(true);
+          break;
+        }
+        case "panel-files":
+        case "panel-git":
+        case "panel-tasks":
+        case "panel-memory": {
+          const tabId = {
+            "panel-files": EXPLORER_TAB_ID,
+            "panel-git": GIT_TAB_ID,
+            "panel-tasks": TASKS_TAB_ID,
+            "panel-memory": MEMORY_TAB_ID,
+          }[item.action.id];
+          setActiveFileTabId(tabId);
+          openRightPanel();
+          break;
+        }
+        case "toggle-theme":
+          toggleTheme();
+          break;
+      }
+    },
+    [
+      activateProject,
+      activeCwd,
+      activeProjectRoot,
+      handleNewSession,
+      handleOpenFile,
+      handleSelectSession,
+      openRightPanel,
+      toggleTheme,
+    ],
+  );
+
   const handleCloseFileTab = useCallback(
     (tabId: string) => {
       setFileTabs((prev) => {
@@ -1027,6 +1119,50 @@ export function AppShell() {
             }}
           >
             <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              title={t("globalSearchShortcut", "Search (⌘K)")}
+              aria-label={t("globalSearch", "Search")}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                margin: 4,
+                height: 28,
+                padding: "0 9px",
+                background: "var(--control-chip-bg)",
+                border: "1px solid var(--control-chip-border)",
+                borderRadius: "var(--radius-sm)",
+                color: "var(--control-chip-fg)",
+                cursor: "pointer",
+                flexShrink: 0,
+                fontSize: 11.5,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = "var(--accent)";
+                e.currentTarget.style.background = "var(--control-chip-bg-hover)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = "var(--control-chip-fg)";
+                e.currentTarget.style.background = "var(--control-chip-bg)";
+              }}
+            >
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                aria-hidden="true"
+              >
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3.5-3.5" />
+              </svg>
+              <span style={{ fontFamily: "var(--font-mono)", opacity: 0.8 }}>⌘K</span>
+            </button>
+            <button
               onClick={handleSidebarToggle}
               title={sidebarOpen ? t("hideSidebar", "Hide sidebar") : t("showSidebar", "Show sidebar")}
               aria-label={sidebarOpen ? t("hideSidebar", "Hide sidebar") : t("showSidebar", "Show sidebar")}
@@ -1099,22 +1235,24 @@ export function AppShell() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: 36,
-                height: 36,
+                margin: 4,
+                width: 28,
+                height: 28,
                 padding: 0,
-                background: "none",
-                border: "none",
-                borderRight: "1px solid var(--border)",
-                color: "var(--text-muted)",
+                background: "var(--control-chip-bg)",
+                border: "1px solid var(--control-chip-border)",
+                borderRadius: "var(--radius-sm)",
+                color: "var(--control-chip-fg)",
                 cursor: "pointer",
                 flexShrink: 0,
-                transition: "color 0.12s",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.color = "var(--text)";
+                e.currentTarget.style.color = "var(--accent)";
+                e.currentTarget.style.background = "var(--control-chip-bg-hover)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.color = "var(--text-muted)";
+                e.currentTarget.style.color = "var(--control-chip-fg)";
+                e.currentTarget.style.background = "var(--control-chip-bg)";
               }}
             >
               {isDark ? (
@@ -2053,6 +2191,15 @@ export function AppShell() {
           </div>
         </div>
       )}
+      <GlobalSearch
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        fileRoot={activeCwd}
+        projects={openProjects.map((project) => ({ root: project.root, label: project.name }))}
+        actions={searchActions}
+        onSelect={handleGlobalSearchSelect}
+      />
+
       {settingsOpen && (
         <SettingsConfig
           cwd={activeCwd ?? selectedSession?.cwd ?? newSessionCwd ?? null}
