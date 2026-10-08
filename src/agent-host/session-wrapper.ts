@@ -15,6 +15,18 @@ import { type DesktopPromptSettings } from "./system-prompt-extension";
 import { withExtensionTools } from "./tool-activation";
 import { getFoldSession } from "./context-fold";
 import { captureTurnStart, collectTurnChanges, type TurnStartSnapshot } from "./turn-changes";
+import {
+  buildContinuationPrompt,
+  buildReviewTask,
+  clampMaxRounds,
+  GOAL_ENTRY_TYPE,
+  goalIsRunning,
+  nextGoalState,
+  parseGoalVerdict,
+  REVIEWER_SYSTEM_PROMPT,
+  type GoalState,
+} from "./goal";
+import { runSubagent } from "./subagent/runner";
 import { notifyRunningChange } from "./running-status";
 
 export interface AgentEvent {
@@ -122,6 +134,9 @@ export class AgentSessionWrapper {
   private externalTurnActive = false;
   private externalTurnChannel: ChannelId | null = null;
   private externalTurnProgress: ((event: AgentEvent) => void) | null = null;
+  /** Goal mode state for this session; null when no goal is set. */
+  private goal: GoalState | null = null;
+  private goalReviewRunning = false;
   private extensionsBound = false;
   private extensionBindingPromise: Promise<void> | null = null;
   private extensionBindingError: unknown = null;
@@ -192,6 +207,9 @@ export class AgentSessionWrapper {
       } else if (event.type === "agent_end" && this.turnStart) {
         const start = this.turnStart;
         this.turnStart = null;
+        // Goal mode reviews after the turn lands, so the verdict sees the final
+        // answer and the diff rather than a half-written state.
+        void this.turnChangesWrite.then(() => this.reviewGoalIfNeeded());
         this.turnChangesWrite = start
           .then((snapshot) => (snapshot ? collectTurnChanges(snapshot) : { files: [], omitted: 0 }))
           .then(({ files, omitted }) => {
@@ -223,6 +241,102 @@ export class AgentSessionWrapper {
       ...event,
       message: { ...(message as Record<string, unknown>), channelSource: this.externalTurnChannel },
     };
+  }
+
+  /** Set or replace the goal. An empty text clears it. */
+  setGoal(input: { text: string; maxRounds?: number; autoReview?: boolean }): GoalState | null {
+    const text = input.text.trim();
+    if (!text) {
+      this.clearGoal("stopped");
+      return null;
+    }
+    const previous = this.goal;
+    this.goal = {
+      text,
+      maxRounds: clampMaxRounds(input.maxRounds ?? previous?.maxRounds),
+      rounds: 0,
+      autoReview: input.autoReview ?? previous?.autoReview ?? false,
+      status: "active",
+      updatedAt: new Date().toISOString(),
+    };
+    this.persistGoal();
+    this.emitGoal();
+    return this.goal;
+  }
+
+  clearGoal(status: GoalState["status"] = "stopped"): void {
+    if (!this.goal) return;
+    this.goal = { ...this.goal, status, updatedAt: new Date().toISOString() };
+    this.persistGoal();
+    this.emitGoal();
+  }
+
+  goalSnapshot(): GoalState | null {
+    return this.goal;
+  }
+
+  private persistGoal(): void {
+    try {
+      this.inner.sessionManager.appendCustomEntry(GOAL_ENTRY_TYPE, this.goal ?? {});
+    } catch (error) {
+      console.error("[pi-desktop] could not persist goal:", error);
+    }
+  }
+
+  private emitGoal(): void {
+    this.emit({ type: "goal_state", state: this.goal } as unknown as AgentEvent);
+  }
+
+  /**
+   * Ask a tool-less reviewer whether the last answer met the goal, and continue
+   * the session when it did not. Off unless the user turned it on: it spends
+   * tokens after every turn.
+   */
+  private async reviewGoalIfNeeded(): Promise<void> {
+    const goal = this.goal;
+    if (!goal || !goalIsRunning(goal) || !goal.autoReview || this.goalReviewRunning) return;
+    this.goalReviewRunning = true;
+    try {
+      const entries = this.inner.sessionManager.getEntries();
+      const finalText = latestAssistantText(entries);
+      const diffStat = await this.diffStat();
+      const result = await runSubagent({
+        agent: {
+          name: "goal-reviewer",
+          description: "Reviews whether a goal was met",
+          systemPrompt: REVIEWER_SYSTEM_PROMPT,
+          tools: [],
+          source: "user",
+          filePath: "",
+        },
+        task: buildReviewTask({ goal: goal.text, finalText, ...(diffStat ? { diffStat } : {}) }),
+        cwd: this.cwd,
+      });
+      const verdict = parseGoalVerdict(result.text ?? "");
+      const next = nextGoalState(goal, verdict);
+      this.goal = next;
+      this.persistGoal();
+      this.emitGoal();
+      if (next.status === "active") {
+        await this.send({ type: "prompt", message: buildContinuationPrompt(next, verdict.reason) });
+      }
+    } catch (error) {
+      console.error("[pi-desktop] goal review failed:", error);
+    } finally {
+      this.goalReviewRunning = false;
+    }
+  }
+
+  private async diffStat(): Promise<string | undefined> {
+    try {
+      const { execFile } = await import("node:child_process");
+      const { promisify } = await import("node:util");
+      const run = promisify(execFile);
+      const { stdout } = await run("git", ["diff", "--stat"], { cwd: this.cwd, maxBuffer: 1024 * 1024 });
+      return stdout.trim() || undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   setForceEmptySystemPrompt(force: boolean): void {
@@ -1248,3 +1362,26 @@ export class AgentSessionWrapper {
 // ============================================================================
 // Session registry
 // ============================================================================
+
+/** Last assistant text in the transcript, which is what the reviewer judges. */
+function latestAssistantText(entries: readonly unknown[]): string {
+  for (let index = entries.length - 1; index >= 0; index -= 1) {
+    const entry = entries[index] as { type?: unknown; message?: { role?: unknown; content?: unknown } };
+    const message = entry?.message;
+    if (!message || message.role !== "assistant") continue;
+    const content = message.content;
+    if (typeof content === "string") return content;
+    if (Array.isArray(content)) {
+      const text = content
+        .map((block) =>
+          block && typeof block === "object" && (block as { type?: unknown }).type === "text"
+            ? ((block as { text?: unknown }).text ?? "")
+            : "",
+        )
+        .filter((part): part is string => typeof part === "string" && part.length > 0)
+        .join("\n");
+      if (text) return text;
+    }
+  }
+  return "";
+}

@@ -24,6 +24,7 @@ import { ChatNavigator, type ChatNavigatorQuestion } from "./ChatNavigator";
 import { FoldedHistoryRow } from "./FoldedHistoryRow";
 import { ChatTodoBlock } from "./ChatTodoBlock";
 import { RunningSubagentsBar } from "./RunningSubagentsBar";
+import { GoalBar } from "./GoalBar";
 import { MessageView } from "./MessageView";
 import { SessionProfiler } from "./SessionProfiler";
 import { ChatInput, type ChatInputHandle } from "./ChatInput";
@@ -483,6 +484,7 @@ export function ChatWindow({
     >
       <SessionTodoStrip cwd={messageCwd ?? null} sessionId={session?.id ?? null} refreshKey={contextMapRefreshKey} />
       <RunningSubagentsBar />
+      <GoalBar sessionId={session?.id ?? null} enabled={!isNew} />
       <ComposerScmBar
         cwd={messageCwd ?? null}
         refreshKey={contextMapRefreshKey}

@@ -1,3 +1,4 @@
+import type { GoalState } from "../shared/api-types";
 import type {
   AgentCommand,
   AgentInfo,
@@ -426,6 +427,20 @@ export interface Api {
   "agents.setModel": {
     params: { filePath: string; model?: string | null };
     result: { ok: true };
+  };
+
+  // Goal mode: one objective per session, reviewed after each turn when enabled.
+  "goal.get": {
+    params: { sessionId: string };
+    result: { state: GoalState | null };
+  };
+  "goal.set": {
+    params: { sessionId: string; text: string; maxRounds?: number; autoReview?: boolean };
+    result: { state: GoalState | null };
+  };
+  "goal.clear": {
+    params: { sessionId: string };
+    result: { state: GoalState | null };
   };
 
   // Presets: the portable half of a setup (agents, MCP endpoints, gate rules).

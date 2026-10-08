@@ -313,3 +313,17 @@ export interface PluginActionParams {
   scope?: PluginScope;
   cwd: string;
 }
+
+/**
+ * Goal mode state. Lives in the shared API types (not the host module) because
+ * both the contract and the renderer need it.
+ */
+export interface GoalState {
+  text: string;
+  maxRounds: number;
+  rounds: number;
+  autoReview: boolean;
+  status: "active" | "met" | "exhausted" | "stopped";
+  lastReason?: string;
+  updatedAt: string;
+}
