@@ -21,6 +21,7 @@ import { SessionTodoStrip } from "./SessionTodoStrip";
 import { WorktreeSwitcher } from "./session-sidebar/WorktreeSwitcher";
 import type { WorktreesController } from "./session-sidebar/useWorktrees";
 import { ChatNavigator, type ChatNavigatorQuestion } from "./ChatNavigator";
+import { FoldedHistoryRow } from "./FoldedHistoryRow";
 import { ChatTodoBlock } from "./ChatTodoBlock";
 import { MessageView } from "./MessageView";
 import { SessionProfiler } from "./SessionProfiler";
@@ -70,6 +71,10 @@ function phaseLabel(phase: AgentPhase, t: (key: string, fallback: string) => str
   if (phase?.kind === "running_command") return t("runningCommand", "Running command…");
   return t("thinking", "Thinking…");
 }
+
+/** Fold older turns only once a conversation is long enough to matter. */
+const FOLD_HISTORY_MIN_MESSAGES = 50;
+const FOLD_HISTORY_KEEP_RECENT = 16;
 
 const CHAT_COLUMN_PADDING = 16;
 const CHAT_INPUT_RIGHT_PADDING = CHAT_COLUMN_PADDING;
@@ -290,6 +295,8 @@ export function ChatWindow({
     handlePromptWithStreamingBehavior,
     handleAbortCompaction,
     handleRecallQueue,
+    handleRemoveQueued,
+    handleRecallQueued,
     handleBuiltinSlashCommand,
     handleToolPresetChange,
     handleThinkingLevelChange,
@@ -395,6 +402,37 @@ export function ChatWindow({
   // tiles honest without polling while the panel is closed.
   const contextMapRefreshKey = messages.length + entryIds.length;
 
+  // Long conversations open at the end: everything but the last few turns is one
+  // summary row until you expand it. Nothing folded is rendered, so the cost of a
+  // 500-message session is the same as a short one.
+  const [historyExpanded, setHistoryExpanded] = useState(false);
+  const foldCount =
+    !historyExpanded && messages.length > FOLD_HISTORY_MIN_MESSAGES
+      ? Math.max(0, messages.length - FOLD_HISTORY_KEEP_RECENT)
+      : 0;
+  const foldedSummary = useMemo(() => {
+    const folded = messages.slice(0, foldCount);
+    let thinking = 0;
+    let tools = 0;
+    let images = 0;
+    let preview = "";
+    for (const message of folded) {
+      const content = (message as { content?: unknown }).content;
+      if (!Array.isArray(content)) {
+        if (typeof content === "string" && !preview) preview = content.split("\n")[0].slice(0, 96);
+        continue;
+      }
+      for (const block of content) {
+        const typed = block as { type?: string; text?: string };
+        if (typed.type === "thinking") thinking += 1;
+        if (typed.type === "tool_use" || typed.type === "tool-call") tools += 1;
+        if (typed.type === "image") images += 1;
+        if (typed.type === "text" && typed.text && !preview) preview = typed.text.split("\n")[0].slice(0, 96);
+      }
+    }
+    return { thinking, tools, images, preview };
+  }, [foldCount, messages]);
+
   // Questions for the jump rail: user turns that actually carry text.
   const questionTextOf = (message: AgentMessage): string => {
     const content = (message as { content?: unknown }).content;
@@ -492,6 +530,8 @@ export function ChatWindow({
       retryInfo={retryInfo}
       queuedMessages={queuedMessages}
       onRecallQueue={handleRecallQueue}
+      onRemoveQueued={handleRemoveQueued}
+      onRecallQueued={handleRecallQueued}
       slashCommands={slashCommands}
       slashCommandsLoading={slashCommandsLoading}
       onLoadSlashCommands={loadSlashCommands}
@@ -811,6 +851,19 @@ export function ChatWindow({
                     };
 
                     const rendered: ReactNode[] = [];
+                    if (foldCount > 0) {
+                      rendered.push(
+                        <FoldedHistoryRow
+                          key="folded-history"
+                          messages={foldCount}
+                          thinking={foldedSummary.thinking}
+                          tools={foldedSummary.tools}
+                          images={foldedSummary.images}
+                          preview={foldedSummary.preview}
+                          onExpand={() => setHistoryExpanded(true)}
+                        />,
+                      );
+                    }
                     // Compaction summaries replace every older turn, so they stay
                     // pinned above the paginated history instead of being buried
                     // behind "load earlier messages".
@@ -821,7 +874,7 @@ export function ChatWindow({
                         attachRef: false,
                       }),
                     );
-                    for (let idx = 0; idx < messages.length;) {
+                    for (let idx = foldCount; idx < messages.length;) {
                       const msg = messages[idx];
                       if (msg.role !== "user") {
                         rendered.push(renderMessage(idx));

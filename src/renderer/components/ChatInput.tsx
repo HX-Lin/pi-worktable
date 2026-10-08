@@ -82,6 +82,10 @@ interface Props {
   retryInfo?: { attempt: number; maxAttempts: number; errorMessage?: string } | null;
   queuedMessages?: QueuedMessages | null;
   onRecallQueue?: () => void;
+  /** Remove one queued message; the rest keep their order and mode. */
+  onRemoveQueued?: (kind: "steering" | "followUp", index: number) => void;
+  /** Pull one queued message back into the box, leaving the rest queued. */
+  onRecallQueued?: (kind: "steering" | "followUp", index: number) => void;
   slashCommands?: SlashCommandInfo[];
   slashCommandsLoading?: boolean;
   onLoadSlashCommands?: () => Promise<SlashCommandInfo[]> | SlashCommandInfo[];
@@ -187,7 +191,17 @@ function revokeImagePreview(image: AttachedImage): void {
   }
 }
 
-function QueuedMessageRow({ kind, text }: { kind: "steer" | "follow-up"; text: string }) {
+function QueuedMessageRow({
+  kind,
+  text,
+  onRemove,
+  onRecall,
+}: {
+  kind: "steer" | "follow-up";
+  text: string;
+  onRemove?: () => void;
+  onRecall?: () => void;
+}) {
   const { t } = useI18n();
   return (
     <div
@@ -215,10 +229,51 @@ function QueuedMessageRow({ kind, text }: { kind: "steer" | "follow-up"; text: s
       >
         {kind === "steer" ? t("steer", "Steer") : t("followUp", "Follow-up")}
       </span>
-      <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{text}</span>
+      <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        {text}
+      </span>
+      {onRecall && (
+        <button
+          type="button"
+          onClick={onRecall}
+          title={t("recallToInput", "Recall to input")}
+          aria-label={t("recallToInput", "Recall to input")}
+          style={queuedRowButtonStyle}
+        >
+          ↩
+        </button>
+      )}
+      {onRemove && (
+        <button
+          type="button"
+          onClick={onRemove}
+          title={t("removeQueued", "Remove from queue")}
+          aria-label={t("removeQueued", "Remove from queue")}
+          style={queuedRowButtonStyle}
+        >
+          ✕
+        </button>
+      )}
     </div>
   );
 }
+
+const queuedRowButtonStyle: React.CSSProperties = {
+  flexShrink: 0,
+  width: 20,
+  height: 20,
+  padding: 0,
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  background: "transparent",
+  border: "none",
+  borderRadius: "var(--radius-sm)",
+  color: "var(--text-dim)",
+  cursor: "pointer",
+  fontSize: 12,
+  lineHeight: 1,
+};
 
 export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
   {
@@ -252,6 +307,8 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
     thinkingLevelMap,
     retryInfo,
     queuedMessages,
+    onRemoveQueued,
+    onRecallQueued,
     onRecallQueue,
     slashCommands,
     slashCommandsLoading,
@@ -1198,10 +1255,22 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
               )}
             </div>
             {queuedMessages?.steering.map((text, i) => (
-              <QueuedMessageRow key={`steer-${i}`} kind="steer" text={text} />
+              <QueuedMessageRow
+                key={`steer-${i}`}
+                kind="steer"
+                text={text}
+                onRemove={onRemoveQueued ? () => onRemoveQueued("steering", i) : undefined}
+                onRecall={onRecallQueued ? () => onRecallQueued("steering", i) : undefined}
+              />
             ))}
             {queuedMessages?.followUp.map((text, i) => (
-              <QueuedMessageRow key={`followup-${i}`} kind="follow-up" text={text} />
+              <QueuedMessageRow
+                key={`followup-${i}`}
+                kind="follow-up"
+                text={text}
+                onRemove={onRemoveQueued ? () => onRemoveQueued("followUp", i) : undefined}
+                onRecall={onRecallQueued ? () => onRecallQueued("followUp", i) : undefined}
+              />
             ))}
           </div>
         )}

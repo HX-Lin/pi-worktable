@@ -338,6 +338,28 @@ type SlashCommandsResponse = {
   commands?: SlashCommandInfo[];
 };
 
+/** A queued message plus where it came from, so single-item edits keep order. */
+export type QueuedKind = "steering" | "followUp";
+interface QueuedEntry {
+  text: string;
+  kind: QueuedKind;
+  index: number;
+}
+
+function entriesFromQueue(queue: { steering: string[]; followUp: string[] }): QueuedEntry[] {
+  return [
+    ...queue.steering.map((text, index) => ({ text, kind: "steering" as const, index })),
+    ...queue.followUp.map((text, index) => ({ text, kind: "followUp" as const, index })),
+  ];
+}
+
+function queuedMessagesFrom(entries: QueuedEntry[]): QueuedMessages {
+  return {
+    steering: entries.filter((entry) => entry.kind === "steering").map((entry) => entry.text),
+    followUp: entries.filter((entry) => entry.kind === "followUp").map((entry) => entry.text),
+  };
+}
+
 export function useAgentSession(opts: UseAgentSessionOptions) {
   const {
     session,
@@ -1744,6 +1766,62 @@ export function useAgentSession(opts: UseAgentSessionOptions) {
     }
   }, [opts.chatInputRef, addNotice]);
 
+  /**
+   * pi only exposes "clear the queue", so removing or recalling a single queued
+   * message means draining, then re-queueing the rest in order with the mode each
+   * one had. The queue is empty for a moment; the order the model sees is intact.
+   */
+  const drainQueue = useCallback(async (): Promise<{ steering: string[]; followUp: string[] }> => {
+    const sid = sessionIdRef.current;
+    if (!sid) return { steering: [], followUp: [] };
+    const result = await sendAgentCommand<{ steering?: string[]; followUp?: string[] }>(sid, { type: "clear_queue" });
+    return { steering: result?.steering ?? [], followUp: result?.followUp ?? [] };
+  }, []);
+
+  const requeue = useCallback(async (items: QueuedEntry[]) => {
+    const sid = sessionIdRef.current;
+    if (!sid) return;
+    for (const item of items) {
+      await sendAgentCommand(sid, {
+        type: item.kind === "steering" ? "steer" : "follow_up",
+        message: item.text,
+      });
+    }
+  }, []);
+
+  const handleRemoveQueued = useCallback(
+    async (kind: QueuedKind, index: number) => {
+      try {
+        const remaining = entriesFromQueue(await drainQueue()).filter(
+          (entry) => !(entry.kind === kind && entry.index === index),
+        );
+        await requeue(remaining);
+        setQueuedMessages(queuedMessagesFrom(remaining));
+      } catch (e) {
+        console.error("Failed to remove queued message:", e);
+        addNotice({ type: "error", message: "Failed to remove that queued message" });
+      }
+    },
+    [addNotice, drainQueue, requeue],
+  );
+
+  const handleRecallQueued = useCallback(
+    async (kind: QueuedKind, index: number) => {
+      try {
+        const all = entriesFromQueue(await drainQueue());
+        const target = all.find((entry) => entry.kind === kind && entry.index === index);
+        const remaining = all.filter((entry) => entry !== target);
+        await requeue(remaining);
+        setQueuedMessages(queuedMessagesFrom(remaining));
+        if (target) opts.chatInputRef?.current?.prependText(target.text);
+      } catch (e) {
+        console.error("Failed to recall queued message:", e);
+        addNotice({ type: "error", message: "Failed to recall that queued message" });
+      }
+    },
+    [addNotice, drainQueue, opts.chatInputRef, requeue],
+  );
+
   const handleThinkingLevelChange = useCallback(async (level: ThinkingLevelOption) => {
     setThinkingLevel(level);
     if (level === "auto") return; // "auto" leaves pi's current setting untouched
@@ -2116,6 +2194,8 @@ export function useAgentSession(opts: UseAgentSessionOptions) {
     handleSteer,
     handleFollowUp,
     handlePromptWithStreamingBehavior,
+    handleRemoveQueued,
+    handleRecallQueued,
     handleAbortCompaction,
     handleRecallQueue,
     handleBuiltinSlashCommand,
