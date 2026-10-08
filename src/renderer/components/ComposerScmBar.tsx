@@ -113,7 +113,7 @@ export function ComposerScmBar({ cwd, refreshKey = 0, worktrees }: Props) {
     borderRadius: "var(--radius-sm)",
     border: "1px solid var(--border)",
     background: "var(--bg-panel)",
-    color: "var(--text-muted)",
+    color: "var(--control-strong-fg)",
     cursor: "pointer",
     flexShrink: 0,
   };

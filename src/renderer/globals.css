@@ -131,6 +131,9 @@
   --thinking-bg: color-mix(in srgb, var(--panel-color) var(--card-alpha), transparent);
   --thinking-border: var(--border-color);
   --control-fg: var(--text-muted-color);
+  /* 输入框附近的控件（模型/思考/权限/工具/仓库按钮）在透明窗口里直接浮在壁纸上，
+     壁纸亮部会吃掉浅灰字，所以 niri 主题下这几个用近黑字。 */
+  --control-strong-fg: var(--text-muted-color);
   --control-bg: var(--bg-panel);
   --control-border: var(--border-color);
 
@@ -242,6 +245,7 @@ html.niri {
   /* 选中态在深色主题下是橙色低透，不能跟着 chip 的白色 9% 走 */
   --bg-selected: rgba(251, 146, 60, 0.24);
   --menu-bg: #1a1d27;
+  --control-strong-fg: #0f1218;
 }
 
 /* Readability on translucent panels without raising opacity: a soft dark
