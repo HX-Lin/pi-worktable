@@ -21,6 +21,7 @@ import { modelHandlers } from "./handlers/models";
 import { pluginHandlers } from "./handlers/plugins";
 import { ensureSessionEvents } from "./handlers/session-events";
 import { sessionHandlers } from "./handlers/sessions";
+import { taskHandlers } from "./handlers/tasks";
 import { systemHandlers } from "./handlers/system";
 import type { HandlerContext } from "./handlers/types";
 
@@ -41,7 +42,8 @@ type ProvidedMethods =
   | keyof ReturnType<typeof agentDefinitionHandlers>
   | keyof ReturnType<typeof channelHandlers>
   | keyof ReturnType<typeof modelHandlers>
-  | keyof ReturnType<typeof pluginHandlers>;
+  | keyof ReturnType<typeof pluginHandlers>
+  | keyof ReturnType<typeof taskHandlers>;
 
 type MissingMethods = Exclude<ApiMethod, ProvidedMethods>;
 type AssertNever<T extends never> = T;
@@ -91,6 +93,7 @@ export function registerHandlers(server: RpcServer): () => Promise<void> {
       channelHandlers(ctx),
       modelHandlers(ctx),
       pluginHandlers(ctx),
+      taskHandlers(ctx),
     ),
   );
 

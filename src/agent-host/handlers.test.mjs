@@ -133,6 +133,30 @@ test("environment credentials are never reported as app-managed provider connect
   assert.deepEqual(describeApiKeyProviderAuth({ configured: true, source: "runtime" }), { configured: true });
 });
 
+test("task handlers drive the project board", async (t) => {
+  const project = mkdtempSync(path.join(tmpdir(), "pi-task-board-"));
+  t.after(() => rmSync(project, { recursive: true, force: true }));
+
+  const { handlers } = await captureHandlers();
+  assert.deepEqual(await handlers["tasks.list"]({ cwd: project }), { tasks: [] });
+
+  const { task } = await handlers["tasks.add"]({ cwd: project, title: "Board it" });
+  assert.equal(task.status, "todo");
+  assert.equal((await handlers["tasks.list"]({ cwd: project })).tasks.length, 1);
+
+  const updated = await handlers["tasks.update"]({ cwd: project, id: task.id, status: "done" });
+  assert.equal(updated.task.status, "done");
+
+  assert.deepEqual(await handlers["tasks.remove"]({ cwd: project, id: task.id }), { ok: true });
+  assert.deepEqual((await handlers["tasks.list"]({ cwd: project })).tasks, []);
+
+  await assert.rejects(
+    async () => handlers["tasks.update"]({ cwd: project, id: "missing", status: "done" }),
+    /not found/i,
+  );
+  await assert.rejects(async () => handlers["tasks.add"]({ cwd: project, title: "  " }), /title/);
+});
+
 test("agents.list and agents.setModel read and rewrite agent definitions", async (t) => {
   const agentsDir = path.join(process.env.PI_CODING_AGENT_DIR, "agents");
   mkdirSync(agentsDir, { recursive: true });

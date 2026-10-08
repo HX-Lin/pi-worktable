@@ -17,6 +17,7 @@ import { JEV_COMPACTION_EXTENSION } from "./jev/compaction/hook";
 import { JEV_GATE_EXTENSION } from "./jev/gate/extension";
 import { JEV_ROUTING_EXTENSION } from "./jev/routing/extension";
 import { SUBAGENT_EXTENSION } from "./subagent/extension";
+import { TASKS_EXTENSION } from "./tasks/extension";
 
 export const BUILTIN_PROVIDER_EXTENSIONS: InlineExtension[] = [JEV_PROVIDER_EXTENSION];
 
@@ -49,7 +50,11 @@ export const BASE_SESSION_EXTENSIONS: InlineExtension[] = [
 ];
 
 /** Every inline extension the app injects into agent sessions. */
-export const BUILTIN_SESSION_EXTENSIONS: InlineExtension[] = [...BASE_SESSION_EXTENSIONS, SUBAGENT_EXTENSION];
+export const BUILTIN_SESSION_EXTENSIONS: InlineExtension[] = [
+  ...BASE_SESSION_EXTENSIONS,
+  SUBAGENT_EXTENSION,
+  TASKS_EXTENSION,
+];
 
 /** Register app-bundled providers on a host-level runtime used by auth APIs. */
 export async function registerBuiltinProviders(modelRuntime: ModelRuntime): Promise<void> {

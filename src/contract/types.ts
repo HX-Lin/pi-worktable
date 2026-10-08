@@ -178,6 +178,18 @@ export interface ProviderStatus {
   [key: string]: unknown;
 }
 
+export type TaskStatus = "todo" | "doing" | "blocked" | "done";
+
+export interface ProjectTask {
+  id: string;
+  title: string;
+  notes?: string;
+  status: TaskStatus;
+  createdAt: string;
+  updatedAt: string;
+  sessionId?: string;
+}
+
 export interface AgentInfo {
   name: string;
   description: string;

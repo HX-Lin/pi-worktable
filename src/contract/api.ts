@@ -1,6 +1,8 @@
 import type {
   AgentCommand,
   AgentInfo,
+  ProjectTask,
+  TaskStatus,
   AgentEvent,
   CredentialMutationResult,
   DirEntry,
@@ -343,6 +345,18 @@ export interface Api {
     params: { provider: string };
     result: { ok: true };
   };
+
+  // Project task board (.pi/tasks.json)
+  "tasks.list": { params: { cwd: string }; result: { tasks: ProjectTask[] } };
+  "tasks.add": {
+    params: { cwd: string; title: string; notes?: string; status?: TaskStatus };
+    result: { task: ProjectTask };
+  };
+  "tasks.update": {
+    params: { cwd: string; id: string; title?: string; notes?: string; status?: TaskStatus };
+    result: { task: ProjectTask };
+  };
+  "tasks.remove": { params: { cwd: string; id: string }; result: { ok: true } };
 
   // Agent definitions (subagent tool)
   "agents.list": {

@@ -13,6 +13,7 @@ import {
 import { SessionSidebar } from "./SessionSidebar";
 import { ChatWindow } from "./ChatWindow";
 import { FileExplorer } from "./FileExplorer";
+import { TaskBoard } from "./TaskBoard";
 import { FileViewer } from "./FileViewer";
 import { WindowControls } from "./WindowControls";
 import { TabBar, type Tab } from "./TabBar";
@@ -46,6 +47,7 @@ import type { ChannelsSnapshot } from "@shared/channel-types";
 
 type SessionCopyField = "file" | "id";
 const EXPLORER_TAB_ID = "explorer";
+const TASKS_TAB_ID = "tasks";
 const EMPTY_CHANNELS: ChannelsSnapshot = { accounts: [], statuses: [], pairings: [], bindings: [], activities: [] };
 
 function initialRightPanelPreferredWidth(): number {
@@ -1682,6 +1684,44 @@ export function AppShell() {
               </svg>
               Explorer
             </button>
+            <button
+              type="button"
+              onClick={() => setActiveFileTabId(TASKS_TAB_ID)}
+              aria-pressed={activeFileTabId === TASKS_TAB_ID}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                height: 36,
+                padding: "0 12px",
+                flexShrink: 0,
+                background: activeFileTabId === TASKS_TAB_ID ? "var(--bg)" : "var(--bg-panel)",
+                border: "none",
+                borderRight: "1px solid var(--border)",
+                color: activeFileTabId === TASKS_TAB_ID ? "var(--text)" : "var(--text-muted)",
+                cursor: "pointer",
+                fontSize: 12,
+                fontWeight: activeFileTabId === TASKS_TAB_ID ? 500 : 400,
+              }}
+            >
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M9 6h11M9 12h11M9 18h11" />
+                <path d="M4 6l1.5 1.5L8 5" />
+                <path d="M4 12l1.5 1.5L8 11" />
+                <path d="M4 18l1.5 1.5L8 17" />
+              </svg>
+              {t("tasksTitle", "Tasks")}
+            </button>
             <div style={{ flex: 1, overflow: "hidden", display: "flex", alignItems: "center", minWidth: 0 }}>
               <div style={{ flex: 1, overflow: "hidden", minWidth: 0 }}>
                 <TabBar
@@ -1743,6 +1783,9 @@ export function AppShell() {
           {/* Explorer / Terminal / file content - mounted persistently so a
               running terminal survives tab switches (display toggled). */}
           <div style={{ flex: 1, overflow: "hidden" }}>
+            <div style={{ height: "100%", display: activeFileTabId === TASKS_TAB_ID ? "block" : "none" }}>
+              <TaskBoard cwd={explorerCwd} />
+            </div>
             <div style={{ height: "100%", display: activeFileTabId === EXPLORER_TAB_ID ? "block" : "none" }}>
               {explorerCwd ? (
                 <div style={{ height: "100%", overflowY: "auto", overflowX: "hidden", paddingTop: 4 }}>
@@ -1771,7 +1814,7 @@ export function AppShell() {
             <div
               style={{
                 height: "100%",
-                display: activeFileTabId === EXPLORER_TAB_ID ? "none" : "block",
+                display: activeFileTabId === EXPLORER_TAB_ID || activeFileTabId === TASKS_TAB_ID ? "none" : "block",
               }}
             >
               {activeFileTab?.filePath ? (

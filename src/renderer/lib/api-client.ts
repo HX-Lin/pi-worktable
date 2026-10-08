@@ -5,6 +5,7 @@
 import { createRpcClient, type PiRpc } from "@contract/rpc";
 import type { ApiMethod, ApiParams, ApiResult, StreamTopic, Streams } from "@contract/api";
 import type { ContextFoldCommand } from "@shared/api-types";
+import type { ProjectTask } from "@contract/types";
 
 let rpc: PiRpc | null = null;
 let connectPromise: Promise<PiRpc> | null = null;
@@ -351,6 +352,30 @@ export async function subscribeRunning(on: (ev: Streams["agent.running"]) => voi
 
 export async function subscribeSessionsChanged(on: (ev: Streams["sessions.changed"]) => void) {
   return subscribe("sessions.changed", "*", on);
+}
+
+// ---------------------------------------------------------------------------
+// Project task board
+// ---------------------------------------------------------------------------
+
+export async function listTasks(cwd: string) {
+  return call("tasks.list", { cwd });
+}
+
+export async function addTask(cwd: string, title: string, notes?: string) {
+  return call("tasks.add", { cwd, title, ...(notes ? { notes } : {}) });
+}
+
+export async function updateTask(
+  cwd: string,
+  id: string,
+  patch: { title?: string; notes?: string; status?: ProjectTask["status"] },
+) {
+  return call("tasks.update", { cwd, id, ...patch });
+}
+
+export async function removeTask(cwd: string, id: string) {
+  return call("tasks.remove", { cwd, id });
 }
 
 export async function subscribeAuthLogin(provider: string, on: (ev: Streams["auth.login"]) => void) {
