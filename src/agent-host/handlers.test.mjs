@@ -133,6 +133,38 @@ test("environment credentials are never reported as app-managed provider connect
   assert.deepEqual(describeApiKeyProviderAuth({ configured: true, source: "runtime" }), { configured: true });
 });
 
+test("agents.list and agents.setModel read and rewrite agent definitions", async (t) => {
+  const agentsDir = path.join(process.env.PI_CODING_AGENT_DIR, "agents");
+  mkdirSync(agentsDir, { recursive: true });
+  const agentFile = path.join(agentsDir, "scout.md");
+  writeFileSync(agentFile, "---\nname: scout\ndescription: Fast recon\ntools: read\n---\n\nYou are a scout.\n");
+  t.after(() => rmSync(agentFile, { force: true }));
+
+  const { handlers } = await captureHandlers();
+  const listed = await handlers["agents.list"]({ scope: "user" });
+  const scout = listed.agents.find((agent) => agent.name === "scout");
+  assert.equal(scout?.source, "user");
+  assert.deepEqual(scout?.tools, ["read"]);
+  assert.equal(scout?.model, undefined);
+
+  assert.deepEqual(await handlers["agents.setModel"]({ filePath: agentFile, model: "openai/gpt-5" }), { ok: true });
+  const after = readFileSync(agentFile, "utf8");
+  assert.match(after, /model: openai\/gpt-5/);
+  assert.match(after, /You are a scout\./);
+
+  assert.deepEqual(await handlers["agents.setModel"]({ filePath: agentFile, model: null }), { ok: true });
+  assert.equal(readFileSync(agentFile, "utf8").includes("model:"), false);
+
+  // A file the subagent tool would not load may not be edited.
+  const stranger = path.join(process.env.PI_CODING_AGENT_DIR, "not-an-agent.md");
+  writeFileSync(stranger, "---\nname: x\ndescription: y\n---\n");
+  t.after(() => rmSync(stranger, { force: true }));
+  await assert.rejects(
+    async () => handlers["agents.setModel"]({ filePath: stranger, model: "a/b" }),
+    /Not an agent definition/,
+  );
+});
+
 test("file, git, worktree, plugin, and system handlers return contract-shaped results", async (t) => {
   const base = mkdtempSync(path.join(tmpdir(), "pi-handler-test-"));
   t.after(() => rmSync(base, { recursive: true, force: true }));

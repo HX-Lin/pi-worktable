@@ -2,7 +2,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { RpcError } from "../../contract/types";
 import type { AgentInfo } from "../../contract/types";
 import type { ApiHandlerSet } from "../../contract/rpc";
-import { discoverAgents, type AgentConfig, type AgentScope } from "../subagent/agents";
+import path from "node:path";
+import { agentDirectories, discoverAgents, loadAgentFile, type AgentConfig, type AgentScope } from "../subagent/agents";
 import { setFrontmatterModel } from "../subagent/frontmatter";
 import { writeFileAtomic } from "../json-file";
 import type { HandlerContext } from "./types";
@@ -35,13 +36,17 @@ export function agentHandlers(_ctx: HandlerContext) {
       if (!filePath || !filePath.endsWith(".md")) {
         throw new RpcError({ code: "BAD_REQUEST", message: "An agent markdown file is required" });
       }
-      // Only a definition the tool would actually load may be edited.
-      const known = discoverAgents(process.cwd(), "both").agents.some((agent) => agent.filePath === filePath);
-      if (!known) {
-        throw new RpcError({ code: "FORBIDDEN", message: "Not an agent definition" });
-      }
       if (!existsSync(filePath)) {
         throw new RpcError({ code: "NOT_FOUND", message: "Agent file not found" });
+      }
+      // Only a file the subagent tool would load may be edited: it must sit in an
+      // agents directory and parse as a definition.
+      const resolved = path.resolve(filePath);
+      const inAgentsDir = agentDirectories(process.cwd(), "both").some((dir) =>
+        resolved.startsWith(path.resolve(dir) + path.sep),
+      );
+      if (!inAgentsDir || !loadAgentFile(filePath)) {
+        throw new RpcError({ code: "FORBIDDEN", message: "Not an agent definition" });
       }
 
       const content = readFileSync(filePath, "utf8");

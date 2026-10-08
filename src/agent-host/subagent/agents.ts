@@ -51,6 +51,27 @@ function parseToolList(value: unknown): string[] | undefined {
   return tools.length > 0 ? tools : undefined;
 }
 
+/** Parse one agent markdown file, or null when it is not a valid definition. */
+export function loadAgentFile(filePath: string, source: "user" | "project" = "user"): AgentConfig | null {
+  let content: string;
+  try {
+    content = fs.readFileSync(filePath, "utf-8");
+  } catch {
+    return null;
+  }
+  const { frontmatter, body } = parseFrontmatter<AgentFrontmatter>(content);
+  if (typeof frontmatter.name !== "string" || typeof frontmatter.description !== "string") return null;
+  return {
+    name: frontmatter.name,
+    description: frontmatter.description,
+    tools: parseToolList(frontmatter.tools),
+    model: typeof frontmatter.model === "string" ? frontmatter.model : undefined,
+    systemPrompt: body,
+    source,
+    filePath,
+  };
+}
+
 function loadAgentsFromDir(dir: string, source: "user" | "project"): AgentConfig[] {
   const agents: AgentConfig[] = [];
   if (!fs.existsSync(dir)) return agents;
@@ -66,26 +87,8 @@ function loadAgentsFromDir(dir: string, source: "user" | "project"): AgentConfig
     if (!entry.name.endsWith(".md")) continue;
     if (!entry.isFile() && !entry.isSymbolicLink()) continue;
 
-    const filePath = path.join(dir, entry.name);
-    let content: string;
-    try {
-      content = fs.readFileSync(filePath, "utf-8");
-    } catch {
-      continue;
-    }
-
-    const { frontmatter, body } = parseFrontmatter<AgentFrontmatter>(content);
-    if (typeof frontmatter.name !== "string" || typeof frontmatter.description !== "string") continue;
-
-    agents.push({
-      name: frontmatter.name,
-      description: frontmatter.description,
-      tools: parseToolList(frontmatter.tools),
-      model: typeof frontmatter.model === "string" ? frontmatter.model : undefined,
-      systemPrompt: body,
-      source,
-      filePath,
-    });
+    const agent = loadAgentFile(path.join(dir, entry.name), source);
+    if (agent) agents.push(agent);
   }
 
   return agents;
@@ -110,6 +113,15 @@ function findNearestProjectAgentsDir(cwd: string): string | null {
     if (parentDir === currentDir) return null;
     currentDir = parentDir;
   }
+}
+
+/** The directories an agent definition may live in, for a given scope. */
+export function agentDirectories(cwd: string, scope: AgentScope): string[] {
+  const dirs: string[] = [];
+  if (scope !== "project") dirs.push(path.join(getAgentDir(), "agents"));
+  const projectDir = scope === "user" ? null : findNearestProjectAgentsDir(cwd);
+  if (projectDir) dirs.push(projectDir);
+  return dirs;
 }
 
 export function discoverAgents(cwd: string, scope: AgentScope): AgentDiscoveryResult {
