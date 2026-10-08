@@ -247,17 +247,6 @@ export function sourceFacts(root, files) {
   };
 }
 
-/** A facts view for every file under a directory (one level or recursive). */
-export function sourceFactsTree(root, directory) {
-  const walk = (dir) =>
-    fs.readdirSync(path.join(root, dir), { withFileTypes: true }).flatMap((entry) => {
-      const relative = path.join(dir, entry.name);
-      if (entry.isDirectory()) return walk(relative);
-      return entry.name.endsWith(".ts") || entry.name.endsWith(".tsx") ? [relative] : [];
-    });
-  return sourceFacts(root, walk(directory));
-}
-
 /**
  * Facts for configuration files that are not TypeScript: YAML and JSON are
  * parsed, so a check can assert the shape rather than a line of text.

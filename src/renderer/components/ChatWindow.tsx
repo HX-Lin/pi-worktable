@@ -15,6 +15,7 @@ import {
   isAssistantFailure,
   splitFinalAssistantBlocks,
 } from "@/lib/message-display";
+import { ContextMapPanel } from "./ContextMapPanel";
 import { MessageView } from "./MessageView";
 import { SessionProfiler } from "./SessionProfiler";
 import { ChatInput, type ChatInputHandle } from "./ChatInput";
@@ -377,6 +378,11 @@ export function ChatWindow({
     return () => observer.disconnect();
   }, [hasOlder, loadOlder, loadingOlder, messages.length, scrollContainerRef]);
 
+  const [contextMapOpen, setContextMapOpen] = useState(false);
+  // The map reads host state on demand; re-reading after each turn keeps the
+  // tiles honest without polling while the panel is closed.
+  const contextMapRefreshKey = messages.length + entryIds.length;
+
   const isEmptyNew = isNew && messages.length === 0 && !streamState.isStreaming && !agentRunning;
   const messageCwd = session?.cwd ?? newSessionCwd ?? undefined;
 
@@ -407,6 +413,7 @@ export function ChatWindow({
       onModelsRefresh={refreshModels}
       onModelsRefreshCancel={cancelModelRefresh}
       onCompactContext={session || isNew ? () => void handleCompact() : undefined}
+      onShowContextMap={session || isNew ? () => setContextMapOpen(true) : undefined}
       onAbortCompaction={handleAbortCompaction}
       isCompacting={isCompacting}
       compactError={compactError}
@@ -527,6 +534,14 @@ export function ChatWindow({
             </g>
           </svg>
         </div>
+      )}
+
+      {contextMapOpen && (
+        <ContextMapPanel
+          sessionId={sessionStats?.sessionId ?? session?.id ?? null}
+          refreshKey={contextMapRefreshKey}
+          onClose={() => setContextMapOpen(false)}
+        />
       )}
 
       {extensionDialog && <ExtensionDialog request={extensionDialog} onRespond={respondToExtensionUi} />}

@@ -427,11 +427,6 @@ export function isUserDeclaredSafeCommand(command: string, safeCommands: readonl
   return matchesAnyCommandPattern(command, safeCommands, false) !== undefined;
 }
 
-/** Either list. Convenience for callers that do not need the distinction. */
-export function isSafeCommand(command: string, extraPatterns: readonly string[] = []): boolean {
-  return isReadOnlyCommand(command) || isUserDeclaredSafeCommand(command, extraPatterns);
-}
-
 /**
  * Names of the dangerous patterns a bash command matches, i.e. the reasons this
  * call has to be judged instead of running straight through.

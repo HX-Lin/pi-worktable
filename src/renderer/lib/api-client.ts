@@ -142,10 +142,6 @@ export async function ensureRpc(): Promise<PiRpc> {
   }
 }
 
-export function getRpc(): PiRpc | null {
-  return rpc;
-}
-
 export async function call<M extends ApiMethod>(
   method: M,
   ...args: ApiParams<M> extends void ? [] | [void] : [ApiParams<M>]
@@ -206,10 +202,6 @@ export async function getSessionContextPage(id: string, cursor: string, maxTurns
 
 export async function getSessionEntryContent(id: string, entryId: string, blockIndex?: number) {
   return call("sessions.entryContent", { id, entryId, blockIndex });
-}
-
-export async function exportSession(id: string, format: "md" | "json" = "md") {
-  return call("sessions.export", { id, format });
 }
 
 export async function deleteSession(id: string) {
@@ -328,10 +320,6 @@ export async function listFiles(path: string) {
 
 export async function readFile(path: string, sourceSessionId?: string) {
   return call("files.read", { path, sourceSessionId });
-}
-
-export async function fileMeta(path: string, sourceSessionId?: string) {
-  return call("files.meta", { path, sourceSessionId });
 }
 
 export async function writeFile(path: string, content: string, sourceSessionId?: string) {

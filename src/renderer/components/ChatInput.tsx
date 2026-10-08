@@ -63,6 +63,8 @@ interface Props {
   onModelsRefreshCancel?: () => void;
   /** Plain context compaction (pi's own pass): frees the window, keeps history. */
   onCompactContext?: () => void;
+  /** Open the context map: what the model is being sent, block by block. */
+  onShowContextMap?: () => void;
   onAbortCompaction?: () => void;
   isCompacting?: boolean;
   compactError?: string | null;
@@ -235,6 +237,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
     onModelsRefresh,
     onModelsRefreshCancel,
     onCompactContext,
+    onShowContextMap,
     onAbortCompaction,
     isCompacting,
     compactError,
@@ -2506,6 +2509,46 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                     </div>
                   )}
                 </div>
+              )}
+
+              {onShowContextMap && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeControlDropdowns();
+                    onShowContextMap();
+                  }}
+                  title={t("contextMapHint", "See what the model is being sent")}
+                  aria-label={t("contextMap", "Context map")}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minWidth: 32,
+                    height: 32,
+                    background: "var(--bg-panel)",
+                    border: "1px solid var(--border)",
+                    borderRadius: 9,
+                    color: "var(--text-muted)",
+                    cursor: "pointer",
+                    flexShrink: 0,
+                  }}
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    aria-hidden="true"
+                  >
+                    <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                    <rect x="14" y="3" width="7" height="4" rx="1.5" />
+                    <rect x="14" y="11" width="7" height="10" rx="1.5" />
+                    <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                  </svg>
+                </button>
               )}
 
               {onCompactContext && (

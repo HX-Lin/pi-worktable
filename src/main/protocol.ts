@@ -5,7 +5,6 @@ import { app, protocol } from "electron";
 import { randomUUID } from "crypto";
 import fs from "fs";
 import path from "path";
-import { pathToFileURL } from "url";
 import { appendMainLog } from "./logger";
 import { runtimeRootDir } from "./host-manager";
 import { overlayMatchesApp } from "./runtime-overlay";
@@ -213,8 +212,4 @@ export function rendererRootPath(mainDirectory = __dirname, appVersion = app.get
     // No override: fall back to the bundle.
   }
   return bundled;
-}
-
-export function fileUrl(p: string): string {
-  return pathToFileURL(p).href;
 }

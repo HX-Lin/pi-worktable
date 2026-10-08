@@ -9,6 +9,8 @@ const zhCN: Record<string, string> = {
   settings: "设置",
   general: "通用",
   models: "模型",
+  contextMap: "上下文地图",
+  contextMapHint: "查看实际发送给模型的内容",
   voiceStart: "语音输入",
   voiceStop: "停止录音",
   voiceTranscribing: "正在转写…",
@@ -689,10 +691,6 @@ export function setAppLanguage(language: AppLanguage): void {
     // Keep the in-memory preference when persistence is unavailable.
   }
   listeners.forEach((listener) => listener());
-}
-
-export function translate(key: string, fallback: string): string {
-  return dictionaries[currentLanguage][key] ?? fallback;
 }
 
 export function useI18n() {

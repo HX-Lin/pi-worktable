@@ -127,7 +127,3 @@ function stop(filePath: string, force = false): void {
   if (entry.timer) clearTimeout(entry.timer);
   watches.delete(filePath);
 }
-
-export function stopAllFileWatches(): void {
-  for (const [path] of watches) stop(path, true);
-}

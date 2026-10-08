@@ -2,8 +2,7 @@ import { createHash } from "node:crypto";
 import path from "node:path";
 import type { ToolCandidate, ToolHealth, ToolchainErrorCode } from "../../../shared/toolchains/types";
 import type { ExecutableSeed } from "../discovery-registry.ts";
-import type { ProbeCommand, ProbeExecutor, ProbeResult } from "../process-runner.ts";
-import { probeSucceeded } from "../process-runner.ts";
+import type { ProbeResult } from "../process-runner.ts";
 
 const PRESERVED_ENV_KEYS = [
   "HOME",
@@ -115,23 +114,6 @@ export function failedCandidate(seed: ExecutableSeed, result?: ProbeResult): Too
     health: "broken",
     reasonCode: permissionFailure ? "TOOLCHAIN_PERMISSION_DENIED" : "TOOLCHAIN_BROKEN",
   });
-}
-
-export async function executeSeedProbe(
-  executor: ProbeExecutor,
-  seed: ExecutableSeed,
-  args: string[],
-  options: Omit<ProbeCommand, "executable" | "args"> = {},
-): Promise<ProbeResult> {
-  return executor.run({
-    ...options,
-    executable: seed.executable,
-    args: [...seed.argvPrefix, ...args],
-  });
-}
-
-export function requireSuccessfulProbe(seed: ExecutableSeed, result: ProbeResult): ToolCandidate | undefined {
-  return probeSucceeded(result) ? undefined : failedCandidate(seed, result);
 }
 
 export function firstVersion(text: string): string | undefined {

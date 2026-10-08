@@ -100,7 +100,3 @@ export function startSessionWatcher(server: RpcServer): () => void {
     setAllowedRootsWatcherHealthy(false);
   };
 }
-
-export function agentSessionsPath(): string {
-  return path.join(getAgentDir());
-}
