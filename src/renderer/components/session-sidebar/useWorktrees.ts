@@ -22,7 +22,8 @@ export interface WorktreeState {
 interface Params {
   selectedCwd: string | null;
   refreshKey?: number;
-  allSessions: SessionInfo[];
+  /** Session list, when the caller has one; used only to resolve project roots. */
+  allSessions?: SessionInfo[];
   onSelectCwd: (cwd: string) => void;
 }
 
@@ -30,7 +31,7 @@ interface Params {
  * Worktree state for the sidebar: the list for the selected cwd, the switcher's
  * transient UI state, and the actions that create or remove a worktree.
  */
-export function useWorktrees({ selectedCwd, refreshKey, allSessions, onSelectCwd: setSelectedCwd }: Params) {
+export function useWorktrees({ selectedCwd, refreshKey, allSessions = [], onSelectCwd: setSelectedCwd }: Params) {
   // Worktree switcher state
   const [worktreeState, setWorktreeState] = useState<WorktreeState | null>(null);
   const [wtDropdownOpen, setWtDropdownOpen] = useState(false);

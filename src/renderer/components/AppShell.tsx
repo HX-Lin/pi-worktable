@@ -1,4 +1,4 @@
-import { call, listSessions, subscribe } from "@/lib/api-client";
+import { call, getHome, listSessions, subscribe } from "@/lib/api-client";
 import {
   useState,
   useCallback,
@@ -20,6 +20,7 @@ import { WindowControls } from "./WindowControls";
 import { TabBar, type Tab } from "./TabBar";
 import { SettingsConfig, type SettingsTab } from "./SettingsConfig";
 import { QuickChannelBinding } from "./channels/QuickChannelBinding";
+import { useWorktrees } from "./session-sidebar/useWorktrees";
 import { useTheme } from "@/hooks/useTheme";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useI18n } from "@/i18n";
@@ -96,6 +97,14 @@ export function AppShell() {
   const router = useRouterCompat();
   const searchParams = useSearchParamsCompat();
   const { isDark, toggleTheme } = useTheme();
+  // The worktree controller lives here, not in the sidebar: the composer renders
+  // the same switcher, and one shared controller keeps both in step.
+  const [homeDir, setHomeDir] = useState("");
+  useEffect(() => {
+    void getHome()
+      .then((result) => setHomeDir(result.home))
+      .catch(() => undefined);
+  }, []);
   const { language, t } = useI18n();
   const isMobile = useIsMobile();
   const [selectedSession, setSelectedSession] = useState<SessionInfo | null>(null);
@@ -758,6 +767,12 @@ export function AppShell() {
     setActiveFileTabId(EXPLORER_TAB_ID);
   }, [activeCwd, isMobile]);
 
+  const worktrees = useWorktrees({
+    selectedCwd: activeCwd,
+    refreshKey,
+    onSelectCwd: (cwd: string) => setActiveCwd(cwd),
+  });
+
   const sidebarContent = (
     <>
       <SessionSidebar
@@ -775,6 +790,7 @@ export function AppShell() {
         onActivateProject={activateProject}
         onRemoveProject={handleRemoveProject}
         onRenameProject={handleRequestRenameProject}
+        worktrees={worktrees}
       />
       <div style={{ padding: "8px", flexShrink: 0 }}>
         <button
@@ -1545,6 +1561,8 @@ export function AppShell() {
                     onSessionForked={handleSessionForked}
                     modelsRefreshKey={modelsRefreshKey}
                     chatInputRef={chatInputRef}
+                    worktrees={worktrees}
+                    homeDir={homeDir}
                     onSessionStatsChange={handleSessionStatsChange}
                     onSessionStatsPanelOpen={openSessionStatsPanel}
                     onContextUsageChange={handleContextUsageChange}

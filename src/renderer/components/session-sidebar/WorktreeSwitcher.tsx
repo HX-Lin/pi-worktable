@@ -6,7 +6,9 @@ import type { WorktreesController } from "./useWorktrees";
  * Worktree row: the switcher for a git checkout top level, or an inert row that
  * explains why worktrees are unavailable here.
  */
-export function WorktreeSwitcher(props: WorktreesController & { selectedCwd: string | null; homeDir: string }) {
+export function WorktreeSwitcher(
+  props: WorktreesController & { selectedCwd: string | null; homeDir: string; openUpward?: boolean },
+) {
   const { selectedCwd, homeDir, onSelectCwd: setSelectedCwd } = props;
   const {
     worktreeState,
@@ -113,7 +115,7 @@ export function WorktreeSwitcher(props: WorktreesController & { selectedCwd: str
                 open={wtDropdownOpen}
                 style={{
                   position: "absolute",
-                  top: "calc(100% + 4px)",
+                  ...(props.openUpward ? { bottom: "calc(100% + 4px)" } : { top: "calc(100% + 4px)" }),
                   left: 0,
                   right: 0,
                   zIndex: 100,

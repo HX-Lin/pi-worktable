@@ -7,7 +7,7 @@ import { useProjectPicker } from "./session-sidebar/useProjectPicker";
 import { useSessionTree } from "./session-sidebar/useSessionTree";
 import { useSessionsFeed } from "./session-sidebar/useSessionsFeed";
 import { useSidebarCwd } from "./session-sidebar/useSidebarCwd";
-import { useWorktrees } from "./session-sidebar/useWorktrees";
+import type { WorktreesController } from "./session-sidebar/useWorktrees";
 
 interface Props {
   selectedSessionId: string | null;
@@ -26,6 +26,8 @@ interface Props {
   onRemoveProject?: (root: string) => void;
   /** Ask the shell to open the rename dialog for a project. */
   onRenameProject?: (root: string) => void;
+  /** Owned by the shell so the composer can render the same switcher. */
+  worktrees: WorktreesController;
 }
 
 export function SessionSidebar({
@@ -43,6 +45,7 @@ export function SessionSidebar({
   onActivateProject,
   onRemoveProject,
   onRenameProject,
+  worktrees,
 }: Props) {
   const feed = useSessionsFeed({ refreshKey, selectedSessionId, onSessionDeleted });
   const { allSessions, loading, error, sessionRefreshDone, runningSessionIds, unreadSessionIds, loadSessions } = feed;
@@ -57,7 +60,6 @@ export function SessionSidebar({
   });
   const { selectedCwd, setSelectedCwd, homeDir } = cwd;
 
-  const worktrees = useWorktrees({ selectedCwd, refreshKey, allSessions, onSelectCwd: setSelectedCwd });
   const { projectRootFor } = worktrees;
 
   // Tell the shell only when the effective cwd actually changes — not when

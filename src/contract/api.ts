@@ -123,7 +123,16 @@ export interface Api {
   "git.commit": { params: { path: string; message: string }; result: { output: string } };
   "git.push": { params: { path: string }; result: { output: string } };
   "git.pull": { params: { path: string }; result: { output: string } };
-  "git.branches": { params: { path: string }; result: { current: string | null; branches: string[] } };
+  "git.branches": {
+    params: { path: string };
+    result: {
+      current: string | null;
+      branches: string[];
+      upstream: string | null;
+      ahead: number;
+      behind: number;
+    };
+  };
   "git.checkout": { params: { path: string; branch: string }; result: { output: string } };
 
   "git.status": {
@@ -373,9 +382,9 @@ export interface Api {
   };
 
   // Project task board (.pi/tasks.json)
-  "tasks.list": { params: { cwd: string }; result: { tasks: ProjectTask[] } };
+  "tasks.list": { params: { cwd: string; sessionId?: string }; result: { tasks: ProjectTask[] } };
   "tasks.add": {
-    params: { cwd: string; title: string; notes?: string; status?: TaskStatus };
+    params: { cwd: string; title: string; notes?: string; status?: TaskStatus; sessionId?: string };
     result: { task: ProjectTask };
   };
   "tasks.update": {

@@ -52,6 +52,7 @@ export const TASKS_EXTENSION: InlineExtension = {
 
       async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
         const cwd = ctx.cwd;
+        const sessionId = ctx.sessionManager.getSessionId();
         const status = params.status as TaskStatus | undefined;
 
         if (params.action === "list") {
@@ -66,6 +67,8 @@ export const TASKS_EXTENSION: InlineExtension = {
             title: params.title,
             ...(params.notes !== undefined ? { notes: params.notes } : {}),
             ...(status ? { status } : {}),
+            // Attributed so the conversation can show the todos it created.
+            sessionId,
           });
           return {
             content: [{ type: "text", text: `Added ${task.id.slice(0, 8)} (${task.status}): ${task.title}` }],

@@ -10,22 +10,24 @@ import type { HandlerContext } from "./types";
 export function taskHandlers(_ctx: HandlerContext) {
   return {
     "tasks.list": (params) => {
-      const { cwd } = params as { cwd: string };
+      const { cwd, sessionId } = params as { cwd: string; sessionId?: string };
       if (!cwd) throw new RpcError({ code: "BAD_REQUEST", message: "cwd is required" });
-      return { tasks: readTasks(cwd) };
+      const tasks = readTasks(cwd);
+      return { tasks: sessionId ? tasks.filter((task) => task.sessionId === sessionId) : tasks };
     },
 
     "tasks.add": (params) => {
-      const { cwd, title, notes, status } = params as {
+      const { cwd, title, notes, status, sessionId } = params as {
         cwd: string;
         title: string;
         notes?: string;
         status?: TaskStatus;
+        sessionId?: string;
       };
       if (!cwd || !title?.trim()) {
         throw new RpcError({ code: "BAD_REQUEST", message: "cwd and title are required" });
       }
-      return { task: addTask(cwd, { title, notes, status }) };
+      return { task: addTask(cwd, { title, notes, status, sessionId }) };
     },
 
     "tasks.update": (params) => {

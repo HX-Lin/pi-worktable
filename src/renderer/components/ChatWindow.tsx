@@ -15,7 +15,11 @@ import {
   isAssistantFailure,
   splitFinalAssistantBlocks,
 } from "@/lib/message-display";
+import { ComposerScmBar } from "./ComposerScmBar";
 import { ContextMapPanel } from "./ContextMapPanel";
+import { SessionTodoStrip } from "./SessionTodoStrip";
+import { WorktreeSwitcher } from "./session-sidebar/WorktreeSwitcher";
+import type { WorktreesController } from "./session-sidebar/useWorktrees";
 import { MessageView } from "./MessageView";
 import { SessionProfiler } from "./SessionProfiler";
 import { ChatInput, type ChatInputHandle } from "./ChatInput";
@@ -34,6 +38,9 @@ interface Props {
   onSessionForked?: (newSessionId: string) => void;
   modelsRefreshKey?: number;
   chatInputRef?: React.RefObject<ChatInputHandle | null>;
+  /** Shared with the sidebar so both render the same worktree switcher. */
+  worktrees?: WorktreesController;
+  homeDir?: string;
   onBranchDataChange?: (
     tree: SessionTreeNode[],
     activeLeafId: string | null,
@@ -201,6 +208,8 @@ export function ChatWindow({
   onSessionStatsPanelOpen,
   onContextUsageChange,
   onOpenFile,
+  worktrees,
+  homeDir = "",
 }: Props) {
   const { soundEnabled, onSoundToggle, playDoneSound, unlockAudio } = useAudio();
   const isMobile = useIsMobile();
@@ -393,6 +402,30 @@ export function ChatWindow({
   const currentThinkingLevelMap = displayModelValue
     ? (modelThinkingLevelMaps[`${displayModelValue.provider}:${displayModelValue.modelId}`] ?? null)
     : null;
+
+  // Conversation-scoped controls, kept directly above the composer: the todos
+  // this session created, and the repository it is working in.
+  const composerExtras = (
+    <div
+      style={{
+        padding: `0 ${CHAT_COLUMN_PADDING}px`,
+        paddingRight: isMobile ? CHAT_COLUMN_PADDING : CHAT_INPUT_RIGHT_PADDING,
+      }}
+    >
+      <SessionTodoStrip cwd={messageCwd ?? null} sessionId={session?.id ?? null} refreshKey={contextMapRefreshKey} />
+      <ComposerScmBar
+        cwd={messageCwd ?? null}
+        refreshKey={contextMapRefreshKey}
+        worktrees={
+          worktrees && messageCwd ? (
+            <div style={{ width: 200, flexShrink: 0 }}>
+              <WorktreeSwitcher {...worktrees} selectedCwd={messageCwd} homeDir={homeDir} openUpward />
+            </div>
+          ) : undefined
+        }
+      />
+    </div>
+  );
 
   const chatInputElement = (
     <ChatInput
@@ -888,6 +921,7 @@ export function ChatWindow({
         style={{ maxWidth: "var(--chat-content-max-width)" }}
         data-position={isEmptyNew ? "welcome" : "conversation"}
       >
+        {composerExtras}
         {!isEmptyNew && belowEditorWidgets.length > 0 && (
           <div
             style={{

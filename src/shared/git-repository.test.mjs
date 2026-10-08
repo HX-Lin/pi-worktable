@@ -72,17 +72,36 @@ test("an unstaged diff has no --cached", async () => {
   );
 });
 
-test("branches report the current one, and a detached HEAD is null", async () => {
-  const attached = withGit((args) => (args[0] === "branch" ? "main\nfeature/x\n" : "main\n"));
+test("branches report the current one, tracking counts, and a detached HEAD is null", async () => {
+  const attached = withGit((args) => {
+    if (args[0] === "branch") return "main\nfeature/x\n";
+    if (args[0] === "rev-parse" && args.includes("@{u}")) return "origin/main\n";
+    if (args[0] === "rev-list") return "2\t3\n";
+    return "main\n";
+  });
   try {
-    assert.deepEqual(await listBranches("/repo"), { current: "main", branches: ["main", "feature/x"] });
+    assert.deepEqual(await listBranches("/repo"), {
+      current: "main",
+      branches: ["main", "feature/x"],
+      upstream: "origin/main",
+      ahead: 3,
+      behind: 2,
+    });
   } finally {
     attached.restore();
   }
 
-  const detached = withGit((args) => (args[0] === "branch" ? "main\n" : "HEAD\n"));
+  const detached = withGit((args) => {
+    if (args[0] === "branch") return "main\n";
+    if (args.includes("@{u}")) return "\n";
+    return "HEAD\n";
+  });
   try {
-    assert.equal((await listBranches("/repo")).current, null);
+    const result = await listBranches("/repo");
+    assert.equal(result.current, null);
+    assert.equal(result.upstream, null);
+    assert.equal(result.ahead, 0);
+    assert.equal(result.behind, 0);
   } finally {
     detached.restore();
   }

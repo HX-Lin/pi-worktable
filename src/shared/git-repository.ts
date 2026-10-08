@@ -22,6 +22,11 @@ export interface GitDiffResult {
 export interface GitBranchList {
   current: string | null;
   branches: string[];
+  /** The tracking branch, when one is configured. */
+  upstream: string | null;
+  /** Commits the upstream does not have / commits this branch does not have. */
+  ahead: number;
+  behind: number;
 }
 
 /** Reject anything that could be read as an option or escapes the ref namespace. */
@@ -81,9 +86,23 @@ export async function listBranches(cwd: string): Promise<GitBranchList> {
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean);
-  const currentOutput = await runGit(cwd, ["rev-parse", "--abbrev-ref", "HEAD"]);
-  const current = currentOutput.trim();
-  return { current: current && current !== "HEAD" ? current : null, branches };
+  const current = (await runGit(cwd, ["rev-parse", "--abbrev-ref", "HEAD"])).trim();
+
+  // A repository with no upstream (or a detached HEAD) is not an error here.
+  let upstream: string | null = null;
+  let ahead = 0;
+  let behind = 0;
+  try {
+    upstream = (await runGit(cwd, ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"])).trim() || null;
+    const counts = await runGit(cwd, ["rev-list", "--left-right", "--count", "@{u}...HEAD"]);
+    const [behindText, aheadText] = counts.trim().split(/\s+/);
+    ahead = Number.parseInt(aheadText ?? "0", 10) || 0;
+    behind = Number.parseInt(behindText ?? "0", 10) || 0;
+  } catch {
+    upstream = null;
+  }
+
+  return { current: current && current !== "HEAD" ? current : null, branches, upstream, ahead, behind };
 }
 
 export async function checkoutBranch(cwd: string, branch: string): Promise<{ output: string }> {

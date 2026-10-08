@@ -343,15 +343,51 @@ export async function subscribeSessionsChanged(on: (ev: Streams["sessions.change
 }
 
 // ---------------------------------------------------------------------------
+// Repository operations (composer SCM bar)
+// ---------------------------------------------------------------------------
+
+export async function gitDiff(cwd: string, staged = false) {
+  return call("git.diff", { path: cwd, staged });
+}
+
+export async function gitStage(cwd: string, files: string[]) {
+  return call("git.stage", { path: cwd, files });
+}
+
+export async function gitUnstage(cwd: string, files: string[]) {
+  return call("git.unstage", { path: cwd, files });
+}
+
+export async function gitCommit(cwd: string, message: string) {
+  return call("git.commit", { path: cwd, message });
+}
+
+export async function gitPush(cwd: string) {
+  return call("git.push", { path: cwd });
+}
+
+export async function gitPull(cwd: string) {
+  return call("git.pull", { path: cwd });
+}
+
+export async function gitBranches(cwd: string) {
+  return call("git.branches", { path: cwd });
+}
+
+export async function gitCheckout(cwd: string, branch: string) {
+  return call("git.checkout", { path: cwd, branch });
+}
+
+// ---------------------------------------------------------------------------
 // Project task board
 // ---------------------------------------------------------------------------
 
-export async function listTasks(cwd: string) {
-  return call("tasks.list", { cwd });
+export async function listTasks(cwd: string, sessionId?: string) {
+  return call("tasks.list", { cwd, ...(sessionId ? { sessionId } : {}) });
 }
 
-export async function addTask(cwd: string, title: string, notes?: string) {
-  return call("tasks.add", { cwd, title, ...(notes ? { notes } : {}) });
+export async function addTask(cwd: string, title: string, notes?: string, sessionId?: string) {
+  return call("tasks.add", { cwd, title, ...(notes ? { notes } : {}), ...(sessionId ? { sessionId } : {}) });
 }
 
 export async function updateTask(
