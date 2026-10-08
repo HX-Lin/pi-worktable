@@ -37,7 +37,9 @@ export function RunningSubagentsBar() {
     return () => clearInterval(timer);
   }, [running.length]);
 
-  if (running.length === 0) return null;
+  // The host keeps finished runs for a few minutes, so the strip lingers after the
+  // last subagent ends — long enough to read what it produced — then disappears.
+  if (runs.length === 0) return null;
 
   return (
     <div
@@ -74,14 +76,16 @@ export function RunningSubagentsBar() {
             width: 6,
             height: 6,
             borderRadius: 999,
-            background: "var(--accent)",
-            animation: "pulse 1.5s infinite",
+            background: running.length > 0 ? "var(--accent)" : "var(--green)",
+            ...(running.length > 0 ? { animation: "pulse 1.5s infinite" } : {}),
             flexShrink: 0,
           }}
         />
         <span style={{ fontWeight: 600 }}>{t("subagentsTitle", "Subagents")}</span>
         <span style={{ color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>
-          {running.length} {t("running", "running")}
+          {running.length > 0
+            ? `${String(running.length)} ${t("running", "running")}`
+            : `${String(recent.length)} ${t("subagentsRecentDone", "finished")}`}
         </span>
         <span
           style={{
