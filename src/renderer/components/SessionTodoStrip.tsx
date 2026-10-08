@@ -110,7 +110,7 @@ export function SessionTodoStrip({ cwd, sessionId, refreshKey = 0 }: Props) {
             border: "none",
             color: "var(--text-muted)",
             cursor: "pointer",
-            fontSize: "var(--text-sm)",
+            fontSize: 11,
             padding: 0,
             textAlign: "left",
           }}
@@ -121,7 +121,7 @@ export function SessionTodoStrip({ cwd, sessionId, refreshKey = 0 }: Props) {
             {done}/{tasks.length} {t("sessionTodosDone", "done")}
           </span>
         </button>
-        {error && <span style={{ fontSize: "var(--text-xs)", color: "var(--danger)" }}>{error}</span>}
+        {error && <span style={{ fontSize: 10, color: "var(--danger)" }}>{error}</span>}
       </div>
 
       {!collapsed && (
@@ -146,7 +146,7 @@ export function SessionTodoStrip({ cwd, sessionId, refreshKey = 0 }: Props) {
                         ? "var(--text)"
                         : "var(--text-dim)",
                   cursor: "pointer",
-                  fontSize: "var(--text-md)",
+                  fontSize: 12,
                   lineHeight: "16px",
                   padding: 0,
                 }}
@@ -155,7 +155,7 @@ export function SessionTodoStrip({ cwd, sessionId, refreshKey = 0 }: Props) {
               </button>
               <span
                 style={{
-                  fontSize: "var(--text-md)",
+                  fontSize: 12,
                   lineHeight: "16px",
                   color: task.status === "done" ? "var(--text-dim)" : "var(--text)",
                   textDecoration: task.status === "done" ? "line-through" : "none",
@@ -177,7 +177,7 @@ export function SessionTodoStrip({ cwd, sessionId, refreshKey = 0 }: Props) {
             style={{
               marginTop: 4,
               padding: "4px 6px",
-              fontSize: "var(--text-sm)",
+              fontSize: 11,
               borderRadius: "var(--radius-sm)",
               background: "var(--bg)",
               color: "var(--text)",

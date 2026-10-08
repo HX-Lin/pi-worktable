@@ -120,14 +120,14 @@ export function GitPanel({ cwd, refreshKey = 0, onOpenFile }: Props) {
 
   if (!cwd) {
     return (
-      <div style={{ padding: 12, fontSize: "var(--text-md)", color: "var(--text-dim)" }}>
+      <div style={{ padding: 12, fontSize: 12, color: "var(--text-dim)" }}>
         {t("gitNoProject", "Open a project to see its repository.")}
       </div>
     );
   }
   if (status && !status.isGit) {
     return (
-      <div style={{ padding: 12, fontSize: "var(--text-md)", color: "var(--text-dim)" }}>
+      <div style={{ padding: 12, fontSize: 12, color: "var(--text-dim)" }}>
         {t("gitNotARepo", "This project is not a git repository.")}
       </div>
     );
@@ -142,7 +142,7 @@ export function GitPanel({ cwd, refreshKey = 0, onOpenFile }: Props) {
     gap: 6,
     padding: "3px 4px",
     borderRadius: "var(--radius-sm)",
-    fontSize: "var(--text-md)",
+    fontSize: 12,
     color: "var(--text)",
   };
   const badgeStyle: React.CSSProperties = {
@@ -150,7 +150,7 @@ export function GitPanel({ cwd, refreshKey = 0, onOpenFile }: Props) {
     width: 20,
     textAlign: "center",
     fontFamily: "var(--font-mono)",
-    fontSize: "var(--text-sm)",
+    fontSize: 11,
     color: "var(--warning)",
   };
   const actionStyle: React.CSSProperties = {
@@ -160,7 +160,7 @@ export function GitPanel({ cwd, refreshKey = 0, onOpenFile }: Props) {
     borderRadius: "var(--radius-sm)",
     color: "var(--text-dim)",
     cursor: "pointer",
-    fontSize: "var(--text-xs)",
+    fontSize: 10,
     padding: "1px 6px",
   };
 
@@ -187,7 +187,7 @@ export function GitPanel({ cwd, refreshKey = 0, onOpenFile }: Props) {
             aria-pressed={view === id}
             style={{
               padding: "3px 9px",
-              fontSize: "var(--text-sm)",
+              fontSize: 11.5,
               borderRadius: "var(--radius-sm)",
               border: "none",
               background: view === id ? "var(--accent-soft)" : "transparent",
@@ -199,20 +199,13 @@ export function GitPanel({ cwd, refreshKey = 0, onOpenFile }: Props) {
             {id === "changes" ? t("gitChanges", "Changes") : t("gitHistory", "History")}
           </button>
         ))}
-        <span
-          style={{
-            marginLeft: "auto",
-            fontSize: "var(--text-sm)",
-            color: "var(--text-dim)",
-            fontFamily: "var(--font-mono)",
-          }}
-        >
+        <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--text-dim)", fontFamily: "var(--font-mono)" }}>
           {status?.branch ?? ""}
         </span>
       </div>
 
       {error && (
-        <div style={{ padding: "6px 10px", fontSize: "var(--text-sm)", color: "var(--danger)" }} role="alert">
+        <div style={{ padding: "6px 10px", fontSize: 11, color: "var(--danger)" }} role="alert">
           {error}
         </div>
       )}
@@ -220,7 +213,7 @@ export function GitPanel({ cwd, refreshKey = 0, onOpenFile }: Props) {
       <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "8px 10px" }}>
         {view === "changes" ? (
           status && status.entries.length === 0 ? (
-            <div style={{ fontSize: "var(--text-md)", color: "var(--text-dim)" }}>{t("gitClean", "No changes.")}</div>
+            <div style={{ fontSize: 12, color: "var(--text-dim)" }}>{t("gitClean", "No changes.")}</div>
           ) : (
             <>
               {staged.length > 0 && (
@@ -290,9 +283,7 @@ export function GitPanel({ cwd, refreshKey = 0, onOpenFile }: Props) {
             </>
           )
         ) : commits.length === 0 ? (
-          <div style={{ fontSize: "var(--text-md)", color: "var(--text-dim)" }}>
-            {t("gitNoCommits", "No commits yet.")}
-          </div>
+          <div style={{ fontSize: 12, color: "var(--text-dim)" }}>{t("gitNoCommits", "No commits yet.")}</div>
         ) : (
           commits.map((commit) => (
             <div key={commit.hash}>
@@ -312,21 +303,14 @@ export function GitPanel({ cwd, refreshKey = 0, onOpenFile }: Props) {
                   cursor: "pointer",
                 }}
               >
-                <span
-                  style={{
-                    flexShrink: 0,
-                    fontFamily: "var(--font-mono)",
-                    fontSize: "var(--text-sm)",
-                    color: "var(--accent)",
-                  }}
-                >
+                <span style={{ flexShrink: 0, fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--accent)" }}>
                   {commit.shortHash}
                 </span>
                 <span
                   style={{
                     flex: 1,
                     minWidth: 0,
-                    fontSize: "var(--text-md)",
+                    fontSize: 12,
                     color: "var(--text)",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -335,7 +319,7 @@ export function GitPanel({ cwd, refreshKey = 0, onOpenFile }: Props) {
                 >
                   {commit.subject}
                 </span>
-                <span style={{ flexShrink: 0, fontSize: "var(--text-xs)", color: "var(--text-faint)" }}>
+                <span style={{ flexShrink: 0, fontSize: 10, color: "var(--text-faint)" }}>
                   {commit.date.slice(0, 10)}
                 </span>
               </button>
@@ -351,7 +335,7 @@ export function GitPanel({ cwd, refreshKey = 0, onOpenFile }: Props) {
               borderRadius: "var(--radius-sm)",
               background: "var(--code-bg)",
               color: "var(--code-text)",
-              fontSize: "var(--text-sm)",
+              fontSize: 11,
               lineHeight: 1.5,
               maxHeight: 320,
               overflow: "auto",
@@ -368,7 +352,7 @@ export function GitPanel({ cwd, refreshKey = 0, onOpenFile }: Props) {
 
 const groupTitle: React.CSSProperties = {
   margin: "6px 0 2px",
-  fontSize: "var(--text-xs)",
+  fontSize: 10,
   letterSpacing: 0.4,
   textTransform: "uppercase",
   color: "var(--text-dim)",

@@ -172,7 +172,7 @@ function ProviderDetail({
             borderRadius: "var(--radius-sm)",
             color: "var(--danger)",
             cursor: "pointer",
-            fontSize: "var(--text-md)",
+            fontSize: 12,
           }}
         >
           Delete
@@ -194,7 +194,7 @@ function ProviderDetail({
               borderRadius: "var(--radius-sm)",
               color: "var(--on-accent)",
               cursor: "pointer",
-              fontSize: "var(--text-md)",
+              fontSize: 12,
               alignSelf: "flex-start",
             }}
           >
@@ -219,7 +219,7 @@ function ProviderDetail({
           placeholder="ENV_VAR_NAME, !shell-command, or literal key"
           mono
         />
-        <span style={{ fontSize: "var(--text-xs)", color: "var(--text-dim)", marginTop: 2 }}>
+        <span style={{ fontSize: 10, color: "var(--text-dim)", marginTop: 2 }}>
           Prefix with <code style={{ fontFamily: "var(--font-mono)" }}>!</code> to run a shell command, or use an env
           var name
         </span>
@@ -281,7 +281,7 @@ function ThinkingLevelMapEditor({
         const btnBase: React.CSSProperties = {
           minHeight: 32,
           padding: "0 10px",
-          fontSize: "var(--text-md)",
+          fontSize: 12,
           border: "none",
           cursor: "pointer",
           fontWeight: 400,
@@ -328,7 +328,7 @@ function ThinkingLevelMapEditor({
               />
               <span
                 style={{
-                  fontSize: "var(--text-sm)",
+                  fontSize: 11,
                   fontFamily: "var(--font-mono)",
                   color: state === "null" ? "var(--text-dim)" : "var(--text-muted)",
                   textDecoration: state === "null" ? "line-through" : "none",
@@ -402,7 +402,7 @@ function ThinkingLevelMapEditor({
                   outline: "none",
                   color: state === "string" ? "var(--text)" : "var(--text-dim)",
                   fontFamily: "var(--font-mono)",
-                  fontSize: "var(--text-sm)",
+                  fontSize: 11,
                   padding: "4px 7px",
                   transition: "background 0.1s, color 0.1s",
                 }}
@@ -515,7 +515,7 @@ function ModelDetail({
                 background:
                   testState.phase === "error" ? "#fee2e2" : testState.phase === "success" ? "#dcfce7" : "#e5e7eb",
                 color: "#111827",
-                fontSize: "var(--text-sm)",
+                fontSize: 11,
                 display: "inline-flex",
                 alignItems: "center",
                 whiteSpace: "nowrap",
@@ -545,7 +545,7 @@ function ModelDetail({
                     ? "var(--text-dim)"
                     : "var(--text-muted)",
               cursor: !model.id.trim() || testState.phase === "testing" ? "not-allowed" : "pointer",
-              fontSize: "var(--text-md)",
+              fontSize: 12,
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
@@ -580,7 +580,7 @@ function ModelDetail({
               borderRadius: "var(--radius-sm)",
               color: "var(--danger)",
               cursor: "pointer",
-              fontSize: "var(--text-md)",
+              fontSize: 12,
               boxSizing: "border-box",
             }}
           >
@@ -635,7 +635,7 @@ function ModelDetail({
                   onClick={() => set("thinkingLevelMap", undefined)}
                   style={{
                     minHeight: 32,
-                    fontSize: "var(--text-md)",
+                    fontSize: 12,
                     padding: "0 9px",
                     background: "none",
                     border: "1px solid var(--border)",
@@ -889,7 +889,7 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
               display: "inline-block",
             }}
           />
-          <span style={{ fontSize: "var(--text-sm)", color: provider.loggedIn ? "var(--success)" : "var(--text-dim)" }}>
+          <span style={{ fontSize: 11, color: provider.loggedIn ? "var(--success)" : "var(--text-dim)" }}>
             {provider.loggedIn ? "connected" : "not connected"}
           </span>
         </div>
@@ -898,20 +898,18 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
       {/* Status */}
       <div style={{ minHeight: 48 }}>
         {loginState.phase === "idle" && (
-          <p style={{ margin: 0, fontSize: "var(--text-md)", color: "var(--text-muted)", lineHeight: 1.5 }}>
+          <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>
             {provider.loggedIn
               ? "Already connected. You can re-login or disconnect."
               : `Connect your ${provider.name} account.`}
           </p>
         )}
         {loginState.phase === "connecting" && (
-          <p style={{ margin: 0, fontSize: "var(--text-md)", color: "var(--text-muted)" }}>Opening browser…</p>
+          <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)" }}>Opening browser…</p>
         )}
         {loginState.phase === "select" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <p style={{ margin: 0, fontSize: "var(--text-md)", color: "var(--text-muted)", lineHeight: 1.5 }}>
-              {loginState.message}
-            </p>
+            <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>{loginState.message}</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {loginState.options.map((option) => (
                 <button
@@ -924,7 +922,7 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
                     borderRadius: "var(--radius-sm)",
                     color: "var(--text)",
                     cursor: "pointer",
-                    fontSize: "var(--text-md)",
+                    fontSize: 12,
                     textAlign: "left",
                   }}
                 >
@@ -936,13 +934,13 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
         )}
         {(loginState.phase === "auth" || loginState.phase === "prompt") && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <p style={{ margin: 0, fontSize: "var(--text-md)", color: "var(--text-muted)", lineHeight: 1.5 }}>
+            <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>
               {loginState.phase === "auth"
                 ? "Complete sign-in in the browser, then copy the redirect URL from the address bar and paste it below."
                 : loginState.message}
             </p>
             {loginState.phase === "auth" && (
-              <p style={{ margin: 0, fontSize: "var(--text-sm)", color: "var(--text-dim)", lineHeight: 1.5 }}>
+              <p style={{ margin: 0, fontSize: 11, color: "var(--text-dim)", lineHeight: 1.5 }}>
                 If the browser window did not open,{" "}
                 <a
                   href={loginState.url}
@@ -975,7 +973,7 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
                   border: "1px solid var(--border)",
                   borderRadius: "var(--radius-sm)",
                   color: "var(--text)",
-                  fontSize: "var(--text-md)",
+                  fontSize: 12,
                   outline: "none",
                   fontFamily: "var(--font-mono)",
                   boxSizing: "border-box",
@@ -991,7 +989,7 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
                   borderRadius: "var(--radius-sm)",
                   color: inputValue.trim() ? "var(--on-accent)" : "var(--text-dim)",
                   cursor: inputValue.trim() ? "pointer" : "not-allowed",
-                  fontSize: "var(--text-md)",
+                  fontSize: 12,
                   fontWeight: 600,
                   flexShrink: 0,
                 }}
@@ -1003,7 +1001,7 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
         )}
         {loginState.phase === "device_code" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <p style={{ margin: 0, fontSize: "var(--text-md)", color: "var(--text-muted)", lineHeight: 1.5 }}>
+            <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>
               Open the verification page and enter this code:
             </p>
             <div
@@ -1013,7 +1011,7 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
                 border: "1px solid var(--border)",
                 borderRadius: "var(--radius-sm)",
                 color: "var(--text)",
-                fontSize: "var(--text-xl)",
+                fontSize: 16,
                 fontWeight: 700,
                 fontFamily: "var(--font-mono)",
                 letterSpacing: 0,
@@ -1021,7 +1019,7 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
             >
               {loginState.userCode}
             </div>
-            <p style={{ margin: 0, fontSize: "var(--text-sm)", color: "var(--text-dim)", lineHeight: 1.5 }}>
+            <p style={{ margin: 0, fontSize: 11, color: "var(--text-dim)", lineHeight: 1.5 }}>
               <a
                 href={loginState.verificationUri}
                 target="_blank"
@@ -1035,21 +1033,15 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
           </div>
         )}
         {loginState.phase === "progress" && (
-          <p style={{ margin: 0, fontSize: "var(--text-md)", color: "var(--text-muted)" }}>{loginState.message}</p>
+          <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)" }}>{loginState.message}</p>
         )}
         {loginState.phase === "success" && (
-          <p
-            style={{
-              margin: 0,
-              fontSize: "var(--text-md)",
-              color: loginState.warning ? "var(--warning)" : "var(--success)",
-            }}
-          >
+          <p style={{ margin: 0, fontSize: 12, color: loginState.warning ? "var(--warning)" : "var(--success)" }}>
             {loginState.message ?? "Connected successfully."}
           </p>
         )}
         {loginState.phase === "error" && (
-          <p style={{ margin: 0, fontSize: "var(--text-md)", color: "var(--danger)" }}>{loginState.message}</p>
+          <p style={{ margin: 0, fontSize: 12, color: "var(--danger)" }}>{loginState.message}</p>
         )}
       </div>
 
@@ -1065,7 +1057,7 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
               borderRadius: "var(--radius-sm)",
               color: "var(--text-muted)",
               cursor: "pointer",
-              fontSize: "var(--text-md)",
+              fontSize: 12,
             }}
           >
             Cancel
@@ -1081,7 +1073,7 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
                 borderRadius: "var(--radius-sm)",
                 color: "var(--on-accent)",
                 cursor: "pointer",
-                fontSize: "var(--text-md)",
+                fontSize: 12,
                 fontWeight: 600,
               }}
             >
@@ -1097,7 +1089,7 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
                   borderRadius: "var(--radius-sm)",
                   color: "var(--danger)",
                   cursor: "pointer",
-                  fontSize: "var(--text-md)",
+                  fontSize: 12,
                 }}
               >
                 Disconnect
@@ -1177,15 +1169,13 @@ function ApiKeyDetail({ provider, onRefresh }: { provider: ApiKeyProvider; onRef
               display: "inline-block",
             }}
           />
-          <span
-            style={{ fontSize: "var(--text-sm)", color: provider.configured ? "var(--success)" : "var(--text-dim)" }}
-          >
+          <span style={{ fontSize: 11, color: provider.configured ? "var(--success)" : "var(--text-dim)" }}>
             {provider.configured ? "configured" : "not configured"}
           </span>
         </div>
       </div>
 
-      <p style={{ margin: 0, fontSize: "var(--text-md)", color: "var(--text-muted)", lineHeight: 1.5 }}>
+      <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>
         {provider.configured
           ? `API key is stored. Enter a new key below to replace it, or disconnect to remove it.`
           : `Enter your ${provider.displayName} API key to enable ${provider.modelCount} model${provider.modelCount !== 1 ? "s" : ""}.`}
@@ -1195,7 +1185,7 @@ function ApiKeyDetail({ provider, onRefresh }: { provider: ApiKeyProvider; onRef
         <p
           style={{
             margin: 0,
-            fontSize: "var(--text-md)",
+            fontSize: 12,
             color: "var(--text-muted)",
             lineHeight: 1.5,
             padding: "7px 9px",
@@ -1234,7 +1224,7 @@ function ApiKeyDetail({ provider, onRefresh }: { provider: ApiKeyProvider; onRef
               borderRadius: "var(--radius-sm)",
               color: apiKey.trim() || savedOk ? "var(--on-accent)" : "var(--text-dim)",
               cursor: saving || !apiKey.trim() || savedOk ? "not-allowed" : "pointer",
-              fontSize: "var(--text-md)",
+              fontSize: 12,
               fontWeight: 600,
               flexShrink: 0,
               display: "flex",
@@ -1261,8 +1251,8 @@ function ApiKeyDetail({ provider, onRefresh }: { provider: ApiKeyProvider; onRef
         </div>
       </Field>
 
-      {error && <p style={{ margin: 0, fontSize: "var(--text-md)", color: "var(--danger)" }}>{error}</p>}
-      {warning && <p style={{ margin: 0, fontSize: "var(--text-md)", color: "var(--warning)" }}>{warning}</p>}
+      {error && <p style={{ margin: 0, fontSize: 12, color: "var(--danger)" }}>{error}</p>}
+      {warning && <p style={{ margin: 0, fontSize: 12, color: "var(--warning)" }}>{warning}</p>}
 
       {provider.configured && (
         <button
@@ -1276,7 +1266,7 @@ function ApiKeyDetail({ provider, onRefresh }: { provider: ApiKeyProvider; onRef
             borderRadius: "var(--radius-sm)",
             color: "var(--danger)",
             cursor: removing ? "not-allowed" : "pointer",
-            fontSize: "var(--text-md)",
+            fontSize: 12,
           }}
         >
           {removing ? "Removing…" : "Disconnect"}
@@ -1449,7 +1439,7 @@ function AddProviderPicker({
               border: "none",
               outline: "none",
               color: "var(--text)",
-              fontSize: "var(--text-base)",
+              fontSize: 13,
               boxSizing: "border-box",
             }}
           />
@@ -1458,9 +1448,7 @@ function AddProviderPicker({
         {/* Card grid */}
         <div style={{ flex: 1, overflowY: "auto", padding: 14 }}>
           {totalCount === 0 ? (
-            <div
-              style={{ padding: "20px 0", fontSize: "var(--text-md)", color: "var(--text-dim)", textAlign: "center" }}
-            >
+            <div style={{ padding: "20px 0", fontSize: 12, color: "var(--text-dim)", textAlign: "center" }}>
               No providers match
             </div>
           ) : (
@@ -1475,7 +1463,7 @@ function AddProviderPicker({
                 <div
                   style={{
                     gridColumn: "1 / -1",
-                    fontSize: "var(--text-xs)",
+                    fontSize: 10,
                     fontWeight: 600,
                     color: "var(--text-dim)",
                     textTransform: "uppercase",
@@ -1504,7 +1492,7 @@ function AddProviderPicker({
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div
                       style={{
-                        fontSize: "var(--text-md)",
+                        fontSize: 12,
                         fontWeight: 600,
                         color: "var(--text)",
                         lineHeight: 1.3,
@@ -1515,9 +1503,7 @@ function AddProviderPicker({
                     >
                       OpenAI / Anthropic compatible
                     </div>
-                    <div style={{ fontSize: "var(--text-xs)", color: "var(--text-dim)", marginTop: 2 }}>
-                      Custom endpoint format
-                    </div>
+                    <div style={{ fontSize: 10, color: "var(--text-dim)", marginTop: 2 }}>Custom endpoint format</div>
                   </div>
                   <span
                     style={{
@@ -1555,7 +1541,7 @@ function AddProviderPicker({
                   style={{
                     gridColumn: "1 / -1",
                     paddingTop: showCustom ? 6 : 0,
-                    fontSize: "var(--text-xs)",
+                    fontSize: 10,
                     fontWeight: 600,
                     color: "var(--text-dim)",
                     textTransform: "uppercase",
@@ -1585,7 +1571,7 @@ function AddProviderPicker({
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div
                       style={{
-                        fontSize: "var(--text-md)",
+                        fontSize: 12,
                         fontWeight: 600,
                         color: "var(--text)",
                         lineHeight: 1.3,
@@ -1596,7 +1582,7 @@ function AddProviderPicker({
                     >
                       {p.name}
                     </div>
-                    <div style={{ fontSize: "var(--text-xs)", color: "var(--text-dim)", marginTop: 2 }}>OAuth</div>
+                    <div style={{ fontSize: 10, color: "var(--text-dim)", marginTop: 2 }}>OAuth</div>
                   </div>
                   <ProviderIcon id={p.id} size={28} />
                 </button>
@@ -1607,7 +1593,7 @@ function AddProviderPicker({
                   style={{
                     gridColumn: "1 / -1",
                     paddingTop: availableOAuth.length > 0 ? 6 : 0,
-                    fontSize: "var(--text-xs)",
+                    fontSize: 10,
                     fontWeight: 600,
                     color: "var(--text-dim)",
                     textTransform: "uppercase",
@@ -1637,7 +1623,7 @@ function AddProviderPicker({
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div
                       style={{
-                        fontSize: "var(--text-md)",
+                        fontSize: 12,
                         fontWeight: 600,
                         color: "var(--text)",
                         lineHeight: 1.3,
@@ -1648,9 +1634,7 @@ function AddProviderPicker({
                     >
                       {p.displayName}
                     </div>
-                    <div style={{ fontSize: "var(--text-xs)", color: "var(--text-dim)", marginTop: 2 }}>
-                      {p.modelCount} models
-                    </div>
+                    <div style={{ fontSize: 10, color: "var(--text-dim)", marginTop: 2 }}>{p.modelCount} models</div>
                   </div>
                   <ProviderIcon id={p.id} size={28} />
                 </button>
@@ -1920,10 +1904,8 @@ export function ModelsConfig({
               }}
             >
               <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-                <span style={{ fontSize: "var(--text-lg)", fontWeight: 700, color: "var(--text)" }}>Models</span>
-                <code
-                  style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}
-                >
+                <span style={{ fontSize: 15, fontWeight: 700, color: "var(--text)" }}>Models</span>
+                <code style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
                   ~/.pi/agent/models.json
                 </code>
               </div>
@@ -1937,7 +1919,7 @@ export function ModelsConfig({
                   border: "none",
                   color: "var(--text-muted)",
                   cursor: "pointer",
-                  fontSize: "var(--text-3xl)",
+                  fontSize: 20,
                   lineHeight: 1,
                   width: 36,
                   height: 36,
@@ -1992,7 +1974,7 @@ export function ModelsConfig({
                       <ProviderIcon id={p.id} size={16} />
                       <span
                         style={{
-                          fontSize: "var(--text-md)",
+                          fontSize: 12,
                           color: "var(--text)",
                           flex: 1,
                           overflow: "hidden",
@@ -2032,7 +2014,7 @@ export function ModelsConfig({
                       <ProviderIcon id={p.id} size={16} />
                       <span
                         style={{
-                          fontSize: "var(--text-md)",
+                          fontSize: 12,
                           color: "var(--text)",
                           flex: 1,
                           overflow: "hidden",
@@ -2053,9 +2035,7 @@ export function ModelsConfig({
 
                 {/* Custom providers */}
                 {loading ? (
-                  <div style={{ padding: "10px 8px", fontSize: "var(--text-md)", color: "var(--text-muted)" }}>
-                    Loading…
-                  </div>
+                  <div style={{ padding: "10px 8px", fontSize: 12, color: "var(--text-muted)" }}>Loading…</div>
                 ) : (
                   providers.map(([pName, pData]) => {
                     const isProviderSelected = selection?.type === "provider" && selection.name === pName;
@@ -2105,7 +2085,7 @@ export function ModelsConfig({
                           </svg>
                           <span
                             style={{
-                              fontSize: "var(--text-md)",
+                              fontSize: 12,
                               fontWeight: isProviderSelected ? 600 : 400,
                               color: "var(--text)",
                               fontFamily: "var(--font-mono)",
@@ -2145,7 +2125,7 @@ export function ModelsConfig({
                             >
                               <span
                                 style={{
-                                  fontSize: "var(--text-sm)",
+                                  fontSize: 11,
                                   fontFamily: "var(--font-mono)",
                                   color: m.id ? "var(--text-muted)" : "var(--text-dim)",
                                   flex: 1,
@@ -2159,7 +2139,7 @@ export function ModelsConfig({
                               {m.reasoning && (
                                 <span
                                   style={{
-                                    fontSize: "var(--text-xs)",
+                                    fontSize: 9,
                                     padding: "1px 4px",
                                     background: "var(--blue-soft)",
                                     color: "var(--blue)",
@@ -2198,7 +2178,7 @@ export function ModelsConfig({
                             e.currentTarget.style.background = "none";
                           }}
                         >
-                          <span style={{ fontSize: "var(--text-sm)" }}>+ model</span>
+                          <span style={{ fontSize: 11 }}>+ model</span>
                         </div>
                       </div>
                     );
@@ -2222,7 +2202,7 @@ export function ModelsConfig({
                     borderRadius: "var(--radius-sm)",
                     color: "var(--text-muted)",
                     cursor: "pointer",
-                    fontSize: "var(--text-md)",
+                    fontSize: 12,
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = "var(--accent)";
@@ -2250,7 +2230,7 @@ export function ModelsConfig({
                         alignItems: "center",
                         justifyContent: "center",
                         color: "var(--text-dim)",
-                        fontSize: "var(--text-base)",
+                        fontSize: 13,
                       }}
                     >
                       {t("selectProviderOrModel", "Select a provider or model")}
@@ -2271,9 +2251,7 @@ export function ModelsConfig({
               flexShrink: 0,
             }}
           >
-            {saveError && (
-              <span style={{ fontSize: "var(--text-md)", color: "var(--danger)", flex: 1 }}>{saveError}</span>
-            )}
+            {saveError && <span style={{ fontSize: 12, color: "var(--danger)", flex: 1 }}>{saveError}</span>}
             {!embedded && (
               <button
                 onClick={onClose}
@@ -2284,7 +2262,7 @@ export function ModelsConfig({
                   borderRadius: "var(--radius-sm)",
                   color: "var(--text-muted)",
                   cursor: "pointer",
-                  fontSize: "var(--text-base)",
+                  fontSize: 13,
                 }}
               >
                 Cancel
@@ -2311,7 +2289,7 @@ export function ModelsConfig({
                     ? "var(--text-muted)"
                     : "var(--on-accent)",
                 cursor: saving || savedOk || loading || loadFailed || !configLoaded ? "default" : "pointer",
-                fontSize: "var(--text-base)",
+                fontSize: 13,
                 fontWeight: 600,
                 display: "inline-flex",
                 alignItems: "center",

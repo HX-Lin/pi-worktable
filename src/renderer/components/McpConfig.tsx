@@ -27,7 +27,7 @@ const inputStyle: React.CSSProperties = {
   borderRadius: "var(--radius-sm)",
   color: "var(--text)",
   font: "inherit",
-  fontSize: "var(--text-md)",
+  fontSize: 12,
   padding: "5px 8px",
   minWidth: 0,
   flex: 1,
@@ -41,7 +41,7 @@ const buttonStyle: React.CSSProperties = {
   color: "var(--text)",
   cursor: "pointer",
   font: "inherit",
-  fontSize: "var(--text-md)",
+  fontSize: 12,
   padding: "5px 12px",
 };
 
@@ -277,8 +277,8 @@ function ServerRow({
     <div style={{ borderTop: "1px solid var(--border)", padding: "12px 0", display: "grid", gap: 8 }}>
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
         <Checkbox checked={server.enabled} disabled={busy} onChange={(value) => onPatch({ enabled: value })} />
-        <strong style={{ fontSize: "var(--text-base)" }}>{server.name}</strong>
-        <span style={{ fontSize: "var(--text-sm)", color: "var(--text-dim)" }}>
+        <strong style={{ fontSize: 13 }}>{server.name}</strong>
+        <span style={{ fontSize: 11, color: "var(--text-dim)" }}>
           {server.scope === "project" ? t("mcpScopeProjectBadge", "project") : t("mcpScopeGlobalBadge", "global")}
           {server.overridesGlobal ? ` · ${t("mcpOverrides", "overrides global")}` : ""} · {server.transport}
         </span>
@@ -289,9 +289,7 @@ function ServerRow({
       </div>
       <code style={{ ...codeStyle, wordBreak: "break-all" }}>{server.target}</code>
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-        <span style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)" }}>
-          {t("mcpExposure", "Tools reach the model as")}
-        </span>
+        <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{t("mcpExposure", "Tools reach the model as")}</span>
         <select
           value={server.exposure}
           disabled={busy}
@@ -338,16 +336,16 @@ const codeStyle: React.CSSProperties = {
   border: "1px solid var(--border)",
   borderRadius: "var(--radius-sm)",
   color: "var(--text-muted)",
-  fontSize: "var(--text-sm)",
+  fontSize: 11,
   padding: "4px 8px",
 };
-const hintStyle: React.CSSProperties = { color: "var(--text-dim)", fontSize: "var(--text-sm)", margin: "6px 0 0" };
+const hintStyle: React.CSSProperties = { color: "var(--text-dim)", fontSize: 11, margin: "6px 0 0" };
 
 function Section({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
   return (
     <section style={{ display: "grid", gap: 10 }}>
       <div>
-        <h3 style={{ fontSize: "var(--text-base)", margin: 0 }}>{title}</h3>
+        <h3 style={{ fontSize: 13, margin: 0 }}>{title}</h3>
         {description && <p style={{ ...hintStyle, marginTop: 4 }}>{description}</p>}
       </div>
       {children}
@@ -358,7 +356,7 @@ function Section({ title, description, children }: { title: string; description?
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ display: "flex", gap: 12, alignItems: "center", minHeight: 28 }}>
-      <span style={{ fontSize: "var(--text-md)", color: "var(--text-muted)", minWidth: 160 }}>{label}</span>
+      <span style={{ fontSize: 12, color: "var(--text-muted)", minWidth: 160 }}>{label}</span>
       {children}
     </div>
   );

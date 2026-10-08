@@ -116,7 +116,7 @@ export function ContextFoldMap({ sessionId, refreshKey = 0 }: ContextFoldMapProp
             {t("unfoldAll", "Unfold all")}
           </button>
           <span style={{ flex: 1 }} />
-          <span style={{ fontSize: "var(--text-sm)", color: overBudget ? "var(--warning)" : "var(--text-dim)" }}>
+          <span style={{ fontSize: 11, color: overBudget ? "var(--warning)" : "var(--text-dim)" }}>
             {t("liveTokens", "context")} {stats.liveTokens.toLocaleString()} / {stats.fullTokens.toLocaleString()} tok
             {stats.savedTokens > 0 ? ` · ${t("savedTokens", "saved")} ${stats.savedTokens.toLocaleString()}` : ""}
             {stats.budget > 0 ? ` · ${t("budget", "budget")} ${stats.budget.toLocaleString()}` : ""}
@@ -174,7 +174,7 @@ export function ContextFoldMap({ sessionId, refreshKey = 0 }: ContextFoldMapProp
                 >
                   <span
                     style={{
-                      fontSize: "var(--text-xs)",
+                      fontSize: 10,
                       lineHeight: 1.3,
                       overflow: "hidden",
                       display: "-webkit-box",
@@ -186,9 +186,7 @@ export function ContextFoldMap({ sessionId, refreshKey = 0 }: ContextFoldMapProp
                     {block.pinned ? "📌 " : ""}
                     {block.label}
                   </span>
-                  <span
-                    style={{ fontSize: "var(--text-xs)", color: "var(--text-dim)", fontVariantNumeric: "tabular-nums" }}
-                  >
+                  <span style={{ fontSize: 9, color: "var(--text-dim)", fontVariantNumeric: "tabular-nums" }}>
                     {block.tokens} tok
                   </span>
                 </button>
@@ -226,16 +224,16 @@ export function ContextFoldMap({ sessionId, refreshKey = 0 }: ContextFoldMapProp
               flexWrap: "wrap",
             }}
           >
-            <span style={{ fontSize: "var(--text-md)", color: "var(--text)" }}>
+            <span style={{ fontSize: 12, color: "var(--text)" }}>
               {selected ? selected.label : t("blockPicker", "Pick a block")}
             </span>
             {selected ? (
-              <span style={{ fontSize: "var(--text-xs)", color: "var(--text-dim)" }}>
+              <span style={{ fontSize: 10, color: "var(--text-dim)" }}>
                 {selected.tokens} / {selected.fullTokens} tok
               </span>
             ) : null}
             {selected?.folded ? (
-              <span style={{ fontSize: "var(--text-xs)", color: "var(--text-dim)" }}>{selected.digest}</span>
+              <span style={{ fontSize: 10, color: "var(--text-dim)" }}>{selected.digest}</span>
             ) : null}
             <span style={{ flex: 1 }} />
             {!selected ? null : selected.folded ? (
@@ -281,14 +279,10 @@ export function ContextFoldMap({ sessionId, refreshKey = 0 }: ContextFoldMapProp
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <span
-        style={{ fontSize: "var(--text-xs)", color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: 0.4 }}
-      >
+      <span style={{ fontSize: 10, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: 0.4 }}>
         {label}
       </span>
-      <span style={{ fontSize: "var(--text-md)", color: "var(--text)", fontVariantNumeric: "tabular-nums" }}>
-        {value}
-      </span>
+      <span style={{ fontSize: 12, color: "var(--text)", fontVariantNumeric: "tabular-nums" }}>{value}</span>
     </div>
   );
 }
@@ -298,7 +292,7 @@ function Hint({ children, tone }: { children: React.ReactNode; tone?: "error" })
     <p
       style={{
         margin: "0 0 12px",
-        fontSize: "var(--text-md)",
+        fontSize: 12,
         lineHeight: 1.6,
         color: tone === "error" ? "var(--danger)" : "var(--text-dim)",
       }}
@@ -342,7 +336,7 @@ const contentColumnStyle = {
 
 const toggleStyle = {
   padding: "5px 12px",
-  fontSize: "var(--text-sm)",
+  fontSize: 11,
   color: "var(--text-muted)",
   background: "transparent",
   border: "1px solid var(--border)",
@@ -352,7 +346,7 @@ const toggleStyle = {
 
 const actionStyle = {
   padding: "3px 10px",
-  fontSize: "var(--text-sm)",
+  fontSize: 11,
   color: "var(--text)",
   background: "var(--bg-panel)",
   border: "1px solid var(--border)",
@@ -366,7 +360,7 @@ const previewStyle = {
   flex: 1,
   minHeight: 0,
   overflow: "auto",
-  fontSize: "var(--text-sm)",
+  fontSize: 11,
   lineHeight: 1.55,
   fontFamily: "var(--font-mono)",
   color: "var(--text-muted)",

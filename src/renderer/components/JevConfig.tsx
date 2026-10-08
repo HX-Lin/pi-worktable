@@ -134,7 +134,7 @@ export function JevConfig() {
               : t("jevClassifierDefaultActive", "内置免密钥 Jev（jev/jev-1.13-free）")}
           </span>
         </Row>
-        <p style={{ fontSize: "var(--text-sm)", color: "var(--text-dim)", margin: "2px 0 0" }}>
+        <p style={{ fontSize: 11, color: "var(--text-dim)", margin: "2px 0 0" }}>
           {t(
             "jevClassifierHint",
             "下方 Channel 与 API key 仅在所选分类器不在目录中时作为回退；内置 Jev 通道无需密钥。",
@@ -203,7 +203,7 @@ export function JevConfig() {
             spellCheck={false}
           />
         </Row>
-        <p style={{ fontSize: "var(--text-sm)", color: "var(--text-dim)", margin: "2px 0 0" }}>
+        <p style={{ fontSize: 11, color: "var(--text-dim)", margin: "2px 0 0" }}>
           {t("jevDefaultsHint", "这两项留空即恢复该通道的默认值（上面显示的就是默认值）；手填过的值会一直覆盖它。")}
         </p>
       </Section>
@@ -264,9 +264,7 @@ export function JevConfig() {
             </span>
           </div>
         </Row>
-        {keyError ? (
-          <p style={{ color: "var(--danger)", fontSize: "var(--text-md)", margin: "2px 0 0" }}>{keyError}</p>
-        ) : null}
+        {keyError ? <p style={{ color: "var(--danger)", fontSize: 12, margin: "2px 0 0" }}>{keyError}</p> : null}
       </Section>
 
       <Divider />
@@ -281,7 +279,7 @@ export function JevConfig() {
 
       <RoutingSection settings={settings} busy={busy} onUpdate={update} />
 
-      {error ? <p style={{ color: "var(--danger)", fontSize: "var(--text-md)", marginTop: 14 }}>{error}</p> : null}
+      {error ? <p style={{ color: "var(--danger)", fontSize: 12, marginTop: 14 }}>{error}</p> : null}
     </div>
   );
 }
@@ -320,7 +318,7 @@ function GateSection({
         // Enabling the gate without a working key makes every call it cannot
         // vouch for fail closed — including the assistant's own commands, which
         // leaves no way to set the key from inside the app.
-        <p style={{ color: "var(--warning)", fontSize: "var(--text-md)", margin: "2px 0 0" }}>
+        <p style={{ color: "var(--warning)", fontSize: 12, margin: "2px 0 0" }}>
           {t(
             "jevGateNoKeyWarning",
             "还没有可用密钥：闸门无法判断，会拦截一切未被确定性规则担保的调用（包括让助手执行命令）。请先保存密钥，或把范围改为「只判断已识别的危险形状」。",
@@ -419,7 +417,7 @@ function GateSection({
       </Row>
 
       <div style={{ marginTop: 6 }}>
-        <span style={{ fontSize: "var(--text-md)", color: "var(--text-muted)" }}>
+        <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
           {t("jevThresholds", "Condition thresholds")} ·{" "}
           {t(
             "jevThresholdsHint",
@@ -433,10 +431,10 @@ function GateSection({
             return (
               <div key={rule.id} style={ruleRowStyle}>
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: "var(--text-md)", color: "var(--text)" }}>
+                  <div style={{ fontSize: 12, color: "var(--text)" }}>
                     {rule.id} · {rule.label}
                   </div>
-                  <div style={{ fontSize: "var(--text-xs)", color: "var(--text-dim)" }}>
+                  <div style={{ fontSize: 10, color: "var(--text-dim)" }}>
                     {rule.mode} / {rule.severity} · {t("jevRuleDefault", "default")} {rule.threshold}
                   </div>
                 </div>
@@ -634,10 +632,8 @@ function ListField({
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-        <span style={{ fontSize: "var(--text-base)", color: "var(--text-muted)" }}>{label}</span>
-        <span style={{ fontSize: "var(--text-xs)", color: "var(--text-dim)", textAlign: "right", maxWidth: 340 }}>
-          {hint}
-        </span>
+        <span style={{ fontSize: 13, color: "var(--text-muted)" }}>{label}</span>
+        <span style={{ fontSize: 10, color: "var(--text-dim)", textAlign: "right", maxWidth: 340 }}>{hint}</span>
       </div>
       <textarea
         defaultValue={values.join("\n")}
@@ -661,11 +657,9 @@ function ListField({
 function Section({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
   return (
     <section style={{ maxWidth: 640, marginBottom: 6 }}>
-      <h2 style={{ margin: 0, fontSize: "var(--text-lg)", color: "var(--text)" }}>{title}</h2>
+      <h2 style={{ margin: 0, fontSize: 14, color: "var(--text)" }}>{title}</h2>
       {description ? (
-        <p style={{ margin: "6px 0 16px", fontSize: "var(--text-md)", lineHeight: 1.6, color: "var(--text-dim)" }}>
-          {description}
-        </p>
+        <p style={{ margin: "6px 0 16px", fontSize: 12, lineHeight: 1.6, color: "var(--text-dim)" }}>{description}</p>
       ) : null}
       <div style={{ display: "grid", gap: 8 }}>{children}</div>
     </section>
@@ -687,7 +681,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
         background: "var(--bg-panel)",
       }}
     >
-      <span style={{ fontSize: "var(--text-base)", color: "var(--text-muted)", flexShrink: 0 }}>{label}</span>
+      <span style={{ fontSize: 13, color: "var(--text-muted)", flexShrink: 0 }}>{label}</span>
       <div style={{ minWidth: 0, display: "flex", justifyContent: "flex-end", flex: 1 }}>{children}</div>
     </div>
   );
@@ -721,7 +715,7 @@ const textareaStyle = {
   width: "100%",
   minWidth: 0,
   padding: "6px 10px",
-  fontSize: "var(--text-md)",
+  fontSize: 12,
   fontFamily: "var(--font-mono)",
   lineHeight: 1.5,
   color: "var(--text)",
@@ -744,7 +738,7 @@ const ruleRowStyle = {
 
 const selectStyle = {
   padding: "6px 10px",
-  fontSize: "var(--text-md)",
+  fontSize: 12,
   color: "var(--text)",
   background: "var(--bg)",
   border: "1px solid var(--border)",
@@ -756,7 +750,7 @@ const inputStyle = {
   flex: 1,
   minWidth: 0,
   padding: "6px 10px",
-  fontSize: "var(--text-md)",
+  fontSize: 12,
   fontFamily: "var(--font-mono)",
   color: "var(--text)",
   background: "var(--bg)",
@@ -764,17 +758,12 @@ const inputStyle = {
   borderRadius: "var(--radius-sm)",
 } as const;
 
-const valueStyle = {
-  fontSize: "var(--text-md)",
-  color: "var(--text-muted)",
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-} as const;
+const valueStyle = { fontSize: 12, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis" } as const;
 
 const buttonStyle = {
   flexShrink: 0,
   padding: "6px 12px",
-  fontSize: "var(--text-md)",
+  fontSize: 12,
   color: "var(--text)",
   background: "var(--bg)",
   border: "1px solid var(--border)",

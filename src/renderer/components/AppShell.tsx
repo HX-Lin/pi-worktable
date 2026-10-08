@@ -864,7 +864,7 @@ export function AppShell() {
             borderRadius: "var(--radius-md)",
             color: "var(--text-muted)",
             cursor: "pointer",
-            fontSize: "var(--text-md)",
+            fontSize: 12,
             transition: "background 0.12s, color 0.12s",
           }}
           onMouseEnter={(e) => {
@@ -1166,7 +1166,7 @@ export function AppShell() {
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
                   color: "var(--text)",
-                  fontSize: "var(--text-base)",
+                  fontSize: 13,
                   fontWeight: 650,
                 }}
               >
@@ -1243,7 +1243,7 @@ export function AppShell() {
                       background: activeTopPanel === "session" ? "var(--bg-selected)" : "none",
                       border: "none",
                       borderTop: activeTopPanel === "session" ? "2px solid var(--accent)" : "2px solid transparent",
-                      fontSize: "var(--text-md)",
+                      fontSize: 12,
                       color: "var(--text-muted)",
                       whiteSpace: "nowrap",
                       cursor: "pointer",
@@ -1385,14 +1385,7 @@ export function AppShell() {
                           compact = false,
                         ) => (
                           <div style={{ minWidth: 0 }}>
-                            <div
-                              style={{
-                                fontSize: "var(--text-md)",
-                                fontWeight: 700,
-                                color: "var(--text)",
-                                marginBottom: 6,
-                              }}
-                            >
+                            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text)", marginBottom: 6 }}>
                               {title}
                             </div>
                             <div
@@ -1498,14 +1491,7 @@ export function AppShell() {
                         };
                         const sessionInfoSection = (
                           <div style={{ minWidth: 0 }}>
-                            <div
-                              style={{
-                                fontSize: "var(--text-md)",
-                                fontWeight: 700,
-                                color: "var(--text)",
-                                marginBottom: 6,
-                              }}
-                            >
+                            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text)", marginBottom: 6 }}>
                               {t("sessionInfo", "Session Info")}
                             </div>
                             <div
@@ -1546,7 +1532,7 @@ export function AppShell() {
                                 ? "1fr"
                                 : "minmax(360px, 1.7fr) minmax(140px, 0.55fr) minmax(190px, 0.75fr)",
                               gap: isMobile ? 16 : 24,
-                              fontSize: "var(--text-md)",
+                              fontSize: 12,
                               lineHeight: 1.5,
                               fontFamily: "var(--font-mono)",
                             }}
@@ -1558,7 +1544,7 @@ export function AppShell() {
                         );
                       })()
                     ) : (
-                      <div style={{ fontSize: "var(--text-md)", color: "var(--text-muted)", fontStyle: "italic" }}>
+                      <div style={{ fontSize: 12, color: "var(--text-muted)", fontStyle: "italic" }}>
                         {t("loadSessionInfoHint", "Send a message or run /session to load session info")}
                       </div>
                     )}
@@ -1610,7 +1596,7 @@ export function AppShell() {
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
                     fontFamily: "var(--font-mono)",
-                    fontSize: "var(--text-sm)",
+                    fontSize: 11,
                     color: "var(--text-muted)",
                   }}
                 >
@@ -1646,7 +1632,7 @@ export function AppShell() {
                       alignItems: "center",
                       justifyContent: "center",
                       color: "var(--text-muted)",
-                      fontSize: "var(--text-lg)",
+                      fontSize: 15,
                     }}
                   >
                     {t("selectSession", "Select a session from the sidebar")}
@@ -1679,12 +1665,10 @@ export function AppShell() {
                       <polyline points="10 6 4 12 10 18" />
                     </svg>
                     <div>
-                      <div
-                        style={{ fontSize: "var(--text-2xl)", fontWeight: 600, color: "var(--text)", marginBottom: 8 }}
-                      >
+                      <div style={{ fontSize: 18, fontWeight: 600, color: "var(--text)", marginBottom: 8 }}>
                         {t("getStarted", "Get Started")}
                       </div>
-                      <div style={{ fontSize: "var(--text-md)", color: "var(--text-muted)", lineHeight: 1.8 }}>
+                      <div style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.8 }}>
                         <span style={{ color: "var(--text-dim)", marginRight: 6 }}>1.</span>
                         {t("selectProject", "Select a project directory from the sidebar")}
                         <br />
@@ -1880,7 +1864,7 @@ export function AppShell() {
                     alignItems: "center",
                     justifyContent: "center",
                     color: "var(--text-dim)",
-                    fontSize: "var(--text-md)",
+                    fontSize: 12,
                   }}
                 >
                   {t("selectProjectPlaceholder", "Select a project to browse files")}
@@ -1908,7 +1892,7 @@ export function AppShell() {
                     alignItems: "center",
                     justifyContent: "center",
                     color: "var(--text-dim)",
-                    fontSize: "var(--text-md)",
+                    fontSize: 12,
                   }}
                 >
                   Select Explorer or open a file
@@ -1991,12 +1975,10 @@ export function AppShell() {
               boxShadow: "var(--shadow-lg)",
             }}
           >
-            <div style={{ fontSize: "var(--text-lg)", fontWeight: 600, color: "var(--text)", marginBottom: 4 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)", marginBottom: 4 }}>
               {t("renameProjectTitle", "Rename project")}
             </div>
-            <div
-              style={{ fontSize: "var(--text-sm)", color: "var(--text-dim)", marginBottom: 12, wordBreak: "break-all" }}
-            >
+            <div style={{ fontSize: 11.5, color: "var(--text-dim)", marginBottom: 12, wordBreak: "break-all" }}>
               {renameProjectTarget.root}
             </div>
             <input
@@ -2016,7 +1998,7 @@ export function AppShell() {
                 borderRadius: "var(--radius-sm)",
                 background: "var(--bg)",
                 color: "var(--text)",
-                fontSize: "var(--text-base)",
+                fontSize: 13,
                 outline: "none",
                 boxSizing: "border-box",
               }}
@@ -2031,7 +2013,7 @@ export function AppShell() {
                   border: "1px solid var(--border)",
                   borderRadius: "var(--radius-sm)",
                   color: "var(--text-muted)",
-                  fontSize: "var(--text-md)",
+                  fontSize: 12,
                   cursor: "pointer",
                 }}
               >
@@ -2046,7 +2028,7 @@ export function AppShell() {
                   border: "none",
                   borderRadius: "var(--radius-sm)",
                   color: "var(--on-accent)",
-                  fontSize: "var(--text-md)",
+                  fontSize: 12,
                   fontWeight: 600,
                   cursor: "pointer",
                 }}

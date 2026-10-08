@@ -104,7 +104,7 @@ function DeferredContentActions({
               background: "var(--bg-panel)",
               color: "var(--accent)",
               cursor: loading ? "default" : "pointer",
-              fontSize: "var(--text-sm)",
+              fontSize: 11,
               padding: "4px 8px",
             }}
           >
@@ -112,9 +112,7 @@ function DeferredContentActions({
           </button>
         );
       })}
-      {loadError && (
-        <span style={{ color: "var(--danger)", fontSize: "var(--text-sm)" }}>Failed to load full content</span>
-      )}
+      {loadError && <span style={{ color: "var(--danger)", fontSize: 11 }}>Failed to load full content</span>}
     </div>
   );
 }
@@ -278,7 +276,7 @@ function UserMessageView({
             background: getUserBubbleColor(message.channelSource),
             borderRadius: "10px 10px 2px 10px",
             padding: "9px 13px",
-            fontSize: "var(--text-base)",
+            fontSize: 13.5,
             lineHeight: 1.55,
             color: "var(--user-fg)",
             wordBreak: "break-word",
@@ -360,7 +358,7 @@ function UserMessageView({
                 borderRadius: "var(--radius-sm)",
                 color: copied ? "var(--accent)" : "var(--text-dim)",
                 cursor: "pointer",
-                fontSize: "var(--text-md)",
+                fontSize: 12,
                 fontWeight: 400,
                 whiteSpace: "nowrap",
                 transition: "color 0.12s",
@@ -433,7 +431,7 @@ function UserMessageView({
                     borderRadius: "var(--radius-sm)",
                     color: "var(--text-dim)",
                     cursor: "pointer",
-                    fontSize: "var(--text-md)",
+                    fontSize: 12,
                     fontWeight: 400,
                     whiteSpace: "nowrap",
                     transition: "color 0.12s",
@@ -480,7 +478,7 @@ function UserMessageView({
                     borderRadius: "var(--radius-sm)",
                     color: forking ? "var(--accent)" : "var(--text-dim)",
                     cursor: forking ? "not-allowed" : "pointer",
-                    fontSize: "var(--text-md)",
+                    fontSize: 12,
                     fontWeight: 400,
                     whiteSpace: "nowrap",
                     transition: "color 0.12s",
@@ -512,7 +510,7 @@ function UserMessageView({
               )}
             </div>
           )}
-          {time && <span style={{ fontSize: "var(--text-md)", color: "var(--text-dim)" }}>{time}</span>}
+          {time && <span style={{ fontSize: 12, color: "var(--text-dim)" }}>{time}</span>}
         </div>
       )}
     </div>
@@ -667,7 +665,7 @@ function AssistantMessageView({
       {/* Model label */}
       <div
         style={{
-          fontSize: "var(--text-md)",
+          fontSize: 12,
           color: "var(--text-dim)",
           marginBottom: 4,
           display: "flex",
@@ -697,15 +695,7 @@ function AssistantMessageView({
                     style={{ display: "flex", alignItems: "center", gap: 4, color: "var(--text)" }}
                     title="Estimated token count while streaming"
                   >
-                    <span
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 2,
-                        fontSize: "var(--text-md)",
-                        fontWeight: 400,
-                      }}
-                    >
+                    <span style={{ display: "flex", alignItems: "center", gap: 2, fontSize: 12, fontWeight: 400 }}>
                       <svg
                         width="10"
                         height="10"
@@ -732,7 +722,7 @@ function AssistantMessageView({
                               borderRadius: "var(--radius-sm)",
                               background: bg,
                               color: "var(--on-accent)",
-                              fontSize: "var(--text-sm)",
+                              fontSize: 11,
                               fontWeight: 400,
                             }}
                           >
@@ -775,7 +765,7 @@ function AssistantMessageView({
               background: "color-mix(in srgb, var(--danger) 8%, var(--assistant-bg))",
               color: "var(--danger)",
               padding: "10px 12px",
-              fontSize: "var(--text-base)",
+              fontSize: 13,
               lineHeight: 1.55,
               overflowWrap: "anywhere",
               whiteSpace: "pre-wrap",
@@ -796,7 +786,7 @@ function AssistantMessageView({
         }}
       >
         {message.usage && !isStreaming && (
-          <div style={{ fontSize: "var(--text-md)", color: "var(--text-dim)" }}>{formatUsage(message.usage)}</div>
+          <div style={{ fontSize: 12, color: "var(--text-dim)" }}>{formatUsage(message.usage)}</div>
         )}
         {textContent && !isStreaming && (
           <button
@@ -815,7 +805,7 @@ function AssistantMessageView({
               borderRadius: "var(--radius-sm)",
               color: copied ? "var(--accent)" : "var(--text-dim)",
               cursor: "pointer",
-              fontSize: "var(--text-md)",
+              fontSize: 12,
               fontWeight: 400,
               whiteSpace: "nowrap",
               opacity: hovered ? 1 : 0,
@@ -861,7 +851,7 @@ function AssistantMessageView({
           </button>
         )}
         {time && !isStreaming && (
-          <span style={{ fontSize: "var(--text-md)", color: "var(--text-dim)", marginLeft: "auto" }}>{time}</span>
+          <span style={{ fontSize: 12, color: "var(--text-dim)", marginLeft: "auto" }}>{time}</span>
         )}
       </div>
     </div>
@@ -930,7 +920,7 @@ function TextBlock({
         border: "1px solid var(--border)",
         padding: "10px 14px",
         borderRadius: "2px 10px 10px 10px",
-        fontSize: "var(--text-base)",
+        fontSize: 13.5,
         lineHeight: 1.6,
       }}
     >
@@ -951,7 +941,7 @@ function ThinkingBlock({ block, duration }: { block: ThinkingContent; duration?:
         border: "1px dashed var(--thinking-border)",
         borderRadius: "var(--radius-md)",
         overflow: "hidden",
-        fontSize: "var(--text-base)",
+        fontSize: 13,
         background: "var(--thinking-bg)",
       }}
     >
@@ -967,27 +957,22 @@ function ThinkingBlock({ block, duration }: { block: ThinkingContent; duration?:
           border: "none",
           color: "var(--text-dim)",
           cursor: "pointer",
-          fontSize: "var(--text-sm)",
+          fontSize: 11.5,
           fontFamily: "var(--font-mono)",
           textAlign: "left",
         }}
       >
-        <span style={{ fontSize: "var(--text-xs)" }}>{expanded ? "▾" : "▸"}</span>
+        <span style={{ fontSize: 10 }}>{expanded ? "▾" : "▸"}</span>
         <span>{t("thinkingLabel", "thinking")}</span>
         {duration !== undefined && (
           <span
-            style={{
-              marginLeft: "auto",
-              fontSize: "var(--text-sm)",
-              color: "var(--text-dim)",
-              fontVariantNumeric: "tabular-nums",
-            }}
+            style={{ marginLeft: "auto", fontSize: 11, color: "var(--text-dim)", fontVariantNumeric: "tabular-nums" }}
           >
             {duration}s
           </span>
         )}
         {duration === undefined && !expanded && (
-          <span style={{ marginLeft: "auto", fontSize: "var(--text-sm)", color: "var(--text-dim)" }}>
+          <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--text-dim)" }}>
             {t("collapsed", "collapsed")}
           </span>
         )}
@@ -997,7 +982,7 @@ function ThinkingBlock({ block, duration }: { block: ThinkingContent; duration?:
           style={{
             padding: "0 12px 10px",
             color: "var(--text-muted)",
-            fontSize: "var(--text-md)",
+            fontSize: 12.5,
             lineHeight: 1.6,
             whiteSpace: "pre-wrap",
             fontStyle: "italic",
@@ -1044,7 +1029,7 @@ function ToolCallBlock({
       style={{
         borderRadius: "var(--radius-md)",
         overflow: "hidden",
-        fontSize: "var(--text-md)",
+        fontSize: 12,
         fontFamily: "var(--font-mono)",
         background: "var(--tool-bg)",
         border: isError
@@ -1066,7 +1051,7 @@ function ToolCallBlock({
           borderBottom: expanded || result ? "1px solid var(--tool-border)" : "none",
           color: isError ? "var(--danger)" : "var(--accent)",
           cursor: "pointer",
-          fontSize: "var(--text-md)",
+          fontSize: 12,
           textAlign: "left",
           minWidth: 0,
         }}
@@ -1087,14 +1072,7 @@ function ToolCallBlock({
           {preview}
         </span>
         {duration !== undefined && (
-          <span
-            style={{
-              fontSize: "var(--text-sm)",
-              color: "var(--text-dim)",
-              flexShrink: 0,
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
+          <span style={{ fontSize: 11, color: "var(--text-dim)", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>
             {duration}s
           </span>
         )}
@@ -1107,7 +1085,7 @@ function ToolCallBlock({
             margin: 0,
             padding: "8px 12px",
             color: "var(--tool-fg)",
-            fontSize: "var(--text-md)",
+            fontSize: 12,
             lineHeight: 1.5,
             overflow: "auto",
             background: "transparent",
@@ -1171,7 +1149,7 @@ function TurnChangesView({ message }: { message: CustomMessage }) {
     <div
       style={{ margin: "8px 0 16px", borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)" }}
     >
-      <div style={{ padding: "7px 10px", fontSize: "var(--text-md)", color: "var(--text-muted)", fontWeight: 600 }}>
+      <div style={{ padding: "7px 10px", fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>
         {t("turnChangesTitle", "Changed files")} · {files.length}
       </div>
       {files.map((file, index) => (
@@ -1182,21 +1160,14 @@ function TurnChangesView({ message }: { message: CustomMessage }) {
               padding: "8px 10px 8px 14px",
               cursor: "pointer",
               color: "var(--text)",
-              fontSize: "var(--text-md)",
+              fontSize: 12,
               listStylePosition: "inside",
               overflowWrap: "anywhere",
             }}
           >
             <span style={{ fontFamily: "var(--font-mono)" }}>{file.path}</span>
             {file.patch && (
-              <span
-                style={{
-                  marginLeft: 10,
-                  whiteSpace: "nowrap",
-                  fontFamily: "var(--font-mono)",
-                  fontSize: "var(--text-sm)",
-                }}
-              >
+              <span style={{ marginLeft: 10, whiteSpace: "nowrap", fontFamily: "var(--font-mono)", fontSize: 11 }}>
                 <span style={{ color: "var(--success)" }}>+{file.added}</span>{" "}
                 <span style={{ color: "var(--danger)" }}>-{file.removed}</span>
               </span>
@@ -1205,7 +1176,7 @@ function TurnChangesView({ message }: { message: CustomMessage }) {
           {file.patch ? (
             <SplitPatchView text={file.patch} />
           ) : (
-            <div style={{ padding: "8px 14px", color: "var(--text-muted)", fontSize: "var(--text-md)" }}>
+            <div style={{ padding: "8px 14px", color: "var(--text-muted)", fontSize: 12 }}>
               {t("turnChangesUnavailable", "No text diff for an empty, binary, or large file")}
             </div>
           )}
@@ -1217,7 +1188,7 @@ function TurnChangesView({ message }: { message: CustomMessage }) {
             padding: "8px 14px",
             borderTop: "1px solid var(--border)",
             color: "var(--text-muted)",
-            fontSize: "var(--text-sm)",
+            fontSize: 11,
           }}
         >
           {t("turnChangesOmitted", "{count} more paths were not inspected").replace("{count}", String(omitted))}
@@ -1258,7 +1229,7 @@ function SplitPatchView({ text }: { text: string }) {
             minWidth: 0,
             borderTop: fileIndex === 0 ? "none" : "1px solid var(--border)",
             fontFamily: "var(--font-mono)",
-            fontSize: "var(--text-md)",
+            fontSize: 12,
             lineHeight: 1.55,
           }}
         >
@@ -1391,7 +1362,7 @@ function PatchTextView({ text }: { text: string }) {
         overflowY: "auto",
         overflowX: "hidden",
         fontFamily: "var(--font-mono)",
-        fontSize: "var(--text-md)",
+        fontSize: 12,
         lineHeight: 1.55,
         minWidth: 0,
       }}
@@ -1515,7 +1486,7 @@ function PairedResult({
           margin: 0,
           padding: "8px 12px",
           color: isError ? "var(--danger)" : isEmpty ? "var(--text-dim)" : "var(--tool-fg)",
-          fontSize: "var(--text-md)",
+          fontSize: 12,
           lineHeight: 1.5,
           maxHeight: collapsed ? 180 : 400,
           overflow: "auto",
@@ -1582,26 +1553,20 @@ function CompactionMessageView({ message }: { message: CustomMessage }) {
           >
             <polyline points="4 2.5 7.5 6 4 9.5" />
           </svg>
-          <span style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", fontWeight: 650 }}>
-            compaction
-          </span>
-          <span style={{ color: "var(--text)", fontSize: "var(--text-md)", fontWeight: 600 }}>
-            Conversation compacted
-          </span>
-          {time && (
-            <span style={{ marginLeft: "auto", color: "var(--text-dim)", fontSize: "var(--text-xs)" }}>{time}</span>
-          )}
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 650 }}>compaction</span>
+          <span style={{ color: "var(--text)", fontSize: 12, fontWeight: 600 }}>Conversation compacted</span>
+          {time && <span style={{ marginLeft: "auto", color: "var(--text-dim)", fontSize: 10 }}>{time}</span>}
         </button>
 
         {expanded && (
           <div style={{ padding: "11px 13px 12px" }}>
-            <div style={{ marginBottom: 10, color: "var(--text)", fontSize: "var(--text-lg)", lineHeight: 1.5 }}>
+            <div style={{ marginBottom: 10, color: "var(--text)", fontSize: 14, lineHeight: 1.5 }}>
               The conversation history before this point was compacted into the following summary:
             </div>
             {parsedSummary.body ? (
               <MarkdownBody className="markdown-compaction-message">{parsedSummary.body}</MarkdownBody>
             ) : (
-              <span style={{ color: "var(--text-dim)", fontSize: "var(--text-md)" }}>(no summary)</span>
+              <span style={{ color: "var(--text-dim)", fontSize: 12 }}>(no summary)</span>
             )}
             <CompactionFileMetadata readFiles={parsedSummary.readFiles} modifiedFiles={parsedSummary.modifiedFiles} />
           </div>
@@ -1690,25 +1655,14 @@ function CustomMessageView({
             borderBottom: "1px solid var(--border)",
             background: "var(--bg-panel)",
             color: "var(--text-muted)",
-            fontSize: "var(--text-md)",
+            fontSize: 12,
           }}
         >
-          <span
-            style={{
-              color: "var(--text-muted)",
-              fontFamily: "var(--font-mono)",
-              fontSize: "var(--text-sm)",
-              fontWeight: 650,
-            }}
-          >
+          <span style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 650 }}>
             {title}
           </span>
-          {isHiddenDisplay && (
-            <span style={{ color: "var(--text-dim)", fontSize: "var(--text-sm)" }}>hidden extension message</span>
-          )}
-          {time && (
-            <span style={{ marginLeft: "auto", color: "var(--text-dim)", fontSize: "var(--text-xs)" }}>{time}</span>
-          )}
+          {isHiddenDisplay && <span style={{ color: "var(--text-dim)", fontSize: 11 }}>hidden extension message</span>}
+          {time && <span style={{ marginLeft: "auto", color: "var(--text-dim)", fontSize: 10 }}>{time}</span>}
         </div>
 
         {contentExpanded ? (
@@ -1741,7 +1695,7 @@ function CustomMessageView({
                 {text}
               </MarkdownBody>
             ) : (
-              <span style={{ color: "var(--text-dim)", fontSize: "var(--text-md)" }}>(no message)</span>
+              <span style={{ color: "var(--text-dim)", fontSize: 12 }}>(no message)</span>
             )}
             <DeferredContentActions content={message.content} onLoad={onLoadDeferredContent} />
           </div>
@@ -1756,7 +1710,7 @@ function CustomMessageView({
               background: "transparent",
               color: "var(--text-dim)",
               cursor: "pointer",
-              fontSize: "var(--text-md)",
+              fontSize: 12,
               textAlign: "left",
             }}
           >
@@ -1783,7 +1737,7 @@ function CustomMessageView({
                 background: "none",
                 color: copied ? "var(--accent)" : "var(--text-dim)",
                 cursor: "pointer",
-                fontSize: "var(--text-sm)",
+                fontSize: 11,
               }}
             >
               {copied ? "Copied" : "Copy"}
@@ -1802,7 +1756,7 @@ function CustomMessageView({
                 background: "none",
                 color: "var(--text-dim)",
                 cursor: "pointer",
-                fontSize: "var(--text-sm)",
+                fontSize: 11,
               }}
             >
               {isHiddenDisplay
@@ -1824,7 +1778,7 @@ function CustomMessageView({
               borderTop: "1px solid var(--border)",
               background: "var(--bg)",
               color: "var(--text-muted)",
-              fontSize: "var(--text-md)",
+              fontSize: 12,
               lineHeight: 1.5,
               whiteSpace: "pre-wrap",
               wordBreak: "break-word",

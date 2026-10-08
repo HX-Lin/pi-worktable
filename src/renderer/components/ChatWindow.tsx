@@ -163,7 +163,7 @@ function ProcessDetailsGroup({
           background: "transparent",
           color: "var(--text-muted)",
           cursor: "pointer",
-          fontSize: "var(--text-md)",
+          fontSize: 12,
           textAlign: "left",
         }}
         title={
@@ -602,7 +602,7 @@ export function ChatWindow({
                     display: "inline-flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: "var(--text-lg)",
+                    fontSize: 14,
                     fontWeight: 700,
                     color: "var(--accent)",
                     flexShrink: 0,
@@ -612,7 +612,7 @@ export function ChatWindow({
                 </span>
                 <span
                   style={{
-                    fontSize: "var(--text-3xl)",
+                    fontSize: 22,
                     color: "var(--text)",
                     fontWeight: 700,
                     letterSpacing: "-0.2px",
@@ -663,7 +663,7 @@ export function ChatWindow({
                           background: "var(--bg-panel)",
                           color: "var(--text-muted)",
                           cursor: loadingOlder ? "default" : "pointer",
-                          fontSize: "var(--text-sm)",
+                          fontSize: 11,
                           padding: "5px 10px",
                         }}
                       >
@@ -947,12 +947,10 @@ function ExtensionStatusBar({ statuses }: { statuses: Array<{ key: string; text:
             borderRadius: "var(--radius-sm)",
             background: "color-mix(in srgb, var(--accent) 7%, var(--bg))",
             color: "var(--text-muted)",
-            fontSize: "var(--text-md)",
+            fontSize: 12,
           }}
         >
-          <span style={{ color: "var(--accent)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)" }}>
-            {status.key}
-          </span>
+          <span style={{ color: "var(--accent)", fontFamily: "var(--font-mono)", fontSize: 11 }}>{status.key}</span>
           <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {status.text}
           </span>
@@ -981,7 +979,7 @@ function ExtensionWidgets({ widgets }: { widgets: Array<{ key: string; lines: st
               padding: "5px 9px",
               borderBottom: "1px solid var(--border)",
               color: "var(--text-dim)",
-              fontSize: "var(--text-sm)",
+              fontSize: 11,
               fontFamily: "var(--font-mono)",
             }}
           >
@@ -992,7 +990,7 @@ function ExtensionWidgets({ widgets }: { widgets: Array<{ key: string; lines: st
               margin: 0,
               padding: "8px 9px",
               color: "var(--text-muted)",
-              fontSize: "var(--text-md)",
+              fontSize: 12,
               lineHeight: 1.5,
               whiteSpace: "pre-wrap",
               wordBreak: "break-word",
@@ -1057,7 +1055,7 @@ function NoticeShelf({
               boxShadow: floating
                 ? "0 1px 2px rgba(15,23,42,0.05), 0 10px 28px -14px rgba(15,23,42,0.24)"
                 : "0 1px 2px rgba(15,23,42,0.04), 0 8px 24px -12px rgba(15,23,42,0.10)",
-              fontSize: "var(--text-2xl)",
+              fontSize: 18,
               lineHeight: 1.45,
               transformOrigin: "top center",
               animation: notice.exiting
@@ -1146,29 +1144,15 @@ function ExtensionDialog({
         }}
       >
         <div style={{ padding: "12px 14px", borderBottom: "1px solid var(--border)" }}>
-          <div style={{ color: "var(--text)", fontSize: "var(--text-lg)", fontWeight: 650 }}>{request.title}</div>
-          <div
-            style={{
-              marginTop: 3,
-              color: "var(--text-dim)",
-              fontSize: "var(--text-sm)",
-              fontFamily: "var(--font-mono)",
-            }}
-          >
+          <div style={{ color: "var(--text)", fontSize: 14, fontWeight: 650 }}>{request.title}</div>
+          <div style={{ marginTop: 3, color: "var(--text-dim)", fontSize: 11, fontFamily: "var(--font-mono)" }}>
             extension request
           </div>
         </div>
 
         <div style={{ padding: 14 }}>
           {request.method === "confirm" && (
-            <div
-              style={{
-                color: "var(--text-muted)",
-                fontSize: "var(--text-base)",
-                lineHeight: 1.6,
-                whiteSpace: "pre-wrap",
-              }}
-            >
+            <div style={{ color: "var(--text-muted)", fontSize: 13, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
               {request.message}
             </div>
           )}
@@ -1187,7 +1171,7 @@ function ExtensionDialog({
                     color: "var(--text)",
                     cursor: "pointer",
                     textAlign: "left",
-                    fontSize: "var(--text-base)",
+                    fontSize: 13,
                   }}
                 >
                   {option}
@@ -1213,7 +1197,7 @@ function ExtensionDialog({
                 background: "var(--bg-panel)",
                 color: "var(--text)",
                 outline: "none",
-                fontSize: "var(--text-base)",
+                fontSize: 13,
               }}
             />
           )}
@@ -1236,7 +1220,7 @@ function ExtensionDialog({
                 color: "var(--text)",
                 outline: "none",
                 resize: "vertical",
-                fontSize: "var(--text-base)",
+                fontSize: 13,
                 lineHeight: 1.55,
                 fontFamily: "var(--font-mono)",
               }}
@@ -1409,7 +1393,7 @@ function ExtensionCustomPanel({
             borderBottom: "1px solid var(--border)",
           }}
         >
-          <div style={{ color: "var(--text)", fontSize: "var(--text-base)", fontWeight: 650 }}>Extension panel</div>
+          <div style={{ color: "var(--text)", fontSize: 13, fontWeight: 650 }}>Extension panel</div>
           <button
             onClick={() => onInput(request, "\x03")}
             style={{
@@ -1419,7 +1403,7 @@ function ExtensionCustomPanel({
               background: "var(--bg-panel)",
               color: "var(--text-muted)",
               cursor: "pointer",
-              fontSize: "var(--text-md)",
+              fontSize: 12,
             }}
           >
             Close
@@ -1434,7 +1418,7 @@ function ExtensionCustomPanel({
             background: "var(--bg-panel)",
             color: "var(--text)",
             fontFamily: "var(--font-mono)",
-            fontSize: "var(--text-base)",
+            fontSize: 13,
             lineHeight: 1.45,
             whiteSpace: "pre",
           }}

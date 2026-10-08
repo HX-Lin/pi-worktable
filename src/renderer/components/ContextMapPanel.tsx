@@ -45,7 +45,7 @@ export function ContextMapPanel({ sessionId, refreshKey = 0, onClose }: Props) {
             flexShrink: 0,
           }}
         >
-          <span style={{ fontSize: "var(--text-base)", color: "var(--text)" }}>{t("contextMap", "Context map")}</span>
+          <span style={{ fontSize: 13, color: "var(--text)" }}>{t("contextMap", "Context map")}</span>
           <button
             ref={closeRef}
             type="button"
@@ -57,7 +57,7 @@ export function ContextMapPanel({ sessionId, refreshKey = 0, onClose }: Props) {
               borderRadius: "var(--radius-sm)",
               color: "var(--text-muted)",
               cursor: "pointer",
-              fontSize: "var(--text-sm)",
+              fontSize: 11,
               padding: "3px 9px",
             }}
           >

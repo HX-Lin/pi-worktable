@@ -49,7 +49,7 @@ export function ProjectPicker(props: ProjectPickerController & { selectedProject
           color: "var(--bg)",
           cursor: "pointer",
           borderRadius: "var(--radius-sm)",
-          fontSize: "var(--text-md)",
+          fontSize: 12.5,
           fontWeight: 600,
           fontFamily: "var(--font-mono)",
           flexShrink: 0,
@@ -62,7 +62,7 @@ export function ProjectPicker(props: ProjectPickerController & { selectedProject
           e.currentTarget.style.opacity = "1";
         }}
       >
-        <span style={{ fontSize: "var(--text-lg)", lineHeight: 1 }}>+</span>
+        <span style={{ fontSize: 14, lineHeight: 1 }}>+</span>
         {t("newProject", "New project")}
       </button>
 
@@ -96,7 +96,7 @@ export function ProjectPicker(props: ProjectPickerController & { selectedProject
               autoFocus
               style={{
                 width: "100%",
-                fontSize: "var(--text-sm)",
+                fontSize: 11,
                 fontFamily: "var(--font-mono)",
                 padding: "5px 8px",
                 border: "1px solid var(--border)",
@@ -133,7 +133,7 @@ export function ProjectPicker(props: ProjectPickerController & { selectedProject
                 color: project === selectedProject ? "var(--text)" : "var(--text-muted)",
                 cursor: "pointer",
                 textAlign: "left",
-                fontSize: "var(--text-sm)",
+                fontSize: 11,
                 fontFamily: "var(--font-mono)",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
@@ -161,7 +161,7 @@ export function ProjectPicker(props: ProjectPickerController & { selectedProject
             </button>
           ))}
           {visibleProjects.length === 0 && projectFilter.trim() && (
-            <div style={{ padding: "8px 10px", fontSize: "var(--text-sm)", color: "var(--text-dim)" }}>
+            <div style={{ padding: "8px 10px", fontSize: 11, color: "var(--text-dim)" }}>
               {t("noMatchingProjects", "No matching projects")}
             </div>
           )}
@@ -186,7 +186,7 @@ export function ProjectPicker(props: ProjectPickerController & { selectedProject
               color: "var(--text-muted)",
               cursor: "pointer",
               textAlign: "left",
-              fontSize: "var(--text-sm)",
+              fontSize: 11,
             }}
           >
             <svg
@@ -224,7 +224,7 @@ export function ProjectPicker(props: ProjectPickerController & { selectedProject
               color: "var(--text-muted)",
               cursor: "pointer",
               textAlign: "left",
-              fontSize: "var(--text-sm)",
+              fontSize: 11,
             }}
           >
             <svg
@@ -264,7 +264,7 @@ export function ProjectPicker(props: ProjectPickerController & { selectedProject
               color: "var(--text-muted)",
               cursor: "pointer",
               textAlign: "left",
-              fontSize: "var(--text-sm)",
+              fontSize: 11,
             }}
           >
             <svg
@@ -305,7 +305,7 @@ export function ProjectPicker(props: ProjectPickerController & { selectedProject
               placeholder="/path/to/project"
               style={{
                 width: "100%",
-                fontSize: "var(--text-sm)",
+                fontSize: 11,
                 fontFamily: "var(--font-mono)",
                 padding: "5px 8px",
                 border: "1px solid var(--accent)",
@@ -321,7 +321,7 @@ export function ProjectPicker(props: ProjectPickerController & { selectedProject
                 style={{
                   marginTop: 5,
                   color: "var(--danger)",
-                  fontSize: "var(--text-sm)",
+                  fontSize: 11,
                   lineHeight: 1.35,
                   overflowWrap: "anywhere",
                 }}
@@ -340,7 +340,7 @@ export function ProjectPicker(props: ProjectPickerController & { selectedProject
                   border: "none",
                   borderRadius: "var(--radius-sm)",
                   color: "var(--on-accent)",
-                  fontSize: "var(--text-sm)",
+                  fontSize: 11,
                   fontWeight: 600,
                   cursor: customPathValidating || !customPathValue.trim() ? "not-allowed" : "pointer",
                   opacity: customPathValidating || !customPathValue.trim() ? 0.65 : 1,
@@ -361,7 +361,7 @@ export function ProjectPicker(props: ProjectPickerController & { selectedProject
                   border: "1px solid var(--border)",
                   borderRadius: "var(--radius-sm)",
                   color: "var(--text-muted)",
-                  fontSize: "var(--text-sm)",
+                  fontSize: 11,
                   cursor: "pointer",
                 }}
               >

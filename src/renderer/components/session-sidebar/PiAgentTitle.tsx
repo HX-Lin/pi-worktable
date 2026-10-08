@@ -105,7 +105,7 @@ export function PiAgentTitle() {
           alignItems: "center",
           justifyContent: "center",
           fontFamily: "var(--font-mono)",
-          fontSize: "var(--text-md)",
+          fontSize: 12,
           color: "var(--accent)",
           fontWeight: 700,
           flexShrink: 0,
@@ -114,9 +114,7 @@ export function PiAgentTitle() {
       >
         $
       </span>
-      <span
-        style={{ fontWeight: 700, fontSize: "var(--text-lg)", letterSpacing: "-0.2px", fontFamily: "var(--font-mono)" }}
-      >
+      <span style={{ fontWeight: 700, fontSize: 14, letterSpacing: "-0.2px", fontFamily: "var(--font-mono)" }}>
         {display}
       </span>
     </button>

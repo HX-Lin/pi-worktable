@@ -240,7 +240,7 @@ export function ToolchainStateView({
                     justifyContent: "space-between",
                     gap: 8,
                     padding: "4px 8px 3px",
-                    fontSize: "var(--text-xs)",
+                    fontSize: 10,
                     fontWeight: 600,
                     color: "var(--text-dim)",
                     textTransform: "uppercase",
@@ -301,7 +301,7 @@ export function ToolchainStateView({
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
                           fontFamily: "var(--font-mono)",
-                          fontSize: "var(--text-md)",
+                          fontSize: 12,
                           fontWeight: selectedItem ? 600 : 400,
                         }}
                       >
@@ -344,7 +344,7 @@ export function ToolchainStateView({
                 flex: 1,
                 overflow: "hidden",
                 textOverflow: "ellipsis",
-                fontSize: "var(--text-xs)",
+                fontSize: 10,
                 color: "var(--text-dim)",
               }}
             >
@@ -443,7 +443,7 @@ function ToolDetail({
             flexShrink: 0,
             background: "var(--sunken-bg)",
             color: "var(--text-dim)",
-            fontSize: "var(--text-xs)",
+            fontSize: 10,
           }}
         >
           {state?.provider ? providerLabel(state.provider, t) : t("toolProviderNone", "Not found")}
@@ -458,7 +458,7 @@ function ToolDetail({
             whiteSpace: "nowrap",
             color: "var(--text-dim)",
             fontFamily: "var(--font-mono)",
-            fontSize: "var(--text-sm)",
+            fontSize: 11,
           }}
         >
           {state?.pathLabel ?? t("toolExecutableMissing", "No executable selected")}
@@ -469,7 +469,7 @@ function ToolDetail({
             alignItems: "center",
             gap: 6,
             flexShrink: 0,
-            fontSize: "var(--text-sm)",
+            fontSize: 11,
             color: healthColor(health),
           }}
         >
@@ -482,12 +482,10 @@ function ToolDetail({
       </div>
 
       <div>
-        <div
-          style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-2xl)", fontWeight: 700, color: "var(--text)" }}
-        >
+        <div style={{ fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 700, color: "var(--text)" }}>
           {CAPABILITY_LABELS[capability]}
         </div>
-        <div style={{ marginTop: 5, fontSize: "var(--text-md)", lineHeight: 1.6, color: "var(--text-muted)" }}>
+        <div style={{ marginTop: 5, fontSize: 12, lineHeight: 1.6, color: "var(--text-muted)" }}>
           {t(
             "toolDetailDescription",
             "Choose which verified provider Pi Desktop should use for Skills, Plugins, Agent commands, and project operations.",
@@ -496,13 +494,13 @@ function ToolDetail({
       </div>
 
       {(failed || actionError) && (
-        <div role="alert" style={{ color: "var(--danger)", fontSize: "var(--text-md)" }}>
+        <div role="alert" style={{ color: "var(--danger)", fontSize: 12 }}>
           {actionError ??
             t("toolDiscoveryFailed", "Tool discovery failed. Existing selections were not changed; try rescanning.")}
         </div>
       )}
       {stateReadOnly && (
-        <div role="alert" style={{ color: "var(--warning)", fontSize: "var(--text-md)" }}>
+        <div role="alert" style={{ color: "var(--warning)", fontSize: 12 }}>
           {t(
             "toolStateReadOnly",
             "These tool settings were written by a newer Pi Desktop. This version will not modify or delete them.",
@@ -528,10 +526,7 @@ function ToolDetail({
           />
         </DetailGrid>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <label
-            htmlFor={`tool-preference-${capability}`}
-            style={{ fontSize: "var(--text-md)", color: "var(--text-dim)" }}
-          >
+          <label htmlFor={`tool-preference-${capability}`} style={{ fontSize: 12, color: "var(--text-dim)" }}>
             {t("toolPreference", "Preference")}
           </label>
           <select
@@ -549,7 +544,7 @@ function ToolDetail({
               borderRadius: "var(--radius-sm)",
               background: "var(--bg-panel)",
               color: "var(--text)",
-              fontSize: "var(--text-sm)",
+              fontSize: 11,
             }}
           >
             {TOOL_PREFERENCES.map((preference) => (
@@ -595,7 +590,7 @@ function ToolDetail({
                     flexShrink: 0,
                   }}
                 />
-                <span style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", flexShrink: 0 }}>
+                <span style={{ fontSize: 11, color: "var(--text-muted)", flexShrink: 0 }}>
                   {providerLabel(candidate.provider, t)}
                 </span>
                 <code
@@ -605,13 +600,13 @@ function ToolDetail({
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
-                    fontSize: "var(--text-xs)",
+                    fontSize: 10,
                     color: "var(--text-dim)",
                   }}
                 >
                   {candidate.pathLabel}
                 </code>
-                <span style={{ fontSize: "var(--text-xs)", color: "var(--text-dim)", flexShrink: 0 }}>
+                <span style={{ fontSize: 10, color: "var(--text-dim)", flexShrink: 0 }}>
                   {candidate.version ? `v${candidate.version}` : healthLabel(candidate.health, t)}
                 </span>
               </div>
@@ -689,9 +684,7 @@ function ToolDetail({
           </div>
           {operationVisible && operation && (
             <div style={{ marginTop: 4 }}>
-              <div
-                style={{ fontSize: "var(--text-sm)", color: operation.error ? "var(--danger)" : "var(--text-muted)" }}
-              >
+              <div style={{ fontSize: 11, color: operation.error ? "var(--danger)" : "var(--text-muted)" }}>
                 {operationPhase(operation.phase, t)}
               </div>
               <OperationProgress operation={operation} t={t} />
@@ -729,7 +722,7 @@ function ToolDetail({
 
       {projectSummary?.length ? (
         <DetailSection title={t("toolProjectRequirements", "Current project")}>
-          <div style={{ fontSize: "var(--text-sm)", lineHeight: 1.65, color: "var(--text-muted)" }}>
+          <div style={{ fontSize: 11, lineHeight: 1.65, color: "var(--text-muted)" }}>
             {projectSummary.map((line) => (
               <div key={line}>{line}</div>
             ))}
@@ -737,7 +730,7 @@ function ToolDetail({
         </DetailSection>
       ) : null}
 
-      <p style={{ margin: 0, paddingTop: 2, fontSize: "var(--text-xs)", lineHeight: 1.65, color: "var(--text-dim)" }}>
+      <p style={{ margin: 0, paddingTop: 2, fontSize: 10, lineHeight: 1.65, color: "var(--text-dim)" }}>
         {t(
           "toolDiscoveryPrivacy",
           "Scanning does not run shell profiles or access the network. Pi Desktop does not modify the system PATH, shell profile, or registry.",
@@ -754,7 +747,7 @@ function ToolDetail({
 function DetailSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <h3 style={{ margin: 0, fontSize: "var(--text-md)", fontWeight: 700, color: "var(--text)" }}>{title}</h3>
+      <h3 style={{ margin: 0, fontSize: 12, fontWeight: 700, color: "var(--text)" }}>{title}</h3>
       {children}
     </section>
   );
@@ -767,7 +760,7 @@ function DetailGrid({ children }: { children: React.ReactNode }) {
         display: "grid",
         gridTemplateColumns: "minmax(100px, 132px) minmax(0, 1fr)",
         gap: "9px 14px",
-        fontSize: "var(--text-md)",
+        fontSize: 12,
         lineHeight: 1.45,
       }}
     >
@@ -833,12 +826,10 @@ function CacheDetail({
       }}
     >
       <div>
-        <div style={{ fontSize: "var(--text-sm)", fontWeight: 600, color: "var(--text-muted)" }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)" }}>
           {CACHE_LABELS[cacheId]} {t("toolCache", "cache")}
         </div>
-        <div style={{ marginTop: 2, fontSize: "var(--text-xs)", color: "var(--text-dim)" }}>
-          {formatBytes(cache.diskBytes, t)}
-        </div>
+        <div style={{ marginTop: 2, fontSize: 10, color: "var(--text-dim)" }}>{formatBytes(cache.diskBytes, t)}</div>
       </div>
       <ActionButton
         disabled={disabled || !cache.canClear}
@@ -870,12 +861,12 @@ function OperationProgress({ operation, t }: { operation: PublicToolchainOperati
         </div>
       )}
       {operation.totalBytes !== undefined && (
-        <div style={{ marginTop: 4, fontSize: "var(--text-xs)", color: "var(--text-dim)" }}>
+        <div style={{ marginTop: 4, fontSize: 9, color: "var(--text-dim)" }}>
           {formatBytes(operation.downloadedBytes, t)} / {formatBytes(operation.totalBytes, t)}
         </div>
       )}
       {operation.error && (
-        <div role="alert" style={{ marginTop: 5, fontSize: "var(--text-xs)", color: "var(--danger)" }}>
+        <div role="alert" style={{ marginTop: 5, fontSize: 10, color: "var(--danger)" }}>
           {friendlyErrorCode(operation.error.code, t)}
         </div>
       )}
@@ -916,7 +907,7 @@ function ActionButton({
         borderRadius: "var(--radius-sm)",
         background: primary ? "var(--accent)" : "var(--bg)",
         color: primary ? "white" : "var(--text)",
-        fontSize: "var(--text-sm)",
+        fontSize: 11,
         fontWeight: 600,
         cursor: disabled ? "not-allowed" : busy ? "wait" : "pointer",
         opacity: disabled ? 0.55 : 1,
