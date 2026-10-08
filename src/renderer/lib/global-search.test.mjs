@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   buildSections,
+  transcriptItems,
   clampSelection,
   flattenSections,
   moveSelection,
@@ -129,4 +130,70 @@ test("flattenSections keeps section order, clampSelection and moveSelection wrap
   assert.equal(moveSelection(-1, 3, 1), 0);
   assert.equal(moveSelection(-1, 3, -1), 2);
   assert.equal(moveSelection(0, 0, 1), -1);
+});
+
+test("transcript hits become one row per conversation, pointing at sessions", () => {
+  const sessions = [session("a", { name: "parser work" }), session("b", { firstMessage: "other" })];
+  const items = transcriptItems(
+    [
+      {
+        sessionId: "a",
+        sessionName: "parser work",
+        cwd: "/w",
+        entryId: "e1",
+        role: "user",
+        snippet: "fix the parser",
+        modified: "2026-07-15T00:00:00.000Z",
+      },
+      {
+        sessionId: "a",
+        sessionName: "parser work",
+        cwd: "/w",
+        entryId: "e2",
+        role: "assistant",
+        snippet: "parser done",
+        modified: "2026-07-15T00:00:00.000Z",
+      },
+      {
+        sessionId: "missing",
+        sessionName: "gone",
+        cwd: "/w",
+        role: "user",
+        snippet: "parser elsewhere",
+        modified: "2026-07-15T00:00:00.000Z",
+      },
+    ],
+    sessions,
+  );
+  // One row per conversation, and a hit in an unknown session keeps its text but no session.
+  assert.equal(items.length, 2);
+  assert.equal(items[0].kind, "transcript");
+  assert.equal(items[0].session?.id, "a");
+  assert.equal(items[0].title, "fix the parser");
+  assert.equal(items[1].session, undefined);
+
+  const sections = buildSections({
+    sessions,
+    transcriptHits: [
+      {
+        sessionId: "a",
+        sessionName: "parser work",
+        cwd: "/w",
+        entryId: "e1",
+        role: "user",
+        snippet: "fix the parser",
+        modified: "2026-07-15T00:00:00.000Z",
+      },
+    ],
+    files: [],
+    projects: [],
+    actions: [],
+    actionLabels: {},
+    query: "",
+    fileRoot: null,
+  });
+  assert.deepEqual(
+    sections.map((section) => section.kind),
+    ["session", "transcript"],
+  );
 });

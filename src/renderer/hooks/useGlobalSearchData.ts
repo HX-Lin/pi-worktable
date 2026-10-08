@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { call, listSessions } from "../lib/api-client";
 import type { SessionInfo } from "@shared/types";
+import { type TranscriptHit } from "@/lib/global-search";
 
 const FILE_QUERY_DEBOUNCE_MS = 120;
 
@@ -20,6 +21,7 @@ interface Params {
 export function useGlobalSearchData({ open, fileRoot }: Params) {
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [files, setFiles] = useState<string[]>([]);
+  const [transcriptHits, setTranscriptHits] = useState<TranscriptHit[]>([]);
   const [loadingFiles, setLoadingFiles] = useState(false);
   const requestRef = useRef(0);
 
@@ -37,6 +39,23 @@ export function useGlobalSearchData({ open, fileRoot }: Params) {
       cancelled = true;
     };
   }, [open]);
+
+  /** Transcript hits come from the host, debounced like the file index. */
+  const searchTranscripts = useCallback(
+    (query: string) => {
+      if (!open || query.trim().length < 2) {
+        setTranscriptHits([]);
+        return;
+      }
+      const timer = setTimeout(() => {
+        void call("search.transcripts", { query })
+          .then((result) => setTranscriptHits(result.hits ?? []))
+          .catch(() => setTranscriptHits([]));
+      }, 180);
+      return () => clearTimeout(timer);
+    },
+    [open],
+  );
 
   const loadFiles = useCallback(
     (query: string) => {
@@ -81,5 +100,8 @@ export function useGlobalSearchData({ open, fileRoot }: Params) {
     [fileRoot, loadFiles],
   );
 
-  return useMemo(() => ({ sessions, files, loadingFiles, searchFiles }), [sessions, files, loadingFiles, searchFiles]);
+  return useMemo(
+    () => ({ sessions, files, transcriptHits, loadingFiles, searchFiles, searchTranscripts }),
+    [sessions, files, transcriptHits, loadingFiles, searchFiles, searchTranscripts],
+  );
 }

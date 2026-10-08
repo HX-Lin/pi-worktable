@@ -825,7 +825,7 @@ export function AppShell() {
   /** Palette dispatch: every branch ends in the same action the UI would run. */
   const handleGlobalSearchSelect = useCallback(
     (item: GlobalSearchItem) => {
-      if (item.kind === "session" && item.session) {
+      if ((item.kind === "session" || item.kind === "transcript") && item.session) {
         handleSelectSession(item.session);
         return;
       }

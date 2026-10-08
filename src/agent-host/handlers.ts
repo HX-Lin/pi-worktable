@@ -22,6 +22,7 @@ import { modelHandlers } from "./handlers/models";
 import { pluginHandlers } from "./handlers/plugins";
 import { ensureSessionEvents } from "./handlers/session-events";
 import { sessionHandlers } from "./handlers/sessions";
+import { searchHandlers } from "./handlers/search";
 import { subagentHandlers } from "./handlers/subagents";
 import { taskHandlers } from "./handlers/tasks";
 import { voiceHandlers } from "./handlers/voice";
@@ -48,6 +49,7 @@ type ProvidedMethods =
   | keyof ReturnType<typeof pluginHandlers>
   | keyof ReturnType<typeof taskHandlers>
   | keyof ReturnType<typeof subagentHandlers>
+  | keyof ReturnType<typeof searchHandlers>
   | keyof ReturnType<typeof memoryHandlers>
   | keyof ReturnType<typeof voiceHandlers>;
 
@@ -101,6 +103,7 @@ export function registerHandlers(server: RpcServer): () => Promise<void> {
       pluginHandlers(ctx),
       taskHandlers(ctx),
       subagentHandlers(),
+      searchHandlers(),
       memoryHandlers(ctx),
       voiceHandlers(ctx),
     ),

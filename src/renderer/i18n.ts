@@ -42,6 +42,7 @@ const zhCN: Record<string, string> = {
   globalSearchOpen: "打开",
   globalSearchResults: "项结果",
   globalSearchSection_session: "会话",
+  globalSearchSection_transcript: "对话内容",
   globalSearchSection_file: "文件",
   globalSearchSection_project: "项目",
   globalSearchSection_action: "命令",

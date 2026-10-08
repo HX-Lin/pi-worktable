@@ -24,6 +24,7 @@ export interface GlobalSearchProps {
 
 const KIND_ICONS: Record<GlobalSearchItem["kind"], string> = {
   session: "M4 5h16M4 10h16M4 15h10",
+  transcript: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z",
   file: "M6 2h8l4 4v16H6zM14 2v4h4",
   project: "M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
   action: "M13 2 3 14h7l-1 8 10-12h-7z",
@@ -58,7 +59,7 @@ export function GlobalSearch({ open, onClose, fileRoot, projects, actions, onSel
   const [selected, setSelected] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const { sessions, files, searchFiles } = useGlobalSearchData({ open, fileRoot });
+  const { sessions, files, transcriptHits, searchFiles, searchTranscripts } = useGlobalSearchData({ open, fileRoot });
 
   const actionLabels = useMemo<Record<string, string>>(
     () => ({
@@ -78,8 +79,8 @@ export function GlobalSearch({ open, onClose, fileRoot, projects, actions, onSel
   );
 
   const sections = useMemo(
-    () => buildSections({ sessions, files, projects, actions, actionLabels, query, fileRoot }),
-    [sessions, files, projects, actions, actionLabels, query, fileRoot],
+    () => buildSections({ sessions, transcriptHits, files, projects, actions, actionLabels, query, fileRoot }),
+    [sessions, transcriptHits, files, projects, actions, actionLabels, query, fileRoot],
   );
   const items = useMemo(() => flattenSections(sections), [sections]);
 
@@ -95,8 +96,13 @@ export function GlobalSearch({ open, onClose, fileRoot, projects, actions, onSel
   // Keep the debounced file search in sync with what was typed.
   useEffect(() => {
     if (!open) return;
-    return searchFiles(query);
-  }, [open, query, searchFiles]);
+    const cancelFiles = searchFiles(query);
+    const cancelTranscripts = searchTranscripts(query);
+    return () => {
+      cancelFiles?.();
+      cancelTranscripts?.();
+    };
+  }, [open, query, searchFiles, searchTranscripts]);
 
   useEffect(() => {
     setSelected((current) => clampSelection(current, items.length));

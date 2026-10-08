@@ -4,7 +4,7 @@ import { buildEntriesFromFiles, filterFileEntries, type FileIndexEntry } from ".
 import { getSessionDisplayTitle } from "./session-list.ts";
 
 /** Everything the palette can jump to. Ordered by usefulness, not by kind. */
-export type GlobalSearchItemKind = "session" | "file" | "project" | "action";
+export type GlobalSearchItemKind = "session" | "transcript" | "file" | "project" | "action";
 
 export interface GlobalSearchItem {
   kind: GlobalSearchItemKind;
@@ -44,6 +44,7 @@ export type GlobalSearchAction =
 
 export const SECTION_LABELS: Record<GlobalSearchItemKind, string> = {
   session: "Sessions",
+  transcript: "In conversations",
   file: "Files",
   project: "Projects",
   action: "Commands",
@@ -51,6 +52,7 @@ export const SECTION_LABELS: Record<GlobalSearchItemKind, string> = {
 
 export const SECTION_LIMITS: Record<GlobalSearchItemKind, number> = {
   session: 8,
+  transcript: 6,
   file: 8,
   project: 5,
   action: 7,
@@ -92,6 +94,41 @@ export function sessionItem(session: SessionInfo): GlobalSearchItem {
     detail: session.cwd,
     session,
   };
+}
+
+export interface TranscriptHit {
+  sessionId: string;
+  sessionName: string;
+  cwd: string;
+  entryId?: string;
+  role: "user" | "assistant" | "other";
+  snippet: string;
+  modified: string;
+}
+
+/**
+ * One row per matching message, each pointing at the conversation it came from.
+ * The palette cannot scroll to the exact entry (sessions load a window), so the
+ * snippet is what tells you whether it is the right hit.
+ */
+export function transcriptItems(hits: TranscriptHit[], sessions: SessionInfo[]): GlobalSearchItem[] {
+  const byId = new Map(sessions.map((session) => [session.id, session]));
+  const seen = new Set<string>();
+  const items: GlobalSearchItem[] = [];
+  for (const hit of hits) {
+    // Keep one row per conversation: several matches in one session get noisy.
+    if (seen.has(hit.sessionId)) continue;
+    seen.add(hit.sessionId);
+    const session = byId.get(hit.sessionId);
+    items.push({
+      kind: "transcript",
+      key: `transcript:${hit.sessionId}:${hit.entryId ?? ""}`,
+      title: hit.snippet,
+      detail: hit.sessionName,
+      session,
+    });
+  }
+  return items;
 }
 
 export function rankProjects(
@@ -142,6 +179,7 @@ export function actionItems(
 
 export function buildSections(parts: {
   sessions: SessionInfo[];
+  transcriptHits?: TranscriptHit[];
   files: string[];
   projects: Array<{ root: string; label?: string }>;
   actions: GlobalSearchAction[];
@@ -153,6 +191,7 @@ export function buildSections(parts: {
   const hasQuery = query.trim().length > 0;
   const sections: GlobalSearchSection[] = [
     { kind: "session", items: rankSessions(parts.sessions, query).map(sessionItem) },
+    { kind: "transcript", items: transcriptItems(parts.transcriptHits ?? [], parts.sessions) },
     { kind: "file", items: parts.fileRoot ? fileItems(parts.files, query) : [] },
     { kind: "project", items: rankProjects(parts.projects, query) },
     { kind: "action", items: hasQuery ? actionItems(parts.actions, actionLabels, query) : [] },

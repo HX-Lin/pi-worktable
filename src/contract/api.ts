@@ -445,6 +445,21 @@ export interface Api {
   };
   "system.defaultCwd": { params: void; result: { cwd: string } };
   "system.allowRoot": { params: { path: string }; result: { ok: true } };
+  "search.transcripts": {
+    params: { query: string; limit?: number };
+    result: {
+      hits: Array<{
+        sessionId: string;
+        sessionName: string;
+        cwd: string;
+        entryId?: string;
+        role: "user" | "assistant" | "other";
+        snippet: string;
+        modified: string;
+      }>;
+    };
+  };
+
   "subagents.list": {
     params: void;
     result: {
