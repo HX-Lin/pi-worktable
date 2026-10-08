@@ -1,7 +1,6 @@
 import { useI18n } from "@/i18n";
 import { PiAgentTitle } from "./PiAgentTitle";
 import { ProjectPicker } from "./ProjectPicker";
-import { WorktreeSwitcher } from "./WorktreeSwitcher";
 import type { ProjectPickerController } from "./useProjectPicker";
 import type { WorktreesController } from "./useWorktrees";
 
@@ -94,15 +93,6 @@ export function SidebarHeader({ picker, worktrees, selectedCwd, homeDir, session
       </div>
 
       <ProjectPicker {...picker} homeDir={homeDir} selectedProject={worktrees.projectRootFor(selectedCwd)} />
-
-      {/* Worktree switcher — shown only for git projects at a checkout top
-            level (repo subdirs keep their own project identity, so switching
-            from them would jump projects). Rendered whenever the selected cwd
-            belongs to the loaded project (not just when forCwd matches), so
-            switching between worktrees of one project keeps the row mounted
-            instead of flickering while data refetches: all worktrees of a
-            project share the same list anyway. */}
-      <WorktreeSwitcher {...worktrees} selectedCwd={selectedCwd} homeDir={homeDir} />
     </div>
   );
 }
