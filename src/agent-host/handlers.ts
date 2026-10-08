@@ -20,6 +20,7 @@ import { jevMcpHandlers } from "./handlers/jevMcp";
 import { memoryHandlers } from "./handlers/memory";
 import { modelHandlers } from "./handlers/models";
 import { pluginHandlers } from "./handlers/plugins";
+import { presetHandlers } from "./handlers/preset";
 import { ensureSessionEvents } from "./handlers/session-events";
 import { sessionHandlers } from "./handlers/sessions";
 import { searchHandlers } from "./handlers/search";
@@ -51,7 +52,8 @@ type ProvidedMethods =
   | keyof ReturnType<typeof subagentHandlers>
   | keyof ReturnType<typeof searchHandlers>
   | keyof ReturnType<typeof memoryHandlers>
-  | keyof ReturnType<typeof voiceHandlers>;
+  | keyof ReturnType<typeof voiceHandlers>
+  | keyof ReturnType<typeof presetHandlers>;
 
 type MissingMethods = Exclude<ApiMethod, ProvidedMethods>;
 type AssertNever<T extends never> = T;
@@ -106,6 +108,7 @@ export function registerHandlers(server: RpcServer): () => Promise<void> {
       searchHandlers(),
       memoryHandlers(ctx),
       voiceHandlers(ctx),
+      presetHandlers(ctx),
     ),
   );
 

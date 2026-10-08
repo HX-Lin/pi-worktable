@@ -428,6 +428,20 @@ export interface Api {
     result: { ok: true };
   };
 
+  // Presets: the portable half of a setup (agents, MCP endpoints, gate rules).
+  // Secrets are stripped on export and nothing is overwritten on import.
+  "preset.export": {
+    params: { cwd?: string } | void;
+    result: { json: string; counts: { agents: number; mcpServers: number } };
+  };
+  "preset.import": {
+    params: { json: string; cwd?: string };
+    result: {
+      applied: { agentsAdded: number; agentsSkipped: number; mcpAdded: number; mcpSkipped: number };
+      warnings: string[];
+    };
+  };
+
   "plugins.list": {
     params: { cwd?: string } | void;
     result: PluginsResponse;

@@ -22,6 +22,7 @@ import { PluginsConfig } from "./PluginsConfig";
 import { AgentsConfig } from "./AgentsConfig";
 import { loadVoiceSettings, saveVoiceSettings, type VoiceSettings } from "@/hooks/useVoiceInput";
 import { ToolchainsConfig } from "./ToolchainsConfig";
+import { PresetsConfig } from "./PresetsConfig";
 import { ChannelsConfig } from "./channels/ChannelsConfig";
 import type { ChannelsSnapshot } from "@shared/channel-types";
 import type { DesktopUpdateState } from "../../contract/desktop";
@@ -29,7 +30,17 @@ import { APP_AUTHOR, APP_DISPLAY_NAME, APP_GITHUB_URL, APP_VERSION, PI_VERSION }
 import appIconUrl from "../../../build/icon.png";
 
 export type SettingsTab =
-  "general" | "capabilities" | "channels" | "models" | "agents" | "tools" | "plugins" | "mcp" | "jev" | "about";
+  | "general"
+  | "capabilities"
+  | "channels"
+  | "models"
+  | "agents"
+  | "tools"
+  | "plugins"
+  | "mcp"
+  | "jev"
+  | "presets"
+  | "about";
 
 interface SettingsConfigProps {
   cwd: string | null;
@@ -128,6 +139,15 @@ function IconWrench() {
     </svg>
   );
 }
+function IconShare() {
+  return (
+    <svg {...iconProps} aria-hidden="true">
+      <path d="M12 15V3M8 7l4-4 4 4" />
+      <path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" />
+    </svg>
+  );
+}
+
 function IconInfo() {
   return (
     <svg {...iconProps} aria-hidden="true">
@@ -191,6 +211,7 @@ export function SettingsConfig({
     { id: "jev", label: t("jevTitle", "Jev"), icon: <IconShield />, hue: "var(--red)" },
     { id: "channels", label: t("channels", "Channels"), icon: <IconChat />, hue: "var(--green)" },
     { id: "tools", label: t("developerTools", "Developer Tools"), icon: <IconWrench />, hue: "var(--text-muted)" },
+    { id: "presets", label: t("presets", "Presets"), icon: <IconShare />, hue: "var(--accent)" },
     { id: "about", label: t("about", "About"), icon: <IconInfo />, hue: "var(--text-muted)" },
   ];
 
@@ -442,6 +463,14 @@ export function SettingsConfig({
             {activeTab === "capabilities" && <CapabilitiesPanel sessionId={sessionId} cwd={cwd} />}
             {activeTab === "mcp" && <McpConfig cwd={cwd} />}
             {activeTab === "jev" && <JevConfig />}
+            {activeTab === "presets" && (
+              <PresetsConfig
+                cwd={cwd}
+                onAppearanceChange={(appearance: { theme?: string; language?: string }) => {
+                  if (appearance.theme) setTheme(appearance.theme);
+                }}
+              />
+            )}
             {activeTab === "about" && <AboutSettings onClose={onClose} />}
           </div>
         </div>
