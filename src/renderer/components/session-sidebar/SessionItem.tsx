@@ -2,6 +2,7 @@ import { useCallback, useRef, useState, type CSSProperties } from "react";
 import type { SessionInfo } from "@/lib/types";
 import { useI18n } from "@/i18n";
 import { getSessionDisplayTitle } from "@/lib/session-list";
+import { deleteSession, renameSession } from "@/lib/api-client";
 import { formatRelativeTime } from "./helpers";
 import { RunningSessionIndicator, UnreadSessionIndicator } from "./indicators";
 
@@ -82,16 +83,7 @@ export function SessionItem({
     setRenaming(false);
     if (name === (session.name ?? "")) return;
     try {
-      const res = await fetch(`/api/sessions/${encodeURIComponent(session.id)}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
-      });
-      if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { error?: string };
-        console.error("rename failed", body.error ?? res.status);
-        return;
-      }
+      await renameSession(session.id, name);
       onRenamed?.();
     } catch (e) {
       console.error("rename failed", e);
@@ -123,15 +115,7 @@ export function SessionItem({
       setConfirmDelete(false);
       setDeleting(true);
       try {
-        const res = await fetch(`/api/sessions/${encodeURIComponent(session.id)}`, {
-          method: "DELETE",
-        });
-        if (!res.ok) {
-          const body = (await res.json().catch(() => ({}))) as { error?: string };
-          window.alert(body.error ?? `Delete failed (${res.status})`);
-          setDeleting(false);
-          return;
-        }
+        await deleteSession(session.id);
         onDeleted?.(session.id);
       } catch (err) {
         window.alert(err instanceof Error ? err.message : String(err));

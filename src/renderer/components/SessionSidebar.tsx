@@ -5,6 +5,14 @@ import { getProjectDisplayName } from "@/lib/projects";
 import { useI18n } from "@/i18n";
 import { filterSessionsForQuery, sessionDateGroup, type SessionDateGroup } from "@/lib/session-list";
 import { applySessionChangedEvent } from "@/lib/session-sidebar-state";
+import {
+  defaultCwd,
+  getHome,
+  listSessions,
+  subscribeRunning,
+  subscribeSessionsChanged,
+  validateCwd,
+} from "@/lib/api-client";
 import { ProjectMenu } from "./ProjectMenu";
 import {
   buildSessionTree,
@@ -129,16 +137,7 @@ export function SessionSidebar({
   const loadSessions = useCallback(async (showLoading = false) => {
     try {
       if (showLoading) setLoading(true);
-      const res = await fetch("/api/sessions");
-      if (!res.ok) {
-        const errBody = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(
-          res.status === 401
-            ? "Unauthorized (401). Restart Pi Desktop so the renderer can reconnect to the Agent Host."
-            : errBody.error || `Failed to load sessions (${res.status})`,
-        );
-      }
-      const data = (await res.json()) as { sessions?: SessionInfo[]; runningSessionIds?: string[] };
+      const data = await listSessions();
       const sessions = Array.isArray(data.sessions) ? data.sessions : [];
       setAllSessions(sessions);
       // Treat the fetched running set as an initial fallback only. Once the stream is
@@ -180,53 +179,43 @@ export function SessionSidebar({
   }, [unreadSessionIds]);
 
   useEffect(() => {
-    // Live running status via IPC stream (shimmed as EventSource).
-    const source = new EventSource("/api/agent/running/events");
-
-    source.onmessage = (e) => {
-      try {
-        const data = JSON.parse(e.data) as {
-          type?: string;
-          runningSessionIds?: string[];
-          sessionIds?: string[];
-        };
-        if (data.type === "running") {
-          streamAuthoritativeRef.current = true;
-          setRunningSessionIds(new Set(data.runningSessionIds ?? data.sessionIds ?? []));
-        }
-      } catch {
-        // ignore malformed frames
-      }
+    let unsub: (() => void) | undefined;
+    let cancelled = false;
+    void subscribeRunning((data) => {
+      streamAuthoritativeRef.current = true;
+      setRunningSessionIds(new Set(data.sessionIds ?? []));
+    }).then((u) => {
+      if (cancelled) u();
+      else unsub = u;
+    });
+    return () => {
+      cancelled = true;
+      unsub?.();
     };
-
-    return () => source.close();
   }, []);
 
   // sessions.changed (CLI / disk watcher) → refresh sidebar without polling
   useEffect(() => {
     let unsub: (() => void) | undefined;
     let cancelled = false;
-    void import("@/lib/api-client").then(({ subscribeSessionsChanged }) => {
-      if (cancelled) return;
-      return subscribeSessionsChanged((event) => {
-        if (event.fullRefresh || (!event.session && !(event.deleted && event.sessionId))) {
-          void loadSessions(false);
-        } else {
-          setAllSessions((current) => applySessionChangedEvent(current, event) ?? current);
-        }
-        if (event.deleted && event.sessionId) {
-          setUnreadSessionIds((current) => {
-            if (!current.has(event.sessionId!)) return current;
-            const next = new Set(current);
-            next.delete(event.sessionId!);
-            return next;
-          });
-          onSessionDeleted?.(event.sessionId);
-        }
-      }).then((u) => {
-        if (cancelled) u();
-        else unsub = u;
-      });
+    void subscribeSessionsChanged((event) => {
+      if (event.fullRefresh || (!event.session && !(event.deleted && event.sessionId))) {
+        void loadSessions(false);
+      } else {
+        setAllSessions((current) => applySessionChangedEvent(current, event) ?? current);
+      }
+      if (event.deleted && event.sessionId) {
+        setUnreadSessionIds((current) => {
+          if (!current.has(event.sessionId!)) return current;
+          const next = new Set(current);
+          next.delete(event.sessionId!);
+          return next;
+        });
+        onSessionDeleted?.(event.sessionId);
+      }
+    }).then((u) => {
+      if (cancelled) u();
+      else unsub = u;
     });
     return () => {
       cancelled = true;
@@ -262,9 +251,8 @@ export function SessionSidebar({
   }, [selectedSessionId]);
 
   useEffect(() => {
-    fetch("/api/home")
-      .then((r) => r.json())
-      .then((d: { home?: string }) => {
+    void getHome()
+      .then((d) => {
         if (d.home) setHomeDir(d.home);
       })
       .catch(() => {});
@@ -377,17 +365,12 @@ export function SessionSidebar({
     setCustomPathValidating(true);
     setCustomPathError(null);
     try {
-      const res = await fetch("/api/cwd/validate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cwd: path }),
-      });
-      const data = (await res.json().catch(() => ({}))) as { cwd?: string; error?: string };
-      if (!res.ok || data.error) {
-        setCustomPathError(data.error ?? `HTTP ${res.status}`);
+      const data = await validateCwd(path);
+      if (!data.ok) {
+        setCustomPathError(data.error ?? "Invalid path");
         return;
       }
-      setSelectedCwd(data.cwd ?? path);
+      setSelectedCwd(data.path ?? path);
       setCustomPathOpen(false);
       setCustomPathValue("");
       setDropdownOpen(false);
@@ -400,8 +383,7 @@ export function SessionSidebar({
 
   const handleDefaultCwd = useCallback(async () => {
     try {
-      const res = await fetch("/api/default-cwd", { method: "POST" });
-      const data = (await res.json()) as { cwd?: string; error?: string };
+      const data = await defaultCwd();
       if (data.cwd) {
         setSelectedCwd(data.cwd);
         setCustomPathOpen(false);
@@ -419,17 +401,12 @@ export function SessionSidebar({
     try {
       const dir = await window.piBridge?.selectDirectory?.();
       if (!dir) return;
-      const res = await fetch("/api/cwd/validate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cwd: dir }),
-      });
-      const data = (await res.json().catch(() => ({}))) as { cwd?: string; error?: string };
-      if (!res.ok || data.error) {
+      const data = await validateCwd(dir);
+      if (!data.ok) {
         setCustomPathError(data.error ?? "Invalid directory");
         return;
       }
-      setSelectedCwd(data.cwd ?? dir);
+      setSelectedCwd(data.path ?? dir);
       setCustomPathOpen(false);
       setCustomPathValue("");
       setCustomPathError(null);
