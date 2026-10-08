@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { addTask, listTasks, updateTask } from "@/lib/api-client";
+import { useState } from "react";
 import { useI18n } from "@/i18n";
-import type { ProjectTask, TaskStatus } from "@contract/types";
+import { TASK_GLYPH, TASK_NEXT_STATUS, useSessionTodos } from "@/hooks/useSessionTodos";
 
 interface Props {
   cwd: string | null;
@@ -10,78 +9,24 @@ interface Props {
   refreshKey?: number;
 }
 
-const GLYPH: Record<TaskStatus, string> = { todo: "○", doing: "◐", blocked: "!", done: "✓" };
-const NEXT_STATUS: Record<TaskStatus, TaskStatus> = { todo: "doing", doing: "done", done: "todo", blocked: "doing" };
-
 /**
  * The conversation's own todos, kept right above the composer: what the agent
  * said it would do, and how far it has got. The same `.pi/tasks.json` the board
- * shows, filtered to this session.
+ * shows, filtered to this session — and the same hook the checklist inside the
+ * message stream reads, so ticking here moves it there.
  */
 export function SessionTodoStrip({ cwd, sessionId, refreshKey = 0 }: Props) {
   const { t } = useI18n();
-  const [tasks, setTasks] = useState<ProjectTask[]>([]);
   const [collapsed, setCollapsed] = useState(false);
   const [draft, setDraft] = useState("");
-  const [busyId, setBusyId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { tasks, visible, done, error, busyId, advance, add } = useSessionTodos({ cwd, sessionId, refreshKey });
 
-  const load = useCallback(async () => {
-    if (!cwd || !sessionId) {
-      setTasks([]);
-      return;
-    }
-    try {
-      const { tasks: listed } = await listTasks(cwd, sessionId);
-      setTasks(listed);
-      setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  }, [cwd, sessionId]);
-
-  useEffect(() => {
-    void load();
-  }, [load, refreshKey]);
-
-  const done = useMemo(() => tasks.filter((task) => task.status === "done").length, [tasks]);
-  const visible = useMemo(
-    () =>
-      [...tasks].sort(
-        (a, b) => Number(a.status === "done") - Number(b.status === "done") || a.createdAt.localeCompare(b.createdAt),
-      ),
-    [tasks],
-  );
-
-  const advance = useCallback(
-    async (task: ProjectTask) => {
-      if (!cwd) return;
-      const status = NEXT_STATUS[task.status];
-      setBusyId(task.id);
-      try {
-        const { task: updated } = await updateTask(cwd, task.id, { status });
-        setTasks((current) => current.map((entry) => (entry.id === updated.id ? updated : entry)));
-      } catch (e) {
-        setError(e instanceof Error ? e.message : String(e));
-      } finally {
-        setBusyId(null);
-      }
-    },
-    [cwd],
-  );
-
-  const submit = useCallback(async () => {
+  const submit = async () => {
     const title = draft.trim();
-    if (!title || !cwd || !sessionId) return;
+    if (!title) return;
     setDraft("");
-    try {
-      const { task } = await addTask(cwd, title, undefined, sessionId);
-      setTasks((current) => [...current, task]);
-      setCollapsed(false);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  }, [cwd, draft, sessionId]);
+    if (await add(title)) setCollapsed(false);
+  };
 
   if (!cwd || !sessionId || tasks.length === 0) return null;
 
@@ -133,7 +78,7 @@ export function SessionTodoStrip({ cwd, sessionId, refreshKey = 0 }: Props) {
                 onClick={() => void advance(task)}
                 disabled={busyId === task.id}
                 title={t("sessionTodosAdvance", "Advance status")}
-                aria-label={`${task.status} → ${NEXT_STATUS[task.status]}`}
+                aria-label={`${task.status} → ${TASK_NEXT_STATUS[task.status]}`}
                 style={{
                   flexShrink: 0,
                   width: 16,
@@ -151,7 +96,7 @@ export function SessionTodoStrip({ cwd, sessionId, refreshKey = 0 }: Props) {
                   padding: 0,
                 }}
               >
-                {GLYPH[task.status]}
+                {TASK_GLYPH[task.status]}
               </button>
               <span
                 style={{

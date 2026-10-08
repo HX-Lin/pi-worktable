@@ -20,6 +20,7 @@ import { ContextMapPanel } from "./ContextMapPanel";
 import { SessionTodoStrip } from "./SessionTodoStrip";
 import { WorktreeSwitcher } from "./session-sidebar/WorktreeSwitcher";
 import type { WorktreesController } from "./session-sidebar/useWorktrees";
+import { ChatTodoBlock } from "./ChatTodoBlock";
 import { MessageView } from "./MessageView";
 import { SessionProfiler } from "./SessionProfiler";
 import { ChatInput, type ChatInputHandle } from "./ChatInput";
@@ -897,6 +898,13 @@ export function ChatWindow({
                       style={{ height: scrollContainerRef.current ? scrollContainerRef.current.clientHeight : "80vh" }}
                     />
                   )}
+
+                  {/* pi TUI 风格：本会话的待办清单，跟着消息流走 */}
+                  <ChatTodoBlock
+                    cwd={messageCwd ?? null}
+                    sessionId={session?.id ?? null}
+                    refreshKey={contextMapRefreshKey}
+                  />
 
                   <div ref={messagesEndRef} />
                 </div>
