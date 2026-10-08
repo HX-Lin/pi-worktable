@@ -2,21 +2,13 @@
  * Compatibility fetch + EventSource for migrated components that still call `/api/...`.
  */
 import {
-  agentCommand,
-  agentState,
   call,
   deleteSession,
-  exportSession,
   fileIndex,
   fileMeta,
   getHome,
-  getSession,
-  getSessionContext,
   listFiles,
-  listModels,
   listSessions,
-  listWorktrees,
-  newAgent,
   readFile,
   renameSession,
   subscribe,
@@ -73,10 +65,6 @@ export async function apiFetch(input: string | URL | Request, init?: RequestInit
     }
     if (segs[0] === "sessions" && segs.length === 2) {
       const id = decodeURIComponent(segs[1]);
-      if (method === "GET") {
-        const includeState = u.searchParams.has("includeState");
-        return jsonResponse(await getSession(id, includeState));
-      }
       if (method === "DELETE") {
         await deleteSession(id);
         return jsonResponse({ ok: true });
@@ -90,61 +78,6 @@ export async function apiFetch(input: string | URL | Request, init?: RequestInit
         return errorResponse("name is required", 400);
       }
     }
-    if (segs[0] === "sessions" && segs[2] === "context" && method === "GET") {
-      const id = decodeURIComponent(segs[1]);
-      const leafId = u.searchParams.get("leafId") ?? undefined;
-      return jsonResponse(await getSessionContext(id, leafId));
-    }
-    if (segs[0] === "sessions" && segs[2] === "export" && method === "GET") {
-      const id = decodeURIComponent(segs[1]);
-      const { content, suggestedName } = await exportSession(id);
-      if (window.piBridge?.saveFile) {
-        const saved = await window.piBridge.saveFile({
-          content,
-          defaultPath: suggestedName,
-        });
-        if (saved) await window.piBridge.showItemInFolder(saved);
-      }
-      return jsonResponse({ ok: true, content });
-    }
-
-    if (segs[0] === "agent" && segs[1] === "new" && method === "POST") {
-      const body = await parseBody(init);
-      const result = await newAgent(body as never);
-      return jsonResponse({ success: true, ...result });
-    }
-    if (segs[0] === "agent" && segs.length === 2 && segs[1] !== "new" && segs[1] !== "running") {
-      const id = decodeURIComponent(segs[1]);
-      if (method === "GET") return jsonResponse(await agentState(id));
-      if (method === "POST") {
-        const body = await parseBody(init);
-        const data = await agentCommand(id, body);
-        return jsonResponse({ success: true, data });
-      }
-    }
-
-    if (segs[0] === "models" && segs[1] === "refresh") {
-      const body = method === "POST" ? await parseBody(init) : {};
-      const requestId = String(body.requestId ?? u.searchParams.get("requestId") ?? "");
-      if (method === "POST") {
-        const cwd = typeof body.cwd === "string" ? body.cwd : (u.searchParams.get("cwd") ?? undefined);
-        return jsonResponse(await call("models.refresh", { ...(cwd ? { cwd } : {}), requestId }));
-      }
-      if (method === "DELETE") {
-        return jsonResponse(await call("models.refreshCancel", { requestId }));
-      }
-    }
-
-    if (segs[0] === "models" && segs.length === 1 && method === "GET") {
-      const cwd = u.searchParams.get("cwd") ?? undefined;
-      const d = await listModels(cwd);
-      return jsonResponse({
-        ...d,
-        modelList: d.models,
-        models: d.nameMap ? Object.fromEntries(Object.entries(d.nameMap)) : d.models,
-      });
-    }
-
     if (segs[0] === "models-config" && segs.length === 1) {
       if (method === "GET") return jsonResponse(await call("modelsConfig.get"));
       if (method === "PUT" || method === "POST") {
@@ -246,30 +179,6 @@ export async function apiFetch(input: string | URL | Request, init?: RequestInit
       const query = u.searchParams.get("q") ?? undefined;
       const result = await fileIndex(root, query);
       return jsonResponse(result);
-    }
-
-    if (segs[0] === "worktrees" && method === "GET") {
-      const cwd = u.searchParams.get("cwd") ?? "";
-      return jsonResponse(await listWorktrees(cwd));
-    }
-    if (segs[0] === "worktrees" && method === "POST") {
-      const body = await parseBody(init);
-      const result = await call("worktrees.create", {
-        projectRoot: String(body.cwd ?? body.projectRoot ?? ""),
-        branch: String(body.branch ?? ""),
-        cwd: body.cwd as string | undefined,
-      });
-      // Preserve the legacy route shape consumed by SessionSidebar.
-      return jsonResponse(result.worktree);
-    }
-    if (segs[0] === "worktrees" && method === "DELETE") {
-      const body = await parseBody(init);
-      await call("worktrees.remove", {
-        path: String(body.path ?? ""),
-        cwd: body.cwd as string | undefined,
-        force: body.force as boolean | undefined,
-      });
-      return jsonResponse({ success: true });
     }
 
     if (segs[0] === "git-status" && method === "GET") {

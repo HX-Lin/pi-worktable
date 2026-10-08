@@ -99,8 +99,11 @@ html.dark {
    wallpaper, `geometry-corner-radius` rounds the window). The alphas are plain values on purpose:
    there is no in-app opacity setting, no stored state and no runtime injection. */
 html.niri {
-  --bg: rgba(17, 19, 26, 0.72);
-  --bg-panel: rgba(26, 29, 39, 0.6);
+  /* Frosted glass: these alphas are the whole in-app transparency knob. Nested surfaces stack
+     (root base + panel + bubble), so the base sits lowest — that is what makes the wallpaper
+     read through the window. */
+  --bg: rgba(17, 19, 26, 0.42);
+  --bg-panel: rgba(26, 29, 39, 0.3);
   --bg-hover: rgba(255, 255, 255, 0.09);
   --bg-selected: rgba(251, 146, 60, 0.24);
   --border: rgba(255, 255, 255, 0.16);
@@ -109,10 +112,10 @@ html.niri {
   --text-dim: #c2c8d5;
   --accent: #fb923c;
   --accent-hover: #fdba74;
-  --user-bg: rgba(42, 46, 58, 0.92);
+  --user-bg: rgba(42, 46, 58, 0.55);
   --user-fg: #f5f6fa;
-  --assistant-bg: rgba(26, 29, 39, 0.6);
-  --tool-bg: rgba(10, 12, 17, 0.92);
+  --assistant-bg: rgba(26, 29, 39, 0.34);
+  --tool-bg: rgba(10, 12, 17, 0.5);
   --tool-fg: #ccd0da;
   --tool-border: rgba(255, 255, 255, 0.16);
   --bg-subtle: rgba(255, 255, 255, 0.06);
@@ -124,7 +127,7 @@ html.niri {
   --danger: #f87171;
   --grid-line: rgba(255, 255, 255, 0.08);
   --selection: rgba(251, 146, 60, 0.38);
-  --thinking-bg: rgba(20, 23, 31, 0.6);
+  --thinking-bg: rgba(20, 23, 31, 0.34);
   --thinking-border: rgba(255, 255, 255, 0.14);
 }
 
