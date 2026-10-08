@@ -58,6 +58,7 @@ const zhCN: Record<string, string> = {
   subagentsTitle: "子代理",
   subagentsEmpty: "本应用会话里还没有跑过子代理。",
   subagentsRecent: "最近",
+  subagentsRecentDone: "条已完成",
   running: "运行中",
   subagentTotal: "共",
   toolRunning: "进行中",

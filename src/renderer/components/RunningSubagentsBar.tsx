@@ -94,7 +94,7 @@ export function RunningSubagentsBar() {
             fontFamily: "var(--font-mono)",
           }}
         >
-          {running.map((run) => `${run.agent} ${formatElapsed(run, now)}`).join(" · ")}
+          {(running.length > 0 ? running : recent).map((run) => `${run.agent} ${formatElapsed(run, now)}`).join(" · ")}
         </span>
         <span style={{ color: "var(--text-dim)", flexShrink: 0 }}>{expanded ? "▾" : "▸"}</span>
       </button>
