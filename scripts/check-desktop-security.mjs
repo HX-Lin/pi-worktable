@@ -1,324 +1,333 @@
 #!/usr/bin/env node
-import fs from "fs";
+/**
+ * Desktop security invariants.
+ *
+ * Each check is a statement about code that exists — an identifier, a call, an
+ * assignment, an object property, a parsed YAML/JSON path — rather than a
+ * substring of a file. Comments and reformatting cannot satisfy a check, and
+ * moving code between modules only means updating the file list.
+ */
 import path from "path";
 import { fileURLToPath } from "url";
+import { configFacts, sourceFacts } from "./lib/source-facts.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
-const main = read("src/main/main.ts");
-const windowFactory = read("src/main/window.ts");
-const protocol = read("src/main/protocol.ts");
-const html = read("src/renderer/index.html");
-const preload = read("src/preload/preload.ts");
-const globals = read("src/renderer/global.d.ts");
-const diagnostics = read("src/main/diagnostics.ts");
-const diagnosticsRedaction = read("src/main/diagnostics-redaction.ts");
-const fileViewer = read("src/renderer/components/FileViewer.tsx");
-const credentialVault = read("src/main/credential-vault.ts");
-const feishuChannelApi = read("src/agent-host/channels/adapters/feishu/api.ts");
-const channelManager = read("src/agent-host/channels/channel-manager.ts");
-const channelMediaStore = read("src/agent-host/channels/media-store.ts");
-const channelOutboundFiles = read("src/agent-host/channels/outbound-files.ts");
-const channelPiBridge = read("src/agent-host/channels/pi-session-bridge.ts");
-// The session layer is split across these modules; the invariants below assert
-// behaviour of the layer as a whole, so read them together.
-const rpcManager = [
+const src = (file) => sourceFacts(root, file);
+const cfg = (file) => configFacts(root, file);
+
+const main = src("src/main/main.ts");
+const windowFactory = src("src/main/window.ts");
+const protocol = src("src/main/protocol.ts");
+const html = src("src/renderer/index.html");
+const preload = src("src/preload/preload.ts");
+const globals = src("src/renderer/global.d.ts");
+const diagnostics = src("src/main/diagnostics.ts");
+const diagnosticsRedaction = src("src/main/diagnostics-redaction.ts");
+const fileViewer = src("src/renderer/components/FileViewer.tsx");
+const credentialVault = src("src/main/credential-vault.ts");
+const feishuChannelApi = src("src/agent-host/channels/adapters/feishu/api.ts");
+const channelManager = src("src/agent-host/channels/channel-manager.ts");
+const channelMediaStore = src("src/agent-host/channels/media-store.ts");
+const channelOutboundFiles = src("src/agent-host/channels/outbound-files.ts");
+const channelPiBridge = src("src/agent-host/channels/pi-session-bridge.ts");
+// The session layer is several modules; the invariants below are about the layer.
+const rpcManager = src([
   "src/agent-host/rpc-manager.ts",
   "src/agent-host/session-wrapper.ts",
   "src/agent-host/session-registry.ts",
   "src/agent-host/running-status.ts",
-]
-  .map(read)
-  .join("\n");
-const channelContract = read("src/contract/api.ts");
-const desktopContract = read("src/contract/desktop.ts");
-const desktopIpc = read("src/main/ipc.ts");
-const updateAdapter = read("src/main/update-adapter.ts");
-const updateManager = read("src/main/update-manager.ts");
-const electronBuilderConfig = read("electron-builder.yml");
-const desktopBuildWorkflow = read(".github/workflows/build-desktop.yml");
-const toolchainContractCheck = read("scripts/check-toolchain-contract.mjs");
-const upstreamToolchainCatalogCheck = read("scripts/verify-toolchain-catalog-upstream.mjs");
-const bundledToolsBuild = read("scripts/prepare-bundled-tools.mjs");
-const packagedToolchainVerifier = read("scripts/verify-packaged-toolchains.mjs");
-const toolchainSearch = read("src/agent-host/toolchain-search.ts");
-const toolchainInstaller = read("src/main/toolchains/installer.ts");
-const toolchainManager = read("src/main/toolchains/manager.ts");
-const electronRuntimeFetch = read("src/main/toolchains/electron-runtime-fetch.ts");
-const legacyNpmCommand = read("src/main/toolchains/legacy-npm-command.ts");
-const toolchainStateStore = read("src/main/toolchains/state-store.ts");
-const verifyScript = read("scripts/verify.mjs");
-const toolchainBash = read("src/agent-host/toolchain-bash.ts");
-const packageJson = read("package.json");
-const rendererCsp = protocol.slice(protocol.indexOf("const CSP ="), protocol.indexOf("const HTML_PREVIEW_CSP ="));
+]);
+const channelContract = src("src/contract/api.ts");
+const desktopContract = src("src/contract/desktop.ts");
+const desktopIpc = src("src/main/ipc.ts");
+const updateAdapter = src("src/main/update-adapter.ts");
+const updateManager = src("src/main/update-manager.ts");
+const electronBuilderConfig = cfg("electron-builder.yml");
+const desktopBuildWorkflow = cfg(".github/workflows/build-desktop.yml");
+const toolchainContractCheck = src("scripts/check-toolchain-contract.mjs");
+const upstreamToolchainCatalogCheck = src("scripts/verify-toolchain-catalog-upstream.mjs");
+const bundledToolsBuild = src("scripts/prepare-bundled-tools.mjs");
+const packagedToolchainVerifier = src("scripts/verify-packaged-toolchains.mjs");
+const toolchainSearch = src("src/agent-host/toolchain-search.ts");
+const toolchainInstaller = src("src/main/toolchains/installer.ts");
+const toolchainManager = src("src/main/toolchains/manager.ts");
+const electronRuntimeFetch = src("src/main/toolchains/electron-runtime-fetch.ts");
+const legacyNpmCommand = src("src/main/toolchains/legacy-npm-command.ts");
+const toolchainStateStore = src("src/main/toolchains/state-store.ts");
+const verifyScript = src("scripts/verify.mjs");
+const toolchainBash = src("src/agent-host/toolchain-bash.ts");
+const toolchainActionTypes = src("src/shared/toolchains/types.ts");
+const packageJson = src("package.json");
+
+const RELEASE_TARGETS = ["darwin-arm64", "darwin-x64", "win32-x64", "linux-x64"];
 
 const checks = [
-  [windowFactory.includes("sandbox: true"), "BrowserWindow sandbox must remain enabled"],
-  [windowFactory.includes("contextIsolation: true"), "context isolation must remain enabled"],
-  [windowFactory.includes("nodeIntegration: false"), "renderer Node integration must remain disabled"],
-  [main.includes("crashReporter.start"), "local crash reporting must be started"],
+  [windowFactory.hasProperty("sandbox", "true"), "BrowserWindow sandbox must remain enabled"],
+  [windowFactory.hasProperty("contextIsolation", "true"), "context isolation must remain enabled"],
+  [windowFactory.hasProperty("nodeIntegration", "false"), "renderer Node integration must remain disabled"],
+  [main.uses("crashReporter.start"), "local crash reporting must be started"],
   [
-    main.includes("createElectronRuntimeFetch") &&
-      main.includes("net.request") &&
-      !main.includes("net.fetch") &&
-      electronRuntimeFetch.includes("request.followRedirect()") &&
-      electronRuntimeFetch.includes("assertRuntimeRedirectUrl") &&
-      main.includes("fetchImpl:") &&
-      toolchainInstaller.includes("fetchImpl: options.fetchImpl"),
+    main.uses("createElectronRuntimeFetch") &&
+      main.calls("net.request") &&
+      !main.uses("net.fetch") &&
+      electronRuntimeFetch.calls("request.followRedirect") &&
+      electronRuntimeFetch.uses("assertRuntimeRedirectUrl") &&
+      main.hasProperty("fetchImpl") &&
+      toolchainInstaller.hasProperty("fetchImpl", "options.fetchImpl"),
     "managed downloads must use Electron networking with synchronous redirect checks so system proxy and trust settings remain effective",
   ],
-  [main.includes("setOverlayIcon"), "Windows taskbar overlay badges must remain implemented"],
+  [main.uses("setOverlayIcon"), "Windows taskbar overlay badges must remain implemented"],
   [
-    diagnostics.includes('app.getPath("crashDumps")') &&
-      diagnostics.includes("collectCrashMetadata") &&
-      diagnostics.includes("MAX_LOG_BYTES") &&
-      !diagnostics.includes("fs.cpSync") &&
-      diagnosticsRedaction.includes("redactDiagnosticText") &&
-      diagnosticsRedaction.includes("<redacted-token>") &&
-      diagnosticsRedaction.includes("buildToolchainDiagnosticSummary"),
+    diagnostics.calls("app.getPath") &&
+      diagnostics.hasString("crashDumps") &&
+      diagnostics.uses("collectCrashMetadata") &&
+      diagnostics.uses("MAX_LOG_BYTES") &&
+      !diagnostics.uses("fs.cpSync") &&
+      diagnosticsRedaction.uses("redactDiagnosticText") &&
+      diagnosticsRedaction.hasString("<redacted-token>") &&
+      diagnosticsRedaction.uses("buildToolchainDiagnosticSummary"),
     "diagnostic export must redact bounded logs, summarize toolchains, and exclude raw crash process memory",
   ],
-  [!/script-src[^;]*unsafe-inline/.test(rendererCsp), "renderer script-src must not allow unsafe-inline"],
-  [fileViewer.includes('sandbox="allow-scripts"'), "HTML previews must remain sandboxed"],
   [
-    protocol.includes("\"object-src 'none'; \"") && protocol.includes("\"form-action 'none'\""),
-    "HTML preview CSP must block plugins and forms",
+    protocol.hasString("object-src 'none'; ") && protocol.hasString("form-action 'none'"),
+    "renderer CSP must block plugins and forms",
   ],
+  [protocol.matches(/script-src(?![^;]*unsafe-inline)/), "renderer script-src must not allow unsafe-inline"],
+  [fileViewer.matches(/sandbox="allow-scripts"/), "HTML previews must remain sandboxed"],
   [
-    desktopBuildWorkflow.includes("check:toolchain-catalog:upstream") &&
-      upstreamToolchainCatalogCheck.includes("SHASUMS256.txt") &&
-      upstreamToolchainCatalogCheck.includes("asset.digest") &&
-      upstreamToolchainCatalogCheck.includes("asset.size"),
+    desktopBuildWorkflow.hasValueMatching(/check:toolchain-catalog:upstream/) &&
+      upstreamToolchainCatalogCheck.hasStringContaining("SHASUMS256.txt") &&
+      upstreamToolchainCatalogCheck.uses("asset.digest") &&
+      upstreamToolchainCatalogCheck.uses("asset.size"),
     "tag releases must verify managed runtime checksums and sizes against official upstream metadata",
   ],
   [
-    rpcManager.includes("createDesktopSearchToolDefinitions") &&
-      toolchainSearch.includes("allowUpstreamDownload: false") &&
-      !toolchainSearch.includes("ensureTool") &&
-      !toolchainSearch.includes("releases/latest") &&
-      bundledToolsBuild.includes("downloadRuntimeArtifact") &&
-      bundledToolsBuild.includes("verifyDownloadedArtifact"),
+    rpcManager.uses("createDesktopSearchToolDefinitions") &&
+      toolchainSearch.hasProperty("allowUpstreamDownload", "false") &&
+      !toolchainSearch.uses("ensureTool") &&
+      !toolchainSearch.hasString("releases/latest") &&
+      bundledToolsBuild.calls("downloadRuntimeArtifact") &&
+      bundledToolsBuild.calls("verifyDownloadedArtifact"),
     "Desktop grep/find must use injected rg/fd descriptors and fixed build-time assets without upstream dynamic downloads",
   ],
   [
-    main.includes('app.isPackaged && process.argv.includes("--validate-packaged-startup")') &&
-      main.includes("packaged-startup-check.json") &&
-      main.includes("getToolchainAckRevision") &&
-      main.includes('candidate.provider === "bundled"') &&
-      main.includes('candidate.health === "healthy"'),
+    main.uses("app.isPackaged") &&
+      main.calls("process.argv.includes") &&
+      main.hasString("--validate-packaged-startup") &&
+      main.hasString("packaged-startup-check.json") &&
+      main.uses("getToolchainAckRevision") &&
+      main.uses("candidate.provider") &&
+      main.hasString("bundled") &&
+      main.uses("candidate.health") &&
+      main.hasString("healthy"),
     "the production startup probe must be packaged-only and require Renderer, Host revision ack, and healthy bundled search tools",
   ],
   [
-    packagedToolchainVerifier.includes("darwin-arm64|darwin-x64|win32-x64|linux-x64") &&
-      packagedToolchainVerifier.includes(
-        'assertExact(entries, ["core", "core-catalog.json", "runtime-catalog.json"]',
-      ) &&
-      packagedToolchainVerifier.includes("verifyManifestFile") &&
-      packagedToolchainVerifier.includes("verifyLinuxSandbox") &&
-      packagedToolchainVerifier.includes("stat.uid !== 0") &&
-      packagedToolchainVerifier.includes('spawnSync(byComponent.get("ripgrep")') &&
-      packagedToolchainVerifier.includes("runPackagedStartup") &&
-      packagedToolchainVerifier.includes("verifyLinuxAppImageDesktopEntry") &&
-      packagedToolchainVerifier.includes('APPIMAGE_EXTRACT_AND_RUN: "1"') &&
-      packagedToolchainVerifier.includes("hostAckRevision !== report.revision"),
+    packagedToolchainVerifier.matches(/darwin-arm64\|darwin-x64\|win32-x64\|linux-x64/) &&
+      packagedToolchainVerifier.calls("assertExact") &&
+      packagedToolchainVerifier.hasString("core-catalog.json") &&
+      packagedToolchainVerifier.calls("verifyManifestFile") &&
+      packagedToolchainVerifier.calls("verifyLinuxSandbox") &&
+      packagedToolchainVerifier.matches(/stat\.uid\s*!==\s*0/) &&
+      packagedToolchainVerifier.calls("spawnSync") &&
+      packagedToolchainVerifier.hasString("ripgrep") &&
+      packagedToolchainVerifier.uses("runPackagedStartup") &&
+      packagedToolchainVerifier.calls("verifyLinuxAppImageDesktopEntry") &&
+      packagedToolchainVerifier.hasProperty("APPIMAGE_EXTRACT_AND_RUN", '"1"') &&
+      packagedToolchainVerifier.uses("hostAckRevision"),
     "the packaged E2E must enforce the release matrix, exact resources, hashes, functional rg/fd, and production startup ack",
   ],
   [
-    ["darwin-arm64", "darwin-x64", "win32-x64", "linux-x64"].every((target) => desktopBuildWorkflow.includes(target)) &&
-      desktopBuildWorkflow.includes("check:packaged-toolchains") &&
-      desktopBuildWorkflow.includes("release-linux") &&
-      desktopBuildWorkflow.includes("xvfb-run --auto-servernum") &&
-      desktopBuildWorkflow.includes("sudo chown root:root dist/linux-unpacked/chrome-sandbox") &&
-      desktopBuildWorkflow.includes("sudo chmod 4755 dist/linux-unpacked/chrome-sandbox") &&
-      electronBuilderConfig.includes("executableName: pi-worktable") &&
-      electronBuilderConfig.includes("--appimage-desktop-launch") &&
-      !electronBuilderConfig.includes("--no-sandbox") &&
-      desktopBuildWorkflow.includes("Pi-Worktable-${version}-x86_64.AppImage"),
+    RELEASE_TARGETS.every((target) => desktopBuildWorkflow.hasValueMatching(new RegExp(target))) &&
+      desktopBuildWorkflow.hasValueMatching(/check:packaged-toolchains/) &&
+      desktopBuildWorkflow.hasValueMatching(/release-linux/) &&
+      desktopBuildWorkflow.hasValueMatching(/xvfb-run --auto-servernum/) &&
+      desktopBuildWorkflow.hasValueMatching(/chown root:root[^\n]*chrome-sandbox/) &&
+      desktopBuildWorkflow.hasValueMatching(/chmod 4755[^\n]*chrome-sandbox/) &&
+      electronBuilderConfig.valueAt("linux.executableName") === "pi-worktable" &&
+      electronBuilderConfig.hasValue("--appimage-desktop-launch") &&
+      !electronBuilderConfig.matches(/--no-sandbox/) &&
+      desktopBuildWorkflow.hasValueMatching(/Pi-Worktable-\$\{version\}-x86_64\.AppImage/),
     "CI and tag releases must run packaged toolchain E2E for every supported target, including Linux under Xvfb",
   ],
   [
-    toolchainInstaller.includes("previousRoot") &&
-      toolchainInstaller.includes("fs.renameSync(finalRoot, previousRoot)") &&
-      toolchainInstaller.includes("this.stateStore.update") &&
-      toolchainInstaller.includes("fs.renameSync(previousRoot, finalRoot)") &&
-      toolchainInstaller.indexOf("this.stateStore.update") < toolchainInstaller.indexOf("fs.rmSync(previousRoot"),
+    toolchainInstaller.uses("previousRoot") &&
+      toolchainInstaller.calls("fs.renameSync") &&
+      toolchainInstaller.uses("this.stateStore.update") &&
+      toolchainInstaller.before("this.stateStore.update", "fs.rmSync"),
     "managed activation must preserve the previous same-version runtime until the new state is durable",
   ],
   [
-    toolchainInstaller.includes("recoverInterruptedOperations") &&
-      toolchainInstaller.includes("cleanupPartialDownloads") &&
-      toolchainInstaller.includes("recoverPreviousRuntimeDirectories") &&
-      toolchainInstaller.includes("TOOLCHAIN_CANCELLED") &&
-      toolchainManager.includes("cancelComponentInstall") &&
-      toolchainManager.includes("isRuntimeInUse()"),
+    toolchainInstaller.usesAll(
+      "recoverInterruptedOperations",
+      "cleanupPartialDownloads",
+      "recoverPreviousRuntimeDirectories",
+    ) &&
+      toolchainInstaller.hasString("TOOLCHAIN_CANCELLED") &&
+      toolchainManager.uses("cancelComponentInstall") &&
+      toolchainManager.calls("isRuntimeInUse"),
     "managed installs must support cancellation, crash-residue recovery, and in-use removal protection",
   ],
   [
-    main.includes("readLegacyNpmCommand") &&
-      legacyNpmCommand.includes("MAX_SETTINGS_BYTES") &&
-      legacyNpmCommand.includes("validateLegacyNpmCommand") &&
-      !legacyNpmCommand.includes("writeFile") &&
-      toolchainManager.includes('intent === "plugin-install"') &&
-      toolchainManager.includes('candidate.discovery === "legacy-npm-command"'),
+    main.uses("readLegacyNpmCommand") &&
+      legacyNpmCommand.usesAll("MAX_SETTINGS_BYTES", "validateLegacyNpmCommand") &&
+      !legacyNpmCommand.uses("writeFile") &&
+      toolchainManager.hasString("plugin-install") &&
+      toolchainManager.hasString("legacy-npm-command"),
     "legacy npmCommand migration must remain bounded, read-only, probed, and scoped to plugin compatibility",
   ],
   [
-    toolchainStateStore.includes("hasFutureSchema") &&
-      toolchainStateStore.includes("compatibilityReadOnly") &&
-      toolchainStateStore.includes("primaryHasFutureSchema") &&
-      toolchainStateStore.includes("written by a newer Pi Desktop"),
+    toolchainStateStore.usesAll("hasFutureSchema", "compatibilityReadOnly", "primaryHasFutureSchema") &&
+      toolchainStateStore.hasStringContaining("written by a newer Pi Desktop"),
     "future toolchain state must remain read-only so application rollback cannot overwrite managed runtime ownership",
   ],
-  [!/<script(?![^>]*\bsrc=)[^>]*>/i.test(html), "renderer HTML must not contain inline scripts"],
-  [preload.includes("../contract/desktop"), "preload must use the shared desktop bridge contract"],
-  [globals.includes("../contract/desktop"), "renderer globals must use the shared desktop bridge contract"],
-  [credentialVault.includes("safeStorage.encryptString"), "channel credentials must use Electron safeStorage"],
-  [credentialVault.includes("safeStorage.isEncryptionAvailable"), "channel credential persistence must fail closed"],
-  [!/(createServer|\.listen\s*\()/.test(feishuChannelApi), "Feishu WebSocket mode must not open a local listener"],
+  [!/<script(?![^>]*\bsrc=)[^>]*>/i.test(html.text), "renderer HTML must not contain inline scripts"],
+  [preload.importsFrom("../contract/desktop"), "preload must use the shared desktop bridge contract"],
+  [globals.importsFrom("../contract/desktop"), "renderer globals must use the shared desktop bridge contract"],
+  [credentialVault.uses("safeStorage.encryptString"), "channel credentials must use Electron safeStorage"],
+  [credentialVault.uses("safeStorage.isEncryptionAvailable"), "channel credential persistence must fail closed"],
+  [!feishuChannelApi.matches(/createServer|\.listen\s*\(/), "Feishu WebSocket mode must not open a local listener"],
   [
-    feishuChannelApi.includes("im.v1.messageResource.get") &&
-      feishuChannelApi.includes("FEISHU_MEDIA_MAX_BYTES") &&
-      feishuChannelApi.includes("readLimitedStream"),
+    feishuChannelApi.matches(/im\.v1\.messageResource\.get/) &&
+      feishuChannelApi.uses("FEISHU_MEDIA_MAX_BYTES") &&
+      feishuChannelApi.uses("readLimitedStream"),
     "Feishu inbound media must use the message resource API with a local byte limit",
   ],
   [
-    channelManager.indexOf("evaluateInboundPolicy") < channelManager.indexOf("adapter.downloadInbound"),
+    channelManager.before("evaluateInboundPolicy", "adapter.downloadInbound"),
     "channel access policy must run before provider media download",
   ],
   [
-    channelMediaStore.includes("CHANNEL_MEDIA_MAX_BYTES") &&
-      channelMediaStore.includes("CHANNEL_MEDIA_MAX_ATTACHMENTS") &&
-      channelMediaStore.includes("info.isSymbolicLink()") &&
-      channelMediaStore.includes("mode: 0o600"),
+    channelMediaStore.usesAll("CHANNEL_MEDIA_MAX_BYTES", "CHANNEL_MEDIA_MAX_ATTACHMENTS") &&
+      channelMediaStore.calls("info.isSymbolicLink") &&
+      channelMediaStore.hasProperty("mode", "0o600"),
     "channel media staging must retain byte/count/symlink/private-file controls",
   ],
   [
-    channelOutboundFiles.includes("realpath") &&
-      channelOutboundFiles.includes("MARKDOWN_LINK") &&
-      channelOutboundFiles.includes("isInside(canonical, root)") &&
-      channelPiBridge.includes("collectOutboundFiles({ finalText: result.finalText, cwd })"),
+    channelOutboundFiles.uses("realpath") &&
+      channelOutboundFiles.uses("MARKDOWN_LINK") &&
+      channelOutboundFiles.matches(/isInside\(\s*canonical/) &&
+      channelPiBridge.matches(/collectOutboundFiles\(\{\s*finalText/),
     "linked-file delivery must remain inside the actual bound session workspace",
   ],
   [
-    channelPiBridge.includes("channelPromptText(envelope.text") && !channelPiBridge.includes("[外部消息来源："),
+    channelPiBridge.calls("channelPromptText") && !channelPiBridge.hasString("[外部消息来源："),
     "channel user prompts must contain the user's text without transport metadata wrappers",
   ],
   [
-    rpcManager.includes("expandPromptTemplates: false") && rpcManager.includes("stripLegacyChannelPrompts"),
+    rpcManager.hasProperty("expandPromptTemplates", "false") && rpcManager.uses("stripLegacyChannelPrompts"),
     "channel prompts must avoid local expansion and remove legacy transport metadata from model history",
   ],
+  [!channelContract.uses("botToken") && !channelContract.uses("appSecret"), "channel RPC must not expose raw secrets"],
   [
-    !channelContract.includes("botToken") && !channelContract.includes("appSecret"),
-    "channel RPC must not expose raw secrets",
-  ],
-  [
-    desktopContract.includes("setChannelCredential") && !desktopContract.includes("getChannelCredential"),
+    desktopContract.uses("setChannelCredential") && !desktopContract.uses("getChannelCredential"),
     "renderer channel credential bridge must remain write-only",
   ],
   [
-    toolchainContractCheck.includes("ToolchainActionRequest") &&
-      toolchainContractCheck.includes("forbiddenPattern") &&
-      toolchainContractCheck.includes("url|uri|sha|hash|path|executable|argv|command") &&
-      verifyScript.includes('run("toolchain contract safety"'),
+    toolchainActionTypes.uses("ToolchainActionRequest") &&
+      toolchainContractCheck.matches(/url\|uri\|sha\|hash\|path\|executable\|argv\|command/) &&
+      verifyScript.hasString("toolchain contract safety"),
     "renderer toolchain actions must retain the URL/hash/path/executable/argv/command safety gate",
   ],
   [
-    desktopContract.includes("getToolchainState") &&
-      desktopContract.includes("rescanToolchains") &&
-      desktopContract.includes("performToolchainAction") &&
-      desktopContract.includes("onToolchainState") &&
-      preload.includes('ipcRenderer.invoke("desktop:toolchains:get-state"') &&
-      preload.includes('ipcRenderer.invoke("desktop:toolchains:rescan"') &&
-      preload.includes('ipcRenderer.invoke("desktop:toolchains:action"') &&
-      preload.includes('ipcRenderer.on("toolchains:state"') &&
-      desktopIpc.includes('ipcMain.handle("desktop:toolchains:get-state"') &&
-      desktopIpc.includes('ipcMain.handle("desktop:toolchains:rescan"') &&
-      desktopIpc.includes('ipcMain.handle("desktop:toolchains:action"') &&
-      desktopIpc.includes("isToolchainActionRequest") &&
-      desktopIpc.includes("assertTrustedToolchainSender(event)") &&
-      desktopIpc.includes("event.senderFrame !== win.webContents.mainFrame") &&
-      desktopIpc.includes("toolchainActionConfirmation(request)") &&
-      desktopIpc.includes("dialog.showMessageBox") &&
-      desktopIpc.includes("validateOptionalToolchainCwd"),
+    desktopContract.usesAll("getToolchainState", "rescanToolchains", "performToolchainAction", "onToolchainState") &&
+      preload.hasString("desktop:toolchains:get-state") &&
+      preload.hasString("desktop:toolchains:rescan") &&
+      preload.hasString("desktop:toolchains:action") &&
+      preload.hasString("toolchains:state") &&
+      desktopIpc.hasString("desktop:toolchains:get-state") &&
+      desktopIpc.hasString("desktop:toolchains:rescan") &&
+      desktopIpc.hasString("desktop:toolchains:action") &&
+      desktopIpc.uses("isToolchainActionRequest") &&
+      // Three privileged toolchain channels, each of which must assert its sender.
+      desktopIpc.countCalls("assertTrustedToolchainSender") >= 3 &&
+      desktopIpc.matches(/event\.senderFrame\s*!==\s*win\.webContents\.mainFrame/) &&
+      desktopIpc.calls("toolchainActionConfirmation") &&
+      desktopIpc.uses("dialog.showMessageBox") &&
+      desktopIpc.uses("validateOptionalToolchainCwd"),
     "toolchain bridge must validate senders/actions/workspaces and keep download/destructive consent in Main",
   ],
   [
-    main.includes('method === "toolchain.resolve"') &&
-      main.includes('typeof body.trusted !== "boolean"') &&
-      !desktopContract.includes("trustedProject") &&
-      !desktopContract.includes("projectTrusted"),
+    main.hasString("toolchain.resolve") &&
+      main.matches(/typeof body\.trusted !== "boolean"/) &&
+      !desktopContract.uses("trustedProject") &&
+      !desktopContract.uses("projectTrusted"),
     "project-local tool trust must come from the app-owned Host and never from the Renderer bridge",
   ],
   [
-    desktopContract.includes("getUpdateState") &&
-      desktopContract.includes("checkForUpdates") &&
-      desktopContract.includes("downloadUpdate") &&
-      desktopContract.includes("installUpdate") &&
-      !/(?:setFeedURL|feedUrl|feedURL)/.test(desktopContract),
+    desktopContract.usesAll("getUpdateState", "checkForUpdates", "downloadUpdate", "installUpdate") &&
+      !desktopContract.matches(/setFeedURL|feedUrl|feedURL/),
     "renderer updater contract must expose fixed actions without a configurable feed",
   ],
   [
-    preload.includes('ipcRenderer.invoke("desktop:update:check")') &&
-      preload.includes('ipcRenderer.invoke("desktop:update:download")') &&
-      preload.includes('ipcRenderer.invoke("desktop:update:install")') &&
-      preload.includes('ipcRenderer.on("update:state"'),
+    preload.hasString("desktop:update:check") &&
+      preload.hasString("desktop:update:download") &&
+      preload.hasString("desktop:update:install") &&
+      preload.hasString("update:state"),
     "preload updater bridge must use fixed IPC channels",
   ],
   [
-    desktopIpc.includes('ipcMain.handle("desktop:update:set-automatic-checks"') &&
-      desktopIpc.includes('typeof enabled !== "boolean"') &&
-      !/(?:setFeedURL|feedUrl|feedURL)/.test(desktopIpc),
+    desktopIpc.hasString("desktop:update:set-automatic-checks") &&
+      desktopIpc.matches(/typeof enabled !== "boolean"/) &&
+      !desktopIpc.matches(/setFeedURL|feedUrl|feedURL/),
     "updater IPC must validate its only mutable preference and reject feed configuration",
   ],
   [
-    updateAdapter.includes("updater.autoDownload = false") &&
-      updateAdapter.includes("updater.autoInstallOnAppQuit = true") &&
-      updateAdapter.includes("updater.allowPrerelease = false") &&
-      updateAdapter.includes("updater.allowDowngrade = false") &&
-      updateAdapter.includes("updater.disableWebInstaller = true") &&
-      updateAdapter.includes("updater.logger = null") &&
-      updateAdapter.includes('platform === "darwin"') &&
-      updateAdapter.includes('platform === "win32"') &&
-      !updateAdapter.includes("WINDOWS_UPDATES_RELEASE_READY") &&
-      !updateAdapter.includes("process.env"),
+    updateAdapter.assigns("updater.autoDownload", "false") &&
+      updateAdapter.assigns("updater.autoInstallOnAppQuit", "true") &&
+      updateAdapter.assigns("updater.allowPrerelease", "false") &&
+      updateAdapter.assigns("updater.allowDowngrade", "false") &&
+      updateAdapter.assigns("updater.disableWebInstaller", "true") &&
+      updateAdapter.assigns("updater.logger", "null") &&
+      updateAdapter.hasString("darwin") &&
+      updateAdapter.hasString("win32") &&
+      !updateAdapter.uses("WINDOWS_UPDATES_RELEASE_READY") &&
+      !updateAdapter.uses("process.env"),
     "production updater must support macOS and Windows while remaining stable-only, consent-first, and using redacted application logging",
   ],
   [
-    !/^\s*publisherName\s*:/im.test(electronBuilderConfig) &&
-      desktopBuildWorkflow.includes("publisherName field in an unsigned Windows release") &&
-      desktopBuildWorkflow.includes("/^\\s*publisherName\\s*:/im"),
+    !electronBuilderConfig.matches(/^\s*publisherName\s*:/im) &&
+      desktopBuildWorkflow.hasValueMatching(/publisherName field in an unsigned Windows release/) &&
+      desktopBuildWorkflow.hasValueMatching(/publisherName/),
     "unsigned Windows updates must omit publisher verification in both build configuration and packaged release checks",
   ],
   [
-    updateManager.includes('platform === "darwin" || platform === "win32"') &&
-      updateManager.includes("options.isPackaged || explicitlyEnabledForDevelopment") &&
-      updateManager.includes("redactUpdateError") &&
-      updateManager.includes("setRunningSessionCount"),
+    updateManager.hasString("darwin") &&
+      updateManager.hasString("win32") &&
+      updateManager.uses("options.isPackaged") &&
+      updateManager.uses("explicitlyEnabledForDevelopment") &&
+      updateManager.uses("redactUpdateError") &&
+      updateManager.uses("setRunningSessionCount"),
     "updater manager must retain platform/package gating, redaction, and active-session protection",
   ],
   [
-    main.includes("createProductionUpdateAdapter") &&
-      main.includes('win.webContents.send("update:state", state)') &&
-      main.includes("updateManager?.setRunningSessionCount(ids.length)") &&
-      main.includes("updateManager.startAutomaticChecks()"),
+    main.uses("createProductionUpdateAdapter") &&
+      main.calls("win.webContents.send") &&
+      main.hasString("update:state") &&
+      main.matches(/setRunningSessionCount\(ids\.length\)/) &&
+      main.calls("updateManager.startAutomaticChecks"),
     "main process must own updater initialization, state publication, and session-aware scheduling",
   ],
   [
-    desktopIpc.includes("assertTrustedToolchainSender(event)") &&
-      desktopIpc.includes("event.senderFrame !== win.webContents.mainFrame"),
+    desktopIpc.calls("assertTrustedToolchainSender") &&
+      desktopIpc.uses("event.senderFrame") &&
+      desktopIpc.uses("win.webContents.mainFrame"),
     "privileged desktop IPC must validate the main-window sender and frame",
   ],
   [
-    !main.includes("remote-debugging-port") &&
-      !main.includes("ignore-certificate-errors") &&
-      !windowFactory.includes("webSecurity: false"),
+    !main.hasString("remote-debugging-port") &&
+      !main.hasString("ignore-certificate-errors") &&
+      !windowFactory.hasProperty("webSecurity", "false"),
     "production code must not expose remote debugging or global certificate bypass, or weaken the main Renderer",
   ],
   [
-    toolchainBash.includes("await beforeExec?.(command)"),
+    toolchainBash.matches(/await beforeExec\?\..{0,2}\(command\)/),
     "Bash execution must run its pre-execution hook before spawning the shell",
   ],
-  [!/"(?:playwright|puppeteer)"\s*:/.test(packageJson), "the app must not bundle a second browser automation stack"],
+  [
+    !/"(?:playwright|puppeteer)"\s*:/.test(packageJson.text),
+    "the app must not bundle a second browser automation stack",
+  ],
 ];
 
 const failures = checks.filter(([ok]) => !ok).map(([, message]) => message);

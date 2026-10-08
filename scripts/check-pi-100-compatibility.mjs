@@ -1,12 +1,16 @@
 #!/usr/bin/env node
 /**
  * Guards the Pi 1.0 contract the desktop builds against: the exact versions we pin, the APIs 1.0
- * removed, and the markers of what the app adopts from 1.0 (`codemode`/`tool_search`/`mcp` built-in
- * extensions, exposure-aware tool activation, and the on-disk codemode runtime).
+ * removed, and what the app adopts from 1.0 (`codemode`/`tool_search`/`mcp` built-in extensions,
+ * exposure-aware tool activation, and the on-disk codemode runtime).
+ *
+ * The code checks parse the sources rather than grepping them, so a comment cannot satisfy a
+ * marker and reformatting cannot break one.
  */
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { sourceFacts } from "./lib/source-facts.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const targetVersion = "1.0.1";
@@ -88,28 +92,32 @@ for (const file of [
   if (/0\.8[0-9]\.(?:0|10)/.test(source)) fail(`stale Pi version fallback found in ${path.relative(root, file)}`);
 }
 
-const requiredMarkers = [
-  // 1.0 features the desktop opts into.
-  ["src/agent-host/builtin-providers.ts", "createCodemodeExtension"],
-  ["src/agent-host/builtin-providers.ts", "createToolSearchExtension"],
-  ["src/agent-host/builtin-providers.ts", "createMcpExtension"],
-  ["src/agent-host/builtin-providers.ts", "builtin: true"],
-  ["src/agent-host/tool-activation.ts", "NON_DIRECT_EXPOSURES"],
-  ["scripts/build-runtime.mjs", "quickjs-wasi"],
-  // Pre-existing contract markers.
-  ["src/agent-host/model-runtime.ts", "allowNetwork: true"],
-  ["src/agent-host/model-runtime.ts", "allowNetwork: false"],
-  ["src/contract/api.ts", '"models.refresh"'],
-  ["src/contract/api.ts", '"models.refreshCancel"'],
-  ["src/agent-host/credential-sync.ts", "recoverCommittedCredential"],
-  ["src/renderer/lib/models-config-state.ts", "samplingParams"],
-  ["src/agent-host/session-registry.ts", "services.diagnostics"],
+// What the desktop must actually adopt from 1.0, as parsed facts rather than substrings.
+const providers = sourceFacts(root, "src/agent-host/builtin-providers.ts");
+const toolActivation = sourceFacts(root, "src/agent-host/tool-activation.ts");
+const buildRuntime = sourceFacts(root, "scripts/build-runtime.mjs");
+const modelRuntime = sourceFacts(root, "src/agent-host/model-runtime.ts");
+const contract = sourceFacts(root, "src/contract/api.ts");
+const credentialSync = sourceFacts(root, "src/agent-host/credential-sync.ts");
+const modelsConfigState = sourceFacts(root, "src/renderer/lib/models-config-state.ts");
+const sessionRegistry = sourceFacts(root, "src/agent-host/session-registry.ts");
+
+const markers = [
+  [providers.calls("createCodemodeExtension"), "the codemode built-in extension must be supplied"],
+  [providers.calls("createToolSearchExtension"), "the tool-search built-in extension must be supplied"],
+  [providers.calls("createMcpExtension"), "the MCP built-in extension must be supplied"],
+  [providers.hasProperty("builtin", "true"), "built-in extensions must be marked `builtin: true`"],
+  [toolActivation.uses("NON_DIRECT_EXPOSURES"), "tool activation must stay exposure-aware"],
+  [buildRuntime.hasStringContaining("quickjs-wasi"), "the codemode runtime must ship QuickJS wasm"],
+  [modelRuntime.hasProperty("allowNetwork", "true"), "the model runtime must support a network refresh"],
+  [modelRuntime.hasProperty("allowNetwork", "false"), "the model runtime must support an offline refresh"],
+  [contract.hasString("models.refresh"), "the contract must expose models.refresh"],
+  [contract.hasString("models.refreshCancel"), "the contract must expose models.refreshCancel"],
+  [credentialSync.uses("recoverCommittedCredential"), "credential sync must keep committed-state recovery"],
+  [modelsConfigState.uses("samplingParams"), "model config state must keep sampling parameters"],
+  [sessionRegistry.uses("services.diagnostics"), "session startup must surface runtime diagnostics"],
 ];
-for (const [relativePath, marker] of requiredMarkers) {
-  if (!readFileSync(path.join(root, relativePath), "utf8").includes(marker)) {
-    fail(`${relativePath} is missing required marker ${JSON.stringify(marker)}`);
-  }
-}
+for (const [ok, message] of markers) if (!ok) fail(message);
 
 console.log(
   `[pi-100-compat] exact dependencies, removed APIs, codemode/MCP wiring, model refresh, credential/config, and extension diagnostics passed (${targetVersion})`,

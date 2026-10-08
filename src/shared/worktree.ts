@@ -96,6 +96,23 @@ async function git(cwd: string, args: string[]): Promise<string> {
   return stdout.trim();
 }
 
+/**
+ * Run one git command in `cwd`. Arguments are passed as an argv array, never
+ * through a shell, so a branch name or commit message cannot become a command.
+ */
+export async function runGit(
+  cwd: string,
+  args: string[],
+  options: { timeoutMs?: number; maxBuffer?: number } = {},
+): Promise<string> {
+  const { stdout } = await gitCommandRunner.run(cwd, args, {
+    timeout: options.timeoutMs ?? 30_000,
+    maxBuffer: options.maxBuffer ?? 20 * 1024 * 1024,
+    env: { ...process.env, LC_ALL: "C" },
+  });
+  return stdout;
+}
+
 export async function gitRaw(cwd: string, args: string[]): Promise<string> {
   const { stdout } = await gitCommandRunner.run(cwd, args, {
     timeout: 10_000,

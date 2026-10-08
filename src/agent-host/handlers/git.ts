@@ -12,6 +12,26 @@ import {
   resolveProject,
 } from "../../shared/worktree";
 import { assertPathAllowed } from "./helpers";
+import {
+  checkoutBranch,
+  commitChanges,
+  getDiff,
+  listBranches,
+  pullBranch,
+  pushBranch,
+  stagePaths,
+  unstagePaths,
+} from "../../shared/git-repository";
+
+/** Surface git's own message (it is the useful part) as a structured RPC error. */
+async function withGitErrors<T>(operation: () => Promise<T>): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new RpcError({ code: "CONFLICT", message: message.replace(/\n+$/, "") });
+  }
+}
 
 /**
  * git handlers.
@@ -73,6 +93,56 @@ export function gitHandlers(_ctx: HandlerContext) {
         throw error;
       }
       return { ok: true as const };
+    },
+
+    "git.diff": async (params) => {
+      const { path: cwd, staged } = params as { path: string; staged?: boolean };
+      await assertPathAllowed(cwd);
+      return getDiff(cwd, staged === true);
+    },
+
+    "git.stage": async (params) => {
+      const { path: cwd, files } = params as { path: string; files: string[] };
+      await assertPathAllowed(cwd);
+      await withGitErrors(() => stagePaths(cwd, files ?? []));
+      return { ok: true as const };
+    },
+
+    "git.unstage": async (params) => {
+      const { path: cwd, files } = params as { path: string; files: string[] };
+      await assertPathAllowed(cwd);
+      await withGitErrors(() => unstagePaths(cwd, files ?? []));
+      return { ok: true as const };
+    },
+
+    "git.commit": async (params) => {
+      const { path: cwd, message } = params as { path: string; message: string };
+      await assertPathAllowed(cwd);
+      return withGitErrors(() => commitChanges(cwd, message));
+    },
+
+    "git.push": async (params) => {
+      const { path: cwd } = params as { path: string };
+      await assertPathAllowed(cwd);
+      return withGitErrors(() => pushBranch(cwd));
+    },
+
+    "git.pull": async (params) => {
+      const { path: cwd } = params as { path: string };
+      await assertPathAllowed(cwd);
+      return withGitErrors(() => pullBranch(cwd));
+    },
+
+    "git.branches": async (params) => {
+      const { path: cwd } = params as { path: string };
+      await assertPathAllowed(cwd);
+      return withGitErrors(() => listBranches(cwd));
+    },
+
+    "git.checkout": async (params) => {
+      const { path: cwd, branch } = params as { path: string; branch: string };
+      await assertPathAllowed(cwd);
+      return withGitErrors(() => checkoutBranch(cwd, branch));
     },
 
     "git.status": async (params) => {

@@ -114,6 +114,18 @@ export interface Api {
     result: { ok: true };
   };
 
+  "git.diff": {
+    params: { path: string; staged?: boolean };
+    result: { patch: string; truncated: boolean; files: string[] };
+  };
+  "git.stage": { params: { path: string; files: string[] }; result: { ok: true } };
+  "git.unstage": { params: { path: string; files: string[] }; result: { ok: true } };
+  "git.commit": { params: { path: string; message: string }; result: { output: string } };
+  "git.push": { params: { path: string }; result: { output: string } };
+  "git.pull": { params: { path: string }; result: { output: string } };
+  "git.branches": { params: { path: string }; result: { current: string | null; branches: string[] } };
+  "git.checkout": { params: { path: string; branch: string }; result: { output: string } };
+
   "git.status": {
     params: { path: string };
     result: GitStatusResult;
