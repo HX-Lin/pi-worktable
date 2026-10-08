@@ -16,6 +16,7 @@ import { CONTEXT_FOLD_EXTENSION } from "./context-fold-extension";
 import { JEV_COMPACTION_EXTENSION } from "./jev/compaction/hook";
 import { JEV_GATE_EXTENSION } from "./jev/gate/extension";
 import { JEV_ROUTING_EXTENSION } from "./jev/routing/extension";
+import { SUBAGENT_EXTENSION } from "./subagent/extension";
 
 export const BUILTIN_PROVIDER_EXTENSIONS: InlineExtension[] = [JEV_PROVIDER_EXTENSION];
 
@@ -34,8 +35,11 @@ export const PI_BUILTIN_EXTENSIONS: InlineExtension[] = [
   { name: "mcp", builtin: true, replaceable: true, factory: createMcpExtension() },
 ];
 
-/** Every inline extension the app injects into agent sessions. */
-export const BUILTIN_SESSION_EXTENSIONS: InlineExtension[] = [
+/**
+ * Everything a session gets *except* the subagent tool. Subagent sessions are
+ * built from this list, so a subagent can never spawn another subagent.
+ */
+export const BASE_SESSION_EXTENSIONS: InlineExtension[] = [
   ...BUILTIN_PROVIDER_EXTENSIONS,
   ...PI_BUILTIN_EXTENSIONS,
   CONTEXT_FOLD_EXTENSION,
@@ -43,6 +47,9 @@ export const BUILTIN_SESSION_EXTENSIONS: InlineExtension[] = [
   JEV_GATE_EXTENSION,
   JEV_ROUTING_EXTENSION,
 ];
+
+/** Every inline extension the app injects into agent sessions. */
+export const BUILTIN_SESSION_EXTENSIONS: InlineExtension[] = [...BASE_SESSION_EXTENSIONS, SUBAGENT_EXTENSION];
 
 /** Register app-bundled providers on a host-level runtime used by auth APIs. */
 export async function registerBuiltinProviders(modelRuntime: ModelRuntime): Promise<void> {
