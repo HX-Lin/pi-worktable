@@ -53,42 +53,12 @@ async function captureHandlers() {
   return { handlers, events };
 }
 
-test("registerHandlers exposes every contract method exactly once", async () => {
+test("registerHandlers wires the contract surface to a live server", async () => {
   const { handlers } = await captureHandlers();
-  assert.equal(Object.keys(handlers).length, 76);
-  for (const method of [
-    "jev.getConfig",
-    "jev.updateConfig",
-    "jev.setKey",
-    "jev.test",
-    "mcp.getConfig",
-    "mcp.setServer",
-    "mcp.patchServer",
-    "mcp.removeServer",
-    "mcp.setAutoEnableCodemode",
-    "mcp.runCommand",
-    "context.map",
-    "context.fold",
-    "host.ping",
-    "host.toolchain",
-    "sessions.list",
-    "sessions.contextPage",
-    "sessions.entryContent",
-    "worktrees.list",
-    "git.status",
-    "agent.state",
-    "channels.list",
-    "channels.accountConnect",
-    "files.list",
-    "files.download",
-    "files.write",
-    "models.list",
-    "models.refresh",
-    "models.refreshCancel",
-    "auth.providers",
-    "plugins.list",
-    "system.allowRoot",
-  ]) {
+  // Completeness is a compile-time guarantee (ApiHandlerSet requires every
+  // contract method), so this only checks the handlers reached the server.
+  assert.ok(Object.keys(handlers).length > 60);
+  for (const method of ["host.ping", "sessions.list", "agent.state", "files.list", "mcp.getConfig"]) {
     assert.equal(typeof handlers[method], "function", `${method} must be registered`);
   }
 });

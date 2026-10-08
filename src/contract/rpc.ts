@@ -197,6 +197,17 @@ export type ApiHandler = {
   [M in ApiMethod]?: (params: ApiParams<M>) => Promise<ApiResult<M>> | ApiResult<M>;
 };
 
+/**
+ * The complete handler set for the contract.
+ *
+ * Registration is exhaustive on purpose: adding a method to `Api` without a handler (or leaving
+ * one behind after removing a method) is a compile error, so the contract stays the single source
+ * of truth instead of being policed by a test that counts keys.
+ */
+export type ApiHandlerSet = {
+  [M in ApiMethod]: (params: ApiParams<M>) => Promise<ApiResult<M>> | ApiResult<M>;
+};
+
 export type StreamSink = {
   topic: string;
   key: string;
@@ -221,7 +232,7 @@ export type AnyMessagePort = {
 };
 
 export interface RpcServer {
-  handle(handlers: ApiHandler): void;
+  handle(handlers: ApiHandlerSet): void;
   emit<T extends StreamTopic>(topic: T, key: string, data: Streams[T]): void;
   attachPort(port: AnyMessagePort): void;
   detachPort(port: AnyMessagePort): void;
