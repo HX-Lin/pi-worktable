@@ -12,7 +12,7 @@ export interface ActiveSessionLiveSyncOptions {
 /**
  * Keep an opened session live even while it is idle. Agent events provide
  * streaming updates; sessions.changed is the durable completion fallback for
- * turns initiated outside the desktop UI (for example Telegram or WeChat).
+ * turns initiated outside the desktop UI (for example a Feishu message).
  */
 export async function subscribeActiveSessionLiveSync(options: ActiveSessionLiveSyncOptions): Promise<Unsubscribe> {
   const unsubscribeAgent = await options.connectAgentEvents(options.sessionId);

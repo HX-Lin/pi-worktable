@@ -83,12 +83,12 @@ void app.whenReady().then(async () => {
     throw new Error(`Unsupported smoke Host request: ${method}`);
   });
   if (safeStorage.isEncryptionAvailable()) {
-    const key = "channel:telegram:smoke-test";
+    const key = "channel:feishu:smoke-test";
     credentialVault.set(key, {
       token: "smoke-secret",
       providerAccountId: "42",
       providerUsername: "@smoke_bot",
-      baseUrl: "https://api.telegram.org",
+      baseUrl: "https://open.feishu.cn",
     });
     const savedCredential = credentialVault.get(key);
     if (savedCredential?.token !== "smoke-secret" || savedCredential.providerAccountId !== "42") {

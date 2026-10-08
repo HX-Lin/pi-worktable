@@ -74,16 +74,15 @@
 - 用户确认后可把 Node.js LTS、CPython、uv、PortableGit、Bun 和 jq 安装到应用私有目录，不修改系统 PATH、Shell 配置或注册表
 - 安装包内置经过清单校验的目标平台 ripgrep 与 fd，保证基础搜索离线可用
 
-### 微信、Telegram 与飞书/Lark 消息渠道
+### 飞书/Lark 消息渠道
 
-- 个人微信二维码登录、Telegram BotFather token，以及飞书/Lark 企业自建应用 App ID/App Secret 接入
-- 私聊配对，以及 Telegram、飞书/Lark 群聊白名单与 @触发控制；微信群尚未开放，默认不授予远程工具权限
+- 飞书/Lark 企业自建应用 App ID/App Secret 接入
+- 私聊配对，以及群聊白名单与 @触发控制，默认不授予远程工具权限
 - 外部对话默认使用独立 Pi Session，也可从当前会话顶部快速绑定并与 UI 共用上下文；绑定列表会在窗口内自动定位，长列表支持内部滚动
-- 模型用户正文只包含 IM 实际文本；桌面端用本地黑、微信绿、Telegram 蓝、飞书/Lark 橙的用户气泡区分来源
-- 微信、Telegram 与飞书/Lark 支持入站图片、文件和语音；飞书/Lark 还支持视频资源，图片直接作为多模态输入，其他附件进入隔离暂存区，微信 SILK 语音优先转为 WAV
-- Telegram 私聊支持流式预览，并折叠思考与工具详情
-- 飞书/Lark 通过官方 SDK 长连接收取私聊、受控群聊和 thread，并使用 Card 渲染 Markdown、流式显示思考/工具调用、最终折叠过程
-- Telegram 与飞书/Lark 在原消息上显示回合 Reaction 状态；飞书单聊可用原生菜单触发 `/help`、`/status`、`/new`、`/compact` 和 `/reload`
+- 模型用户正文只包含 IM 实际文本；桌面端用飞书/Lark 橙的用户气泡区分来源
+- 支持入站图片、文件、语音与视频资源：图片直接作为多模态输入，其他附件进入隔离暂存区
+- 通过官方 SDK 长连接收取私聊、受控群聊和 thread，并使用 Card 渲染 Markdown、流式显示思考/工具调用、最终折叠过程
+- 在原消息上显示回合 Reaction 状态；单聊可用原生菜单触发 `/help`、`/status`、`/new`、`/compact` 和 `/reload`
 
 ### 为长期运行而设计
 
@@ -163,7 +162,7 @@ flowchart LR
 - Renderer 开启 Electron sandbox，并使用严格的 Content Security Policy
 - preload 只暴露受控桥接接口，Host RPC 由 TypeScript 契约约束
 - 更新客户端只使用正式包内固定的公开 GitHub Release 配置，不接收 Renderer 提供的更新地址或发布凭证
-- 微信和 Telegram 只发起出站 long polling，飞书/Lark 使用出站 WebSocket；均不开放 webhook 或本地监听端口
+- 飞书/Lark 只发起出站 WebSocket 长连接，不开放 webhook 或本地监听端口
 - 模型请求的数据处理方式取决于你配置的模型提供商，请同时查看对应服务的隐私政策
 
 ## 参与开发
@@ -215,7 +214,7 @@ npm run verify
 
 - [x] Electron 三进程架构与类型化 IPC
 - [x] 会话、项目文件、模型、Skills、Plugins 与 OAuth
-- [x] 个人微信、Telegram 与飞书/Lark 文本、图片、文件和语音消息渠道，以及飞书/Lark 视频资源
+- [x] 飞书/Lark 文本、图片、文件、语音与视频消息渠道
 - [x] 托盘、通知、系统主题、崩溃恢复与诊断导出
 - [x] Linux、macOS、Windows CI 测试与正式发布构建矩阵
 - [x] macOS 本地签名/公证工具与 `v*` tag release workflow

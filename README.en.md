@@ -74,16 +74,15 @@ Local-first · No local server · Cross-platform
 - With explicit user confirmation, install Node.js LTS, CPython, uv, PortableGit, Bun, and jq into private application storage without changing the system PATH, shell profile, or registry
 - Bundle manifest-verified ripgrep and fd binaries for the target platform so basic search remains available offline
 
-### WeChat, Telegram, and Feishu/Lark channels
+### Feishu / Lark channel
 
-- Connect personal WeChat with QR login, Telegram with a BotFather token, or a Feishu/Lark self-built app with an App ID and App Secret
-- Protect direct messages with pairing and Telegram or Feishu/Lark groups with allowlists and mention requirements; WeChat groups are not enabled yet, and remote tools are disabled by default
+- Connect a Feishu/Lark self-built app with an App ID and App Secret
+- Protect direct messages with pairing and groups with allowlists and mention requirements; remote tools are disabled by default
 - Give each external conversation an isolated Pi Session by default, or bind it from the active desktop session to share history and context with the UI; the binding list stays within the window and scrolls internally when long
-- Send only the user's actual IM text as the model's user prompt; the desktop distinguishes sources with black local, green WeChat, blue Telegram, and orange Feishu/Lark user bubbles
-- Receive images, files, and voice messages from WeChat, Telegram, and Feishu/Lark, plus Feishu/Lark video resources; images enter the model as multimodal input, while other attachments use an isolated staging area and WeChat SILK audio is converted to WAV when possible
-- Stream previews in Telegram private chats and collapse reasoning and tool details
-- Receive Feishu/Lark DMs, controlled groups, and threads through the official SDK long connection; Cards render Markdown, stream thinking and tool progress, and fold process details into the final response
-- Show turn-status reactions on the source message in Telegram and Feishu/Lark; Feishu DMs can invoke `/help`, `/status`, `/new`, `/compact`, and `/reload` from a native bot menu
+- Send only the user's actual IM text as the model's user prompt; the desktop marks the source with an orange Feishu/Lark user bubble
+- Receive images, files, voice, and video resources: images enter the model as multimodal input, while other attachments use an isolated staging area
+- Receive DMs, controlled groups, and threads through the official SDK long connection; Cards render Markdown, stream thinking and tool progress, and fold process details into the final response
+- Show turn-status reactions on the source message; DMs can invoke `/help`, `/status`, `/new`, `/compact`, and `/reload` from a native bot menu
 
 ### Designed for long-running desktop use
 
@@ -163,7 +162,7 @@ flowchart LR
 - The Renderer runs in the Electron sandbox with a strict Content Security Policy
 - Preload exposes only controlled bridge APIs, and TypeScript contracts constrain Host RPC
 - The update client uses only the public GitHub Release configuration embedded in production builds; it accepts neither update URLs nor release credentials from the Renderer
-- WeChat and Telegram use outbound-only long polling, while Feishu/Lark uses an outbound WebSocket; none opens a webhook or local listener
+- Feishu/Lark uses an outbound-only WebSocket long connection; it opens no webhook or local listener
 - Model providers determine how model request data is processed; review the privacy policy of every provider you configure
 
 ## Contributing
@@ -218,7 +217,7 @@ npm run verify
 
 - [x] Electron three-process architecture and typed IPC
 - [x] Sessions, project files, models, Skills, Plugins, and OAuth
-- [x] Personal WeChat, Telegram, and Feishu/Lark text, image, file, and voice channels, plus Feishu/Lark video resources
+- [x] Feishu/Lark text, image, file, voice, and video channels
 - [x] Tray, notifications, system theme, crash recovery, and diagnostic exports
 - [x] Linux, macOS, and Windows CI tests plus the production release build matrix
 - [x] Local macOS signing/notarization tooling and the `v*` tag release workflow

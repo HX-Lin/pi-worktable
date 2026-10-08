@@ -260,10 +260,7 @@ export function ChannelsConfig({ onSnapshotChange }: { onSnapshotChange?: (snaps
                 fontSize: 12,
               }}
             >
-              {t(
-                "noChannels",
-                "No messaging accounts configured. Connect WeChat, Telegram, or Feishu / Lark to get started.",
-              )}
+              {t("noChannels", "No messaging accounts configured. Connect Feishu / Lark to get started.")}
             </div>
           ) : (
             <div style={{ display: "grid", gap: 12 }}>
