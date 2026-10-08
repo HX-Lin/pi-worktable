@@ -43,7 +43,7 @@ export function SidebarHeader({ picker, worktrees, selectedCwd, homeDir, session
             cursor: "pointer",
             width: 32,
             height: 32,
-            borderRadius: 7,
+            borderRadius: "var(--radius-sm)",
             padding: 0,
             flexShrink: 0,
             transition: "background 0.3s, color 0.3s, border-color 0.3s",

@@ -133,7 +133,7 @@ function TreeNode({
             cursor: "pointer",
             background: hovered || focusedWithin ? "var(--bg-hover)" : "transparent",
             border: "none",
-            borderRadius: 6,
+            borderRadius: "var(--radius-sm)",
             userSelect: "none",
             textAlign: "left",
             transition: "background 0.12s, padding-right 0.12s",
@@ -205,7 +205,7 @@ function TreeNode({
               height: 30,
               background: "var(--bg-panel)",
               border: "1px solid var(--border)",
-              borderRadius: 4,
+              borderRadius: "var(--radius-sm)",
               color: "var(--accent)",
               cursor: "pointer",
               fontSize: 12,
@@ -256,7 +256,7 @@ function TreeNode({
               height: 30,
               background: "var(--bg-panel)",
               border: "1px solid var(--border)",
-              borderRadius: 4,
+              borderRadius: "var(--radius-sm)",
               color: "var(--text-muted)",
               cursor: downloading ? "wait" : "pointer",
               fontSize: 12,
@@ -391,7 +391,7 @@ export function FileExplorer({ cwd, onOpenFile, refreshKey, onAtMention }: Props
   }
 
   if (error) {
-    return <div style={{ padding: "8px 12px", fontSize: 11, color: "#f87171" }}>{error}</div>;
+    return <div style={{ padding: "8px 12px", fontSize: 11, color: "var(--danger)" }}>{error}</div>;
   }
 
   return (

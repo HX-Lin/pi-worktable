@@ -90,7 +90,7 @@ export function SessionTodoStrip({ cwd, sessionId, refreshKey = 0 }: Props) {
       style={{
         margin: "0 0 8px",
         border: "1px solid var(--border)",
-        borderRadius: 9,
+        borderRadius: "var(--radius-md)",
         background: "var(--bg-panel)",
         overflow: "hidden",
       }}
@@ -178,7 +178,7 @@ export function SessionTodoStrip({ cwd, sessionId, refreshKey = 0 }: Props) {
               marginTop: 4,
               padding: "4px 6px",
               fontSize: 11,
-              borderRadius: 5,
+              borderRadius: "var(--radius-sm)",
               background: "var(--bg)",
               color: "var(--text)",
               border: "1px solid var(--border)",

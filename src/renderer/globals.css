@@ -26,109 +26,222 @@
  * Light/Dark are opaque. The optional "niri" theme (Linux) uses translucent
  * backgrounds so a transparent window lets the desktop wallpaper glow
  * through while text stays opaque and readable. */
+/* ============================================================================
+ * 设计令牌（token）
+ *
+ * 布局代码只使用第 3 节往下的「区域与表面」令牌，不直接写颜色字面量：
+ *   - 主题只需覆盖第 1 节的基础色板、第 5 节的语义色与第 7 节的效果色；
+ *   - 半透明只改第 2 节的透明度旋钮，所有表面自动跟随；
+ *   - 浅色/深色/半透明主题共用同一套布局，改布局永不碰主题。
+ * ========================================================================== */
 :root {
+  /* ---- 字体 ---- */
   --font-inter: "Inter", system-ui, sans-serif;
   --font-noto-mono: "Noto Sans Mono", ui-monospace, monospace;
-  --bg: #f7f6f3;
-  --bg-panel: #fcfbf9;
-  --bg-hover: #f0eeea;
-  --bg-selected: #fff0e6;
-  --border: #e4e1da;
-  --text: #1c1a17;
-  --text-muted: #57534a;
-  --text-dim: #746f66;
-  --accent: #c2410c;
-  --accent-hover: #9a3412;
-  --user-bg: #1c1a17;
-  --user-fg: #faf9f7;
-  --assistant-bg: #ffffff;
-  --tool-bg: #1c1a17;
-  --tool-fg: #c9c5bb;
-  --tool-border: #33302a;
-  --bg-subtle: rgba(28, 26, 23, 0.035);
-  --accent-soft: #fff0e6;
-  --accent-soft-border: #f7d9bd;
-  --accent-chip-bg: #fbeee0;
-  --accent-chip-fg: #8b5e2c;
-  --success: #16a34a;
-  --danger: #ef4444;
-  --grid-line: #ece9e2;
-  --selection: #fed7aa;
-  --thinking-bg: #fbfaf8;
-  --thinking-border: #d6d3cd;
-  --font-size-caption: 12px;
+
+  /* ---- 1. 基础色板：主题只覆盖这一节 ---- */
+  --bg-color: #f7f6f3;
+  --panel-color: #fcfbf9;
+  --hover-color: #f0eeea;
+  --selected-color: #fff0e6;
+  --border-color: #e4e1da;
+  --border-soft-color: #ece9e2;
+  --text-color: #1c1a17;
+  --text-muted-color: #57534a;
+  --text-dim-color: #746f66;
+  --text-faint-color: #8f8a81;
+  --accent-color: #c2410c;
+  --accent-hover-color: #9a3412;
+  --tool-bg-color: #1c1a17;
+  --tool-fg-color: #c9c5bb;
+  --tool-border-color: #33302a;
+  --user-bg-color: #1c1a17;
+  --user-fg-color: #faf9f7;
+  --assistant-bg-color: #ffffff;
+
+  /* ---- 2. 透明度旋钮 ----
+     不透明主题保持 100%；半透明主题（如 niri）只改这几个百分比，第 3 节的
+     所有表面用 color-mix() 自动跟随：底色 < 面板 < 卡片 < 控件，嵌套叠加后
+     仍能透出壁纸，而文字保持不透明可读。 */
+  --base-alpha: 100%;
+  --panel-alpha: 100%;
+  --card-alpha: 100%;
+  --chip-alpha: 100%;
+  --input-alpha: 100%;
+
+  /* ---- 3. 区域与表面：布局只用这一层 ---- */
+  --bg: color-mix(in srgb, var(--bg-color) var(--base-alpha), transparent);
+  --bg-panel: color-mix(in srgb, var(--panel-color) var(--panel-alpha), transparent);
+  --bg-hover: color-mix(in srgb, var(--hover-color) var(--chip-alpha), transparent);
+  --bg-selected: color-mix(in srgb, var(--selected-color) var(--chip-alpha), transparent);
+  --card-bg: color-mix(in srgb, var(--assistant-bg-color) var(--card-alpha), transparent);
+  --user-bg: color-mix(in srgb, var(--user-bg-color) var(--user-alpha, var(--card-alpha)), transparent);
+  --assistant-bg: var(--card-bg);
+  --inputbox-bg: color-mix(in srgb, var(--panel-color) var(--input-alpha), transparent);
+  --border: var(--border-color);
+  --border-soft: var(--border-soft-color);
+  /* 凹陷面：比所在底板低一层（内嵌区域、代码块）。浅色主题不能用黑色低透，
+     否则会变成一块深灰，所以单独成令牌。 */
+  --sunken-bg: color-mix(in srgb, var(--text-color) 4%, transparent);
+  --code-bg: #24211d;
+  --code-text: #e6e2d9;
+  /* 菜单必须实色：密集列表叠在消息流上，半透会透出底下文字。 */
+  --menu-bg: var(--panel-color);
+
+  /* ---- 4. 文字层级 ---- */
+  --text: var(--text-color);
+  --text-muted: var(--text-muted-color);
+  --text-dim: var(--text-dim-color);
+  --text-faint: var(--text-faint-color);
+  --on-accent: #ffffff;
+
+  /* ---- 5. 语义色（含柔和底与描边两种派生）---- */
+  --red: #dc2626;
+  --red-soft: color-mix(in srgb, var(--red) 12%, transparent);
+  --red-border: color-mix(in srgb, var(--red) 38%, transparent);
+  --green: #16a34a;
+  --green-soft: color-mix(in srgb, var(--green) 12%, transparent);
+  --green-border: color-mix(in srgb, var(--green) 40%, transparent);
+  --amber: #b45309;
+  --amber-soft: color-mix(in srgb, var(--amber) 14%, transparent);
+  --amber-border: color-mix(in srgb, var(--amber) 42%, transparent);
+  --blue: #2563eb;
+  --blue-soft: color-mix(in srgb, var(--blue) 14%, transparent);
+  --blue-border: color-mix(in srgb, var(--blue) 42%, transparent);
+  /* 遮罩：模态框与抽屉背后的压暗层，浅色主题更轻。 */
+  --scrim: rgba(0, 0, 0, 0.35);
+  --scrim-soft: rgba(0, 0, 0, 0.18);
+  --success: var(--green);
+  --danger: var(--red);
+  --warning: var(--amber);
+
+  /* ---- 6. 控件与内容面 ---- */
+  --tool-bg: color-mix(in srgb, var(--tool-bg-color) var(--tool-alpha, var(--card-alpha)), transparent);
+  --tool-fg: var(--tool-fg-color);
+  --tool-border: var(--tool-border-color);
+  --user-fg: var(--user-fg-color);
+  --accent: var(--accent-color);
+  --accent-hover: var(--accent-hover-color);
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+  --accent-soft-border: color-mix(in srgb, var(--accent) 36%, transparent);
+  --accent-chip-bg: color-mix(in srgb, var(--accent) 16%, transparent);
+  --accent-chip-fg: color-mix(in srgb, var(--accent) 70%, var(--text-color));
+  --bg-subtle: var(--sunken-bg);
+  --grid-line: color-mix(in srgb, var(--text-color) 6%, transparent);
+  --selection: color-mix(in srgb, var(--accent) 38%, transparent);
+  --thinking-bg: color-mix(in srgb, var(--panel-color) var(--card-alpha), transparent);
+  --thinking-border: var(--border-color);
+  --control-fg: var(--text-muted-color);
+  --control-bg: var(--bg-panel);
+  --control-border: var(--border-color);
+
+  /* ---- 7. 效果：阴影、遮罩、白色高光 ----
+     布局里不写 rgba(0,0,0,…)：浅色主题的阴影要更轻，深色主题近乎不可见。 */
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.16);
+  --shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.22);
+  --glow-03: rgba(255, 255, 255, 0.03);
+  --glow-05: rgba(255, 255, 255, 0.05);
+  --glow-08: rgba(255, 255, 255, 0.08);
+  --glow-12: rgba(255, 255, 255, 0.12);
+
+  /* ---- 8. 刻度：间距、圆角、字号、控件高度 ---- */
+  --space-1: 4px;
+  --space-2: 6px;
+  --space-3: 8px;
+  --space-4: 12px;
+  --space-5: 16px;
+  --space-6: 24px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --text-xs: 10px;
+  --text-sm: 11px;
+  --text-md: 12px;
+  --text-lg: 14px;
+  --font-size-caption: var(--text-md);
   --font-size-control: 13px;
   --font-size-body: 14px;
   --control-height-compact: 32px;
   --chat-content-max-width: 760px;
+  --font-sans: var(--font-inter), "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono:
+    var(--font-noto-mono), "JetBrains Mono", "Fira Code", "Consolas", ui-monospace, "PingFang SC", "Microsoft YaHei",
+    monospace;
 }
 
 html.dark {
-  --bg: #141210;
-  --bg-panel: #1c1a17;
-  --bg-hover: #26231f;
-  --bg-selected: #3a2a1f;
-  --border: #33302a;
-  --text: #faf9f7;
-  --text-muted: #a19d92;
-  --text-dim: #8f8a81;
-  --accent: #f97316;
-  --accent-hover: #fb923c;
-  --user-bg: #2a2620;
-  --user-fg: #faf9f7;
-  --assistant-bg: #1c1a17;
-  --tool-bg: #0f0e0c;
-  --tool-fg: #c9c5bb;
-  --tool-border: #33302a;
-  --bg-subtle: rgba(255, 255, 255, 0.04);
-  --accent-soft: rgba(234, 88, 12, 0.16);
-  --accent-soft-border: rgba(234, 88, 12, 0.38);
-  --accent-chip-bg: rgba(234, 88, 12, 0.18);
-  --accent-chip-fg: #e8b07a;
-  --success: #22c55e;
-  --danger: #f87171;
-  --grid-line: #2a2620;
-  --selection: rgba(234, 88, 12, 0.38);
-  --thinking-bg: #1a1815;
-  --thinking-border: #4a453c;
+  --bg-color: #141210;
+  --panel-color: #1c1a17;
+  --hover-color: #26231f;
+  --selected-color: #3a2a1f;
+  --border-color: #33302a;
+  --border-soft-color: #2a2620;
+  --text-color: #faf9f7;
+  --text-muted-color: #a19d92;
+  --text-dim-color: #8f8a81;
+  --text-faint-color: #6f6a62;
+  --accent-color: #f97316;
+  --accent-hover-color: #fb923c;
+  --tool-bg-color: #0f0e0c;
+  --tool-fg-color: #c9c5bb;
+  --tool-border-color: #33302a;
+  --user-bg-color: #2a2620;
+  --user-fg-color: #faf9f7;
+  --assistant-bg-color: #1c1a17;
+  --code-bg: #0b0a09;
+  --code-text: #d6d2c9;
+  --red: #f87171;
+  --green: #22c55e;
+  --amber: #f59e0b;
+  --blue: #60a5fa;
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.58);
 }
 
-/* niri (Linux) theme — dark graphite blue + orange accent, frosted glass.
-   The surfaces are translucent so the wallpaper shows through *and* text stays crisp; the
-   compositor does the rest (niri's `background-effect { xray true; blur true }` blurs the
-   wallpaper, `geometry-corner-radius` rounds the window). The alphas are plain values on purpose:
-   there is no in-app opacity setting, no stored state and no runtime injection. */
+/* niri (Linux)：深石墨蓝 + 橙色强调，磨砂玻璃。
+   合成器负责模糊与圆角（niri 的 background-effect { xray true; blur true } 模糊壁纸、
+   geometry-corner-radius 给窗口圆角）；应用只负责画半透明表面，文字保持不透明。
+   透明度就是第 2 节这几个旋钮，没有应用内开关、没有持久状态、没有运行时注入。 */
 html.niri {
-  /* Frosted glass: these alphas are the whole in-app transparency knob. Nested surfaces stack
-     (root base + panel + bubble), so the base sits lowest — that is what makes the wallpaper
-     read through the window. */
-  --bg: rgba(17, 19, 26, 0.42);
-  --bg-panel: rgba(26, 29, 39, 0.3);
-  --bg-hover: rgba(255, 255, 255, 0.09);
+  --bg-color: #11131a;
+  --panel-color: #1a1d27;
+  --hover-color: #ffffff;
+  --selected-color: #fb923c;
+  --border-color: rgba(255, 255, 255, 0.16);
+  --border-soft-color: rgba(255, 255, 255, 0.1);
+  --text-color: #f8f9fc;
+  --text-muted-color: #d6dbe6;
+  --text-dim-color: #c2c8d5;
+  --text-faint-color: #9aa2b4;
+  --accent-color: #fb923c;
+  --accent-hover-color: #fdba74;
+  --tool-bg-color: #0a0c11;
+  --tool-fg-color: #ccd0da;
+  --tool-border-color: rgba(255, 255, 255, 0.16);
+  --user-bg-color: #2a2e3a;
+  --user-fg-color: #f5f6fa;
+  --assistant-bg-color: #1a1d27;
+  --code-bg: #0a0c11;
+  --code-text: #ccd0da;
+  --red: #f87171;
+  --green: #4ade80;
+  --amber: #fbbf24;
+  --blue: #60a5fa;
+
+  /* 磨砂玻璃：嵌套表面会叠加（底色 + 面板 + 气泡），底色最低，才透得出壁纸。 */
+  --base-alpha: 42%;
+  --panel-alpha: 30%;
+  --card-alpha: 34%;
+  --user-alpha: 55%;
+  --tool-alpha: 50%;
+  --chip-alpha: 9%;
+  --input-alpha: 55%;
+  /* 选中态在深色主题下是橙色低透，不能跟着 chip 的白色 9% 走 */
   --bg-selected: rgba(251, 146, 60, 0.24);
-  --border: rgba(255, 255, 255, 0.16);
-  --text: #f8f9fc;
-  --text-muted: #d6dbe6;
-  --text-dim: #c2c8d5;
-  --accent: #fb923c;
-  --accent-hover: #fdba74;
-  --user-bg: rgba(42, 46, 58, 0.55);
-  --user-fg: #f5f6fa;
-  --assistant-bg: rgba(26, 29, 39, 0.34);
-  --tool-bg: rgba(10, 12, 17, 0.5);
-  --tool-fg: #ccd0da;
-  --tool-border: rgba(255, 255, 255, 0.16);
-  --bg-subtle: rgba(255, 255, 255, 0.06);
-  --accent-soft: rgba(251, 146, 60, 0.16);
-  --accent-soft-border: rgba(251, 146, 60, 0.36);
-  --accent-chip-bg: rgba(251, 146, 60, 0.2);
-  --accent-chip-fg: #f2c9a1;
-  --success: #4ade80;
-  --danger: #f87171;
+  --menu-bg: #1a1d27;
   --grid-line: rgba(255, 255, 255, 0.08);
-  --selection: rgba(251, 146, 60, 0.38);
-  --thinking-bg: rgba(20, 23, 31, 0.34);
-  --thinking-border: rgba(255, 255, 255, 0.14);
 }
 
 /* Readability on translucent panels without raising opacity: a soft dark
@@ -284,20 +397,13 @@ html.niri body::before {
 }
 ::-webkit-scrollbar-thumb {
   background: rgba(28, 26, 23, 0.25);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 html.dark ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-dim);
-}
-
-:root {
-  --font-sans: var(--font-inter), "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-mono:
-    var(--font-noto-mono), "JetBrains Mono", "Fira Code", "Consolas", ui-monospace, "PingFang SC", "Microsoft YaHei",
-    monospace;
 }
 
 /* Streaming caret (design.html) */
@@ -443,7 +549,7 @@ code {
   max-width: 100%;
   height: auto;
   margin: 10px 0;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   object-fit: contain;
 }
 .markdown-image-loading {
@@ -452,7 +558,7 @@ code {
   min-height: 120px;
   margin: 10px 0;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--bg-subtle);
   animation: pulse 1.2s ease-in-out infinite;
 }
@@ -465,7 +571,7 @@ code {
 }
 .markdown-body .markdown-inline-code {
   background: var(--bg-subtle);
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   padding: 1px 5px;
   color: var(--text);
   font-family: var(--font-mono);
@@ -492,7 +598,7 @@ code {
   height: 14px;
   margin: 5px 0 0;
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: var(--bg);
   display: inline-grid;
   place-content: center;
@@ -523,7 +629,7 @@ code {
   overflow-x: auto;
   overflow-y: hidden;
   border: 1px solid var(--border);
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
 }
 .markdown-body table {
   border-collapse: separate;
@@ -692,7 +798,7 @@ code {
   padding: 7px 8px;
   overflow: auto;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--bg-panel);
   font-family: var(--font-mono);
   font-size: 11px;
@@ -710,7 +816,7 @@ code {
   position: relative;
   margin: 6px 0;
   border: 1px solid var(--border);
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
   background: var(--bg);
   box-shadow: 0 1px 0 color-mix(in srgb, var(--border) 42%, transparent);
@@ -738,7 +844,7 @@ code {
 }
 .markdown-code-action {
   border: 1px solid var(--border);
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   padding: 2px 7px;
   background: var(--bg);
   color: var(--text-muted);
@@ -795,7 +901,7 @@ code {
 .markdown-file-preview pre {
   background: var(--bg-panel);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: 12px 16px;
   overflow-x: auto;
   font-family: var(--font-mono);
@@ -807,7 +913,7 @@ code {
   font-size: 0.9em;
   background: var(--bg-panel);
   padding: 1px 5px;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
 }
 .markdown-file-preview pre code {
   background: none;

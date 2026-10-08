@@ -54,7 +54,7 @@ export function ContextMapPanel({ sessionId, refreshKey = 0, onClose }: Props) {
             style={{
               background: "transparent",
               border: "1px solid var(--border)",
-              borderRadius: 6,
+              borderRadius: "var(--radius-sm)",
               color: "var(--text-muted)",
               cursor: "pointer",
               fontSize: 11,
@@ -80,7 +80,7 @@ const overlayStyle = {
   alignItems: "center",
   justifyContent: "center",
   padding: 20,
-  background: "rgba(0,0,0,0.18)",
+  background: "var(--scrim-soft)",
 } as const;
 
 const dialogStyle = {
@@ -90,8 +90,8 @@ const dialogStyle = {
   flexDirection: "column",
   background: "var(--bg-panel)",
   border: "1px solid var(--border)",
-  borderRadius: 10,
-  boxShadow: "0 18px 48px rgba(0,0,0,0.22)",
+  borderRadius: "var(--radius-lg)",
+  boxShadow: "var(--shadow-lg)",
   overflow: "hidden",
 } as const;
 

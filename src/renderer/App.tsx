@@ -157,8 +157,8 @@ export function App() {
     return (
       <div style={centerStyle}>
         <div style={{ ...cardStyle, textAlign: "center" }}>
-          <div style={{ fontSize: 13, color: "#57534a", marginBottom: 8 }}>{status}</div>
-          <div style={{ fontSize: 12, color: "#a19d92" }}>Pi Worktable</div>
+          <div style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 8 }}>{status}</div>
+          <div style={{ fontSize: 12, color: "var(--text-dim)" }}>Pi Worktable</div>
         </div>
       </div>
     );
@@ -190,7 +190,7 @@ const cardStyle: CSSProperties = {
   maxWidth: 520,
   background: "var(--bg-panel)",
   border: "1px solid var(--border)",
-  borderRadius: 12,
+  borderRadius: "var(--radius-lg)",
   padding: "28px 32px",
 };
 
@@ -210,13 +210,13 @@ const preStyle: CSSProperties = {
   background: "var(--tool-bg)",
   color: "var(--tool-fg)",
   padding: 12,
-  borderRadius: 8,
+  borderRadius: "var(--radius-md)",
 };
 
 const btnPrimary: CSSProperties = {
   marginTop: 16,
   padding: "8px 14px",
-  borderRadius: 8,
+  borderRadius: "var(--radius-md)",
   border: "1px solid var(--border)",
   background: "var(--text)",
   color: "var(--bg)",
@@ -235,7 +235,7 @@ const hotUpdateBannerStyle: CSSProperties = {
   borderRadius: 999,
   border: "1px solid var(--border)",
   background: "var(--bg-panel)",
-  boxShadow: "0 6px 20px rgba(0,0,0,0.18)",
+  boxShadow: "var(--shadow-md)",
   color: "var(--text-muted)",
   fontSize: 12,
   pointerEvents: "none",

@@ -14,7 +14,7 @@ const sessionMenuItemStyle: CSSProperties = {
   gap: 8,
   padding: "0 9px",
   border: 0,
-  borderRadius: 6,
+  borderRadius: "var(--radius-sm)",
   background: "transparent",
   color: "var(--text-muted)",
   cursor: "pointer",
@@ -162,7 +162,7 @@ export function SessionItem({
           : isSelected
             ? "1px solid var(--accent-soft-border)"
             : "1px solid transparent",
-        borderRadius: 8,
+        borderRadius: "var(--radius-md)",
         transition: "background 0.1s, border-color 0.1s",
         opacity: deleting ? 0.5 : 1,
         gap: 6,
@@ -200,10 +200,10 @@ export function SessionItem({
                 gap: 4,
                 height: 32,
                 padding: "0 11px",
-                background: "#ef4444",
+                background: "var(--danger)",
                 border: "none",
-                borderRadius: 6,
-                color: "#fff",
+                borderRadius: "var(--radius-sm)",
+                color: "var(--on-accent)",
                 cursor: "pointer",
                 fontSize: 12,
                 fontWeight: 600,
@@ -237,7 +237,7 @@ export function SessionItem({
                 padding: "0 11px",
                 background: "var(--bg)",
                 border: "1px solid var(--border)",
-                borderRadius: 6,
+                borderRadius: "var(--radius-sm)",
                 color: "var(--text-muted)",
                 cursor: "pointer",
                 fontSize: 12,
@@ -266,7 +266,7 @@ export function SessionItem({
             fontSize: 13,
             padding: "5px 8px",
             border: "1px solid var(--accent)",
-            borderRadius: 5,
+            borderRadius: "var(--radius-sm)",
             outline: "none",
             background: "var(--bg)",
             color: "var(--text)",
@@ -380,7 +380,7 @@ export function SessionItem({
                     color: "var(--accent-chip-fg)",
                     background: "var(--accent-chip-bg)",
                     padding: "1px 6px",
-                    borderRadius: 4,
+                    borderRadius: "var(--radius-sm)",
                   }}
                 >
                   {session.messageCount} msgs
@@ -443,7 +443,7 @@ export function SessionItem({
                 flexShrink: 0,
                 background: hovered ? "var(--bg-hover)" : "none",
                 border: "none",
-                borderRadius: 7,
+                borderRadius: "var(--radius-sm)",
                 color: "var(--text-dim)",
                 cursor: "pointer",
                 transition: "background 0.12s, color 0.12s",
@@ -503,7 +503,7 @@ export function SessionItem({
                 padding: 0,
                 background: actionsOpen || hovered ? "var(--bg-hover)" : "transparent",
                 border: actionsOpen ? "1px solid var(--border)" : "1px solid transparent",
-                borderRadius: 7,
+                borderRadius: "var(--radius-sm)",
                 color: actionsOpen ? "var(--text)" : "var(--text-dim)",
                 cursor: "pointer",
               }}
@@ -526,9 +526,9 @@ export function SessionItem({
                   minWidth: 132,
                   padding: 4,
                   border: "1px solid var(--border)",
-                  borderRadius: 8,
+                  borderRadius: "var(--radius-md)",
                   background: "var(--bg)",
-                  boxShadow: "0 8px 24px rgba(0,0,0,0.14)",
+                  boxShadow: "var(--shadow-md)",
                 }}
               >
                 <button

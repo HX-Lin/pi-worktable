@@ -96,7 +96,7 @@ export function AgentsConfig({ cwd }: Props) {
                 padding: "10px 12px",
                 background: "var(--bg-panel)",
                 border: "1px solid var(--border)",
-                borderRadius: 8,
+                borderRadius: "var(--radius-md)",
               }}
             >
               <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
@@ -133,7 +133,7 @@ export function AgentsConfig({ cwd }: Props) {
                     minWidth: 220,
                     padding: "5px 7px",
                     fontSize: 11,
-                    borderRadius: 6,
+                    borderRadius: "var(--radius-sm)",
                     background: "var(--bg)",
                     color: agent.model ? "var(--text)" : "var(--text-dim)",
                     border: "1px solid var(--border)",

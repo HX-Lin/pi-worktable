@@ -100,7 +100,7 @@ function DeferredContentActions({
             }}
             style={{
               border: "1px solid var(--border)",
-              borderRadius: 6,
+              borderRadius: "var(--radius-sm)",
               background: "var(--bg-panel)",
               color: "var(--accent)",
               cursor: loading ? "default" : "pointer",
@@ -303,7 +303,7 @@ function UserMessageView({
                     style={{
                       maxWidth: 240,
                       maxHeight: 240,
-                      borderRadius: 6,
+                      borderRadius: "var(--radius-sm)",
                       objectFit: "contain",
                       display: "block",
                       border: "1px solid color-mix(in srgb, var(--user-fg) 18%, transparent)",
@@ -355,7 +355,7 @@ function UserMessageView({
                 height: 32,
                 background: "none",
                 border: "none",
-                borderRadius: 5,
+                borderRadius: "var(--radius-sm)",
                 color: copied ? "var(--accent)" : "var(--text-dim)",
                 cursor: "pointer",
                 fontSize: 12,
@@ -428,7 +428,7 @@ function UserMessageView({
                     height: 32,
                     background: "none",
                     border: "none",
-                    borderRadius: 5,
+                    borderRadius: "var(--radius-sm)",
                     color: "var(--text-dim)",
                     cursor: "pointer",
                     fontSize: 12,
@@ -475,7 +475,7 @@ function UserMessageView({
                     height: 32,
                     background: "none",
                     border: "none",
-                    borderRadius: 5,
+                    borderRadius: "var(--radius-sm)",
                     color: forking ? "var(--accent)" : "var(--text-dim)",
                     cursor: forking ? "not-allowed" : "pointer",
                     fontSize: 12,
@@ -719,9 +719,9 @@ function AssistantMessageView({
                             style={{
                               marginLeft: 6,
                               padding: "1px 6px",
-                              borderRadius: 4,
+                              borderRadius: "var(--radius-sm)",
                               background: bg,
-                              color: "#fff",
+                              color: "var(--on-accent)",
                               fontSize: 11,
                               fontWeight: 400,
                             }}
@@ -761,7 +761,7 @@ function AssistantMessageView({
             data-testid="assistant-error-message"
             style={{
               border: "1px solid color-mix(in srgb, var(--danger) 45%, var(--border))",
-              borderRadius: 9,
+              borderRadius: "var(--radius-md)",
               background: "color-mix(in srgb, var(--danger) 8%, var(--assistant-bg))",
               color: "var(--danger)",
               padding: "10px 12px",
@@ -802,7 +802,7 @@ function AssistantMessageView({
               height: 32,
               background: "none",
               border: "none",
-              borderRadius: 5,
+              borderRadius: "var(--radius-sm)",
               color: copied ? "var(--accent)" : "var(--text-dim)",
               cursor: "pointer",
               fontSize: 12,
@@ -939,7 +939,7 @@ function ThinkingBlock({ block, duration }: { block: ThinkingContent; duration?:
     <div
       style={{
         border: "1px dashed var(--thinking-border)",
-        borderRadius: 9,
+        borderRadius: "var(--radius-md)",
         overflow: "hidden",
         fontSize: 13,
         background: "var(--thinking-bg)",
@@ -1027,7 +1027,7 @@ function ToolCallBlock({
     <div
       className="tool-card"
       style={{
-        borderRadius: 9,
+        borderRadius: "var(--radius-md)",
         overflow: "hidden",
         fontSize: 12,
         fontFamily: "var(--font-mono)",
@@ -1291,14 +1291,15 @@ function SplitDiffHeader({ title, side }: { title: string; side: "left" | "right
 function SplitDiffCellView({ cell, side }: { cell: SplitDiffCell; side: "left" | "right" }) {
   const bg =
     cell.type === "added"
-      ? "rgba(34,197,94,0.12)"
+      ? "var(--success-soft)"
       : cell.type === "removed"
-        ? "rgba(248,113,113,0.13)"
+        ? "var(--danger-soft)"
         : cell.type === "empty"
           ? "var(--bg-subtle)"
           : "transparent";
   const marker = cell.type === "added" ? "+" : cell.type === "removed" ? "-" : " ";
-  const markerColor = cell.type === "added" ? "#22c55e" : cell.type === "removed" ? "#f87171" : "var(--text-dim)";
+  const markerColor =
+    cell.type === "added" ? "var(--success)" : cell.type === "removed" ? "var(--danger)" : "var(--text-dim)";
 
   return (
     <div
@@ -1376,17 +1377,17 @@ function PatchTextView({ text }: { text: string }) {
               : "context";
         const bg =
           kind === "added"
-            ? "rgba(34,197,94,0.12)"
+            ? "var(--success-soft)"
             : kind === "removed"
-              ? "rgba(248,113,113,0.13)"
+              ? "var(--danger-soft)"
               : kind === "hunk"
-                ? "rgba(96,165,250,0.12)"
+                ? "var(--blue-soft)"
                 : "transparent";
         const color =
           kind === "added"
-            ? "#22c55e"
+            ? "var(--success)"
             : kind === "removed"
-              ? "#f87171"
+              ? "var(--danger)"
               : kind === "hunk"
                 ? "var(--accent)"
                 : "var(--text)";
@@ -1401,7 +1402,7 @@ function PatchTextView({ text }: { text: string }) {
                 kind === "added"
                   ? "3px solid #22c55e"
                   : kind === "removed"
-                    ? "3px solid #f87171"
+                    ? "3px solid var(--danger)"
                     : kind === "hunk"
                       ? "3px solid var(--accent)"
                       : "3px solid transparent",
@@ -1513,7 +1514,7 @@ function CompactionMessageView({ message }: { message: CustomMessage }) {
       <div
         style={{
           border: "1px solid var(--border)",
-          borderRadius: 8,
+          borderRadius: "var(--radius-md)",
           overflow: "hidden",
           background: "var(--bg)",
         }}
@@ -1639,7 +1640,7 @@ function CustomMessageView({
       <div
         style={{
           border: "1px solid var(--border)",
-          borderRadius: 8,
+          borderRadius: "var(--radius-md)",
           overflow: "hidden",
           background: isHiddenDisplay ? "var(--bg-subtle)" : "var(--bg)",
           opacity: isHiddenDisplay && !contentExpanded ? 0.82 : 1,
@@ -1679,7 +1680,7 @@ function CustomMessageView({
                       style={{
                         maxWidth: 240,
                         maxHeight: 240,
-                        borderRadius: 6,
+                        borderRadius: "var(--radius-sm)",
                         objectFit: "contain",
                         display: "block",
                         border: "1px solid var(--border)",

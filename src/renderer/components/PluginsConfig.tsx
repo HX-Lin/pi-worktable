@@ -58,9 +58,9 @@ function findInstalledPackage(
 
 function statusColor(status: PluginPackageInfo["status"]): string {
   if (status === "loaded") return "var(--accent)";
-  if (status === "installed") return "#f59e0b";
+  if (status === "installed") return "var(--warning)";
   if (status === "disabled") return "var(--text-dim)";
-  return "#ef4444";
+  return "var(--danger)";
 }
 
 function ResourceList({ pkg }: { pkg: PluginPackageInfo }) {
@@ -159,10 +159,10 @@ function ScopeTag({ scope }: { scope: PluginScope }) {
       style={{
         fontSize: 10,
         padding: "1px 5px",
-        borderRadius: 3,
+        borderRadius: "var(--radius-sm)",
         flexShrink: 0,
-        background: scope === "project" ? "rgba(99,102,241,0.12)" : "rgba(120,120,120,0.12)",
-        color: scope === "project" ? "rgba(99,102,241,0.85)" : "var(--text-dim)",
+        background: scope === "project" ? "var(--blue-soft)" : "var(--sunken-bg)",
+        color: scope === "project" ? "var(--blue)" : "var(--text-dim)",
       }}
     >
       {scope}
@@ -173,10 +173,10 @@ function ScopeTag({ scope }: { scope: PluginScope }) {
 function buttonStyle(disabled?: boolean, danger?: boolean): React.CSSProperties {
   return {
     padding: "6px 12px",
-    background: danger ? "rgba(239,68,68,0.08)" : "none",
+    background: danger ? "var(--danger-soft)" : "none",
     border: "1px solid var(--border)",
-    borderRadius: 6,
-    color: danger ? "#ef4444" : "var(--text-muted)",
+    borderRadius: "var(--radius-sm)",
+    color: danger ? "var(--danger)" : "var(--text-muted)",
     cursor: disabled ? "not-allowed" : "pointer",
     fontSize: 12,
     opacity: disabled ? 0.5 : 1,
@@ -206,7 +206,7 @@ function Toggle({
         flexShrink: 0,
         width: 40,
         height: 22,
-        borderRadius: 11,
+        borderRadius: "var(--radius-lg)",
         border: "none",
         padding: 0,
         cursor: loading ? "wait" : "pointer",
@@ -226,7 +226,7 @@ function Toggle({
           height: 16,
           borderRadius: "50%",
           background: "var(--bg)",
-          boxShadow: "0 1px 4px rgba(0,0,0,0.22)",
+          boxShadow: "var(--shadow-sm)",
           transition: "left 0.18s cubic-bezier(.4,0,.2,1)",
         }}
       />
@@ -240,7 +240,7 @@ function SegmentedScope({ value, onChange }: { value: PluginScope; onChange: (sc
       style={{
         display: "inline-flex",
         border: "1px solid var(--border)",
-        borderRadius: 7,
+        borderRadius: "var(--radius-sm)",
         overflow: "hidden",
         height: 30,
       }}
@@ -319,7 +319,7 @@ function AddPluginPanel({
             height: 36,
             padding: "0 11px",
             border: "1px solid var(--border)",
-            borderRadius: 6,
+            borderRadius: "var(--radius-sm)",
             background: "var(--bg-panel)",
             color: "var(--text)",
             fontFamily: "var(--font-mono)",
@@ -363,7 +363,7 @@ function AddPluginPanel({
                 textAlign: "left",
                 padding: "6px 9px",
                 border: "1px solid var(--border)",
-                borderRadius: 6,
+                borderRadius: "var(--radius-sm)",
                 background: "var(--bg-panel)",
                 color: "var(--text-dim)",
                 cursor: "pointer",
@@ -385,7 +385,7 @@ function AddPluginPanel({
         </div>
       </div>
 
-      {actionError && <div style={{ fontSize: 12, color: "#ef4444", whiteSpace: "pre-wrap" }}>{actionError}</div>}
+      {actionError && <div style={{ fontSize: 12, color: "var(--danger)", whiteSpace: "pre-wrap" }}>{actionError}</div>}
     </div>
   );
 }
@@ -439,8 +439,8 @@ function PackageDetail({
               style={{
                 fontSize: 10,
                 padding: "1px 5px",
-                borderRadius: 3,
-                background: "rgba(120,120,120,0.12)",
+                borderRadius: "var(--radius-sm)",
+                background: "var(--sunken-bg)",
                 color: "var(--text-dim)",
               }}
             >
@@ -452,9 +452,9 @@ function PackageDetail({
                 style={{
                   fontSize: 10,
                   padding: "1px 5px",
-                  borderRadius: 3,
-                  background: "rgba(245,158,11,0.12)",
-                  color: "#d97706",
+                  borderRadius: "var(--radius-sm)",
+                  background: "var(--amber-soft)",
+                  color: "var(--warning)",
                 }}
               >
                 filtered
@@ -523,7 +523,7 @@ function PackageDetail({
         <div style={{ color: "var(--text-dim)" }}>Installed path</div>
         <div
           style={{
-            color: pkg.installedPath ? "var(--text-muted)" : "#ef4444",
+            color: pkg.installedPath ? "var(--text-muted)" : "var(--danger)",
             fontFamily: "var(--font-mono)",
             overflowWrap: "anywhere",
           }}
@@ -541,8 +541,8 @@ function PackageDetail({
         <ResourceList pkg={pkg} />
       </div>
 
-      {actionMessage && <div style={{ fontSize: 12, color: "#16a34a" }}>{actionMessage}</div>}
-      {actionError && <div style={{ fontSize: 12, color: "#ef4444", whiteSpace: "pre-wrap" }}>{actionError}</div>}
+      {actionMessage && <div style={{ fontSize: 12, color: "var(--success)" }}>{actionMessage}</div>}
+      {actionError && <div style={{ fontSize: 12, color: "var(--danger)", whiteSpace: "pre-wrap" }}>{actionError}</div>}
     </div>
   );
 }
@@ -722,7 +722,7 @@ export function PluginsConfig({
               position: "fixed",
               inset: 0,
               zIndex: 1000,
-              background: "rgba(0,0,0,0.35)",
+              background: "var(--scrim)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -807,7 +807,7 @@ export function PluginsConfig({
               {loading ? (
                 <div style={{ padding: "10px 8px", fontSize: 12, color: "var(--text-muted)" }}>Loading...</div>
               ) : error ? (
-                <div style={{ padding: "10px 8px", fontSize: 11, color: "#ef4444" }}>{error}</div>
+                <div style={{ padding: "10px 8px", fontSize: 11, color: "var(--danger)" }}>{error}</div>
               ) : packages.length === 0 ? (
                 <div style={{ padding: "10px 8px", fontSize: 11, color: "var(--text-dim)" }}>No plugins configured</div>
               ) : (
@@ -841,7 +841,7 @@ export function PluginsConfig({
                             alignItems: "center",
                             gap: 7,
                             padding: "8px 8px",
-                            borderRadius: 5,
+                            borderRadius: "var(--radius-sm)",
                             cursor: "pointer",
                             background: isSelected ? "var(--bg-selected)" : "none",
                           }}
@@ -922,7 +922,7 @@ export function PluginsConfig({
                   alignItems: "center",
                   gap: 6,
                   padding: "7px 8px",
-                  borderRadius: 5,
+                  borderRadius: "var(--radius-sm)",
                   border: "none",
                   width: "100%",
                   cursor: "pointer",
@@ -1026,7 +1026,7 @@ export function PluginsConfig({
                 title={data.diagnostics
                   .map((d) => `${d.type}: ${d.source ? `${d.source}: ` : ""}${d.message}`)
                   .join("\n")}
-                style={{ color: data.diagnostics.some((d) => d.type === "error") ? "#ef4444" : "#d97706" }}
+                style={{ color: data.diagnostics.some((d) => d.type === "error") ? "var(--danger)" : "var(--warning)" }}
               >
                 {data.diagnostics.length} diagnostic{data.diagnostics.length === 1 ? "" : "s"}
               </span>

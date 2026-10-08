@@ -22,9 +22,9 @@ import {
 const EXPOSURES: McpExposurePayload[] = ["codemode", "deferred", "direct", "hidden"];
 
 const inputStyle: React.CSSProperties = {
-  background: "var(--bg-elevated, rgba(127,127,127,0.08))",
+  background: "var(--sunken-bg)",
   border: "1px solid var(--border)",
-  borderRadius: 6,
+  borderRadius: "var(--radius-sm)",
   color: "var(--text)",
   font: "inherit",
   fontSize: 12,
@@ -35,9 +35,9 @@ const inputStyle: React.CSSProperties = {
 
 const selectStyle: React.CSSProperties = { ...inputStyle, flex: "0 0 auto" };
 const buttonStyle: React.CSSProperties = {
-  background: "var(--bg-elevated, rgba(127,127,127,0.08))",
+  background: "var(--sunken-bg)",
   border: "1px solid var(--border)",
-  borderRadius: 6,
+  borderRadius: "var(--radius-sm)",
   color: "var(--text)",
   cursor: "pointer",
   font: "inherit",
@@ -165,7 +165,7 @@ export function McpConfig({ cwd }: { cwd: string | null }) {
 
       <Section title={t("mcpServers", "Servers")}>
         {config && config.errors.length > 0 && (
-          <pre style={{ ...codeStyle, whiteSpace: "pre-wrap", color: "#ef4444" }}>{config.errors.join("\n")}</pre>
+          <pre style={{ ...codeStyle, whiteSpace: "pre-wrap", color: "var(--danger)" }}>{config.errors.join("\n")}</pre>
         )}
         {config?.servers.length === 0 && (
           <p style={hintStyle}>{t("mcpNoServers", "No MCP servers yet. Add one below.")}</p>
@@ -247,7 +247,7 @@ export function McpConfig({ cwd }: { cwd: string | null }) {
         </>
       )}
 
-      {error && <p style={{ ...hintStyle, color: "#ef4444" }}>{error}</p>}
+      {error && <p style={{ ...hintStyle, color: "var(--danger)" }}>{error}</p>}
     </div>
   );
 }
@@ -332,9 +332,9 @@ function ServerRow({
 }
 
 const codeStyle: React.CSSProperties = {
-  background: "var(--bg-elevated, rgba(127,127,127,0.08))",
+  background: "var(--sunken-bg)",
   border: "1px solid var(--border)",
-  borderRadius: 6,
+  borderRadius: "var(--radius-sm)",
   color: "var(--text-muted)",
   fontSize: 11,
   padding: "4px 8px",

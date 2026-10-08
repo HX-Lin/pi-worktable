@@ -807,7 +807,7 @@ export function AppShell() {
             gap: 7,
             background: "none",
             border: "none",
-            borderRadius: 9,
+            borderRadius: "var(--radius-md)",
             color: "var(--text-muted)",
             cursor: "pointer",
             fontSize: 12,
@@ -924,7 +924,7 @@ export function AppShell() {
             position: "fixed",
             inset: 0,
             zIndex: 199,
-            background: "rgba(0,0,0,0.4)",
+            background: "var(--scrim)",
             opacity: sidebarOpen ? 1 : 0,
             pointerEvents: sidebarOpen ? "auto" : "none",
             transition: "opacity 0.25s ease",
@@ -1143,8 +1143,8 @@ export function AppShell() {
                 let ctxStr: string | null = null;
                 if (contextUsage?.contextWindow) {
                   const pct = contextUsage.percent;
-                  if (pct !== null && pct > 90) ctxColor = "#ef4444";
-                  else if (pct !== null && pct > 70) ctxColor = "rgba(234,179,8,0.95)";
+                  if (pct !== null && pct > 90) ctxColor = "var(--danger)";
+                  else if (pct !== null && pct > 70) ctxColor = "var(--warning)";
                   ctxStr =
                     pct !== null
                       ? `${pct.toFixed(0)}% / ${fmt(contextUsage.contextWindow)}`
@@ -1264,7 +1264,7 @@ export function AppShell() {
                     style={{
                       background: "var(--bg-panel)",
                       borderBottom: "1px solid var(--border)",
-                      boxShadow: "0 10px 28px rgba(0,0,0,0.10)",
+                      boxShadow: "var(--shadow-md)",
                       padding: "12px 16px",
                     }}
                   >
@@ -1386,7 +1386,7 @@ export function AppShell() {
                                 color: copied ? "var(--accent)" : "var(--text-dim)",
                                 background: "transparent",
                                 border: "1px solid var(--border)",
-                                borderRadius: 4,
+                                borderRadius: "var(--radius-sm)",
                                 cursor: "pointer",
                                 flex: "0 0 auto",
                                 transition: "color 0.12s, border-color 0.12s, background 0.12s",
@@ -1807,7 +1807,7 @@ export function AppShell() {
                   border: "none",
                   color: "var(--text-dim)",
                   cursor: "pointer",
-                  borderRadius: 5,
+                  borderRadius: "var(--radius-sm)",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.color = "var(--text)";
@@ -1956,7 +1956,7 @@ export function AppShell() {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            background: "rgba(0,0,0,0.4)",
+            background: "var(--scrim)",
           }}
           onClick={() => setRenameProjectTarget(null)}
         >
@@ -1969,9 +1969,9 @@ export function AppShell() {
               maxWidth: "calc(100vw - 40px)",
               background: "var(--bg-panel)",
               border: "1px solid var(--border)",
-              borderRadius: 12,
+              borderRadius: "var(--radius-lg)",
               padding: 18,
-              boxShadow: "0 10px 40px rgba(0,0,0,0.3)",
+              boxShadow: "var(--shadow-lg)",
             }}
           >
             <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)", marginBottom: 4 }}>
@@ -1994,7 +1994,7 @@ export function AppShell() {
                 width: "100%",
                 padding: "8px 10px",
                 border: "1px solid var(--border)",
-                borderRadius: 7,
+                borderRadius: "var(--radius-sm)",
                 background: "var(--bg)",
                 color: "var(--text)",
                 fontSize: 13,
@@ -2010,7 +2010,7 @@ export function AppShell() {
                   padding: "7px 14px",
                   background: "var(--bg-hover)",
                   border: "1px solid var(--border)",
-                  borderRadius: 7,
+                  borderRadius: "var(--radius-sm)",
                   color: "var(--text-muted)",
                   fontSize: 12,
                   cursor: "pointer",
@@ -2025,8 +2025,8 @@ export function AppShell() {
                   padding: "7px 14px",
                   background: "var(--accent)",
                   border: "none",
-                  borderRadius: 7,
-                  color: "#fff",
+                  borderRadius: "var(--radius-sm)",
+                  color: "var(--on-accent)",
                   fontSize: 12,
                   fontWeight: 600,
                   cursor: "pointer",

@@ -1124,7 +1124,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
             style={{
               marginBottom: 8,
               border: "1px solid var(--border)",
-              borderRadius: 6,
+              borderRadius: "var(--radius-sm)",
               background: "var(--bg-panel)",
               padding: "5px 0",
             }}
@@ -1166,7 +1166,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                     color: "var(--text)",
                     background: "transparent",
                     border: "1px solid var(--border)",
-                    borderRadius: 7,
+                    borderRadius: "var(--radius-sm)",
                     cursor: "pointer",
                     transition: "background 0.12s, border-color 0.12s",
                     whiteSpace: "nowrap",
@@ -1211,9 +1211,9 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
             style={{
               marginBottom: 8,
               padding: "5px 10px",
-              background: "rgba(234,179,8,0.08)",
-              border: "1px solid rgba(234,179,8,0.25)",
-              borderRadius: 6,
+              background: "var(--amber-soft)",
+              border: "1px solid var(--amber-border)",
+              borderRadius: "var(--radius-sm)",
               fontSize: 12,
               color: "rgba(180,130,0,0.9)",
               display: "flex",
@@ -1246,9 +1246,9 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
               padding: "5px 10px",
               background: "rgba(16,185,129,0.08)",
               border: "1px solid rgba(16,185,129,0.24)",
-              borderRadius: 6,
+              borderRadius: "var(--radius-sm)",
               fontSize: 12,
-              color: "rgba(5,150,105,0.95)",
+              color: "var(--success)",
               display: "flex",
               alignItems: "center",
               gap: 6,
@@ -1275,9 +1275,9 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
             style={{
               marginBottom: 8,
               padding: "5px 10px",
-              background: compactIsNearLimit ? "rgba(234,179,8,0.08)" : "var(--bg-panel)",
-              border: `1px solid ${compactIsNearLimit ? "rgba(234,179,8,0.28)" : "var(--border)"}`,
-              borderRadius: 6,
+              background: compactIsNearLimit ? "var(--amber-soft)" : "var(--bg-panel)",
+              border: `1px solid ${compactIsNearLimit ? "var(--amber-border)" : "var(--border)"}`,
+              borderRadius: "var(--radius-sm)",
               fontSize: 12,
               color: "var(--text-muted)",
               display: "flex",
@@ -1318,7 +1318,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                     width: 56,
                     height: 56,
                     objectFit: "cover",
-                    borderRadius: 6,
+                    borderRadius: "var(--radius-sm)",
                     border: "1px solid var(--border)",
                     display: "block",
                   }}
@@ -1372,8 +1372,8 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                 zIndex: 120,
                 background: "var(--bg)",
                 border: "1px solid var(--border)",
-                borderRadius: 8,
-                boxShadow: "0 -6px 20px rgba(0,0,0,0.12)",
+                borderRadius: "var(--radius-md)",
+                boxShadow: "var(--shadow-md)",
                 overflow: "hidden",
                 maxHeight: "min(56vh, 460px)",
               }}
@@ -1454,7 +1454,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                                 justifyContent: "center",
                                 padding: "9px 10px",
                                 border: `1px solid ${active ? "var(--accent)" : "var(--border)"}`,
-                                borderRadius: 7,
+                                borderRadius: "var(--radius-sm)",
                                 background: active ? "var(--bg-selected)" : "var(--bg-panel)",
                                 color: "var(--text)",
                                 cursor: "pointer",
@@ -1522,8 +1522,8 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                     zIndex: 120,
                     background: "var(--bg)",
                     border: "1px solid var(--border)",
-                    borderRadius: 8,
-                    boxShadow: "0 -6px 20px rgba(0,0,0,0.12)",
+                    borderRadius: "var(--radius-md)",
+                    boxShadow: "var(--shadow-md)",
                     overflow: "hidden",
                     maxHeight: "min(48vh, 400px)",
                   }}
@@ -1572,7 +1572,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                               gap: 8,
                               padding: "6px 8px",
                               border: "none",
-                              borderRadius: 6,
+                              borderRadius: "var(--radius-sm)",
                               background: active ? "var(--bg-selected)" : "none",
                               color: "var(--text)",
                               cursor: "pointer",
@@ -1612,8 +1612,8 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                 gap: 8,
                 alignItems: "center",
                 background: "var(--assistant-bg)",
-                border: `1px solid ${isStreaming && (onSteer || onFollowUp) ? "rgba(234,179,8,0.4)" : "var(--border)"}`,
-                borderRadius: 14,
+                border: `1px solid ${isStreaming && (onSteer || onFollowUp) ? "var(--amber-border)" : "var(--border)"}`,
+                borderRadius: "var(--radius-lg)",
                 padding: "10px 10px 10px 12px",
                 boxShadow: "0 8px 24px color-mix(in srgb, #000 8%, transparent)",
                 transition: "border-color 0.15s, background 0.15s, box-shadow 0.15s",
@@ -1683,9 +1683,9 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                       alignItems: "center",
                       gap: 5,
                       padding: "7px 12px",
-                      background: canQueueStreamingMessage ? "rgba(234,179,8,0.12)" : "none",
-                      border: "1px solid rgba(234,179,8,0.35)",
-                      borderRadius: 8,
+                      background: canQueueStreamingMessage ? "var(--amber-soft)" : "none",
+                      border: "1px solid var(--amber-border)",
+                      borderRadius: "var(--radius-md)",
                       color: canQueueStreamingMessage ? "rgba(180,130,0,1)" : "var(--text-dim)",
                       cursor: canQueueStreamingMessage ? "pointer" : "not-allowed",
                       fontSize: 13,
@@ -1726,8 +1726,8 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                       padding: "7px 12px",
                       background: canQueueStreamingMessage ? "rgba(129,140,248,0.12)" : "none",
                       border: "1px solid rgba(129,140,248,0.35)",
-                      borderRadius: 8,
-                      color: canQueueStreamingMessage ? "rgba(99,102,241,1)" : "var(--text-dim)",
+                      borderRadius: "var(--radius-md)",
+                      color: canQueueStreamingMessage ? "var(--blue)" : "var(--text-dim)",
                       cursor: canQueueStreamingMessage ? "pointer" : "not-allowed",
                       fontSize: 13,
                       fontWeight: 600,
@@ -1780,7 +1780,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                         ? "color-mix(in srgb, var(--danger) 24%, transparent)"
                         : "var(--bg-hover)",
                       border: `1px solid ${voice.recording ? "var(--danger)" : "var(--border)"}`,
-                      borderRadius: 9,
+                      borderRadius: "var(--radius-md)",
                       color: voice.recording ? "var(--danger)" : "var(--text-muted)",
                       cursor: voice.transcribing ? "wait" : "pointer",
                     }}
@@ -1835,8 +1835,8 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                     padding: "10px 18px",
                     background: value.trim() || attachedImages.length ? "var(--accent)" : "var(--bg-hover)",
                     border: "none",
-                    borderRadius: 9,
-                    color: value.trim() || attachedImages.length ? "#fff" : "var(--text-dim)",
+                    borderRadius: "var(--radius-md)",
+                    color: value.trim() || attachedImages.length ? "var(--on-accent)" : "var(--text-dim)",
                     cursor: value.trim() || attachedImages.length ? "pointer" : "not-allowed",
                     fontSize: 12.5,
                     fontWeight: 700,
@@ -1896,7 +1896,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                 padding: 0,
                 background: attachedImages.length ? "var(--accent-soft)" : "var(--bg-panel)",
                 border: "1px solid var(--border)",
-                borderRadius: 9,
+                borderRadius: "var(--radius-md)",
                 color: attachedImages.length ? "var(--accent)" : "var(--text-muted)",
                 cursor: isStreaming ? "not-allowed" : "pointer",
                 opacity: isStreaming ? 0.5 : 1,
@@ -1952,7 +1952,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                     overflow: "hidden",
                     background: modelDropdownOpen ? "var(--bg-selected)" : "var(--bg-panel)",
                     border: "1px solid var(--border)",
-                    borderRadius: 9,
+                    borderRadius: "var(--radius-md)",
                     color: "var(--text-muted)",
                     cursor: isStreaming ? "not-allowed" : "pointer",
                     fontSize: 12,
@@ -2017,8 +2017,8 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                             zIndex: 500,
                             background: "var(--bg)",
                             border: "1px solid var(--border)",
-                            borderRadius: 8,
-                            boxShadow: "0 -4px 16px rgba(0,0,0,0.10)",
+                            borderRadius: "var(--radius-md)",
+                            boxShadow: "var(--shadow-md)",
                             overflow: "hidden",
                             maxHeight: maxH,
                             overflowY: "auto",
@@ -2040,7 +2040,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                                   width: "100%",
                                   padding: "7px 9px",
                                   border: "1px solid var(--border)",
-                                  borderRadius: 6,
+                                  borderRadius: "var(--radius-sm)",
                                   background: "var(--bg-panel)",
                                   color: "var(--text)",
                                   cursor: modelRefreshing ? "wait" : "pointer",
@@ -2061,7 +2061,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                                 <div
                                   key={`${warning.provider}:${warning.code}`}
                                   role="alert"
-                                  style={{ marginTop: 6, color: "#d97706", fontSize: 11, whiteSpace: "normal" }}
+                                  style={{ marginTop: 6, color: "var(--warning)", fontSize: 11, whiteSpace: "normal" }}
                                 >
                                   {warning.message}
                                 </div>
@@ -2180,10 +2180,10 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                   width: isMobile ? 32 : undefined,
                   padding: isMobile ? 0 : "8px 14px",
                   height: 32,
-                  background: "rgba(239,68,68,0.08)",
-                  border: "1px solid rgba(239,68,68,0.3)",
-                  borderRadius: 9,
-                  color: "#ef4444",
+                  background: "var(--danger-soft)",
+                  border: "1px solid var(--danger-border)",
+                  borderRadius: "var(--radius-md)",
+                  color: "var(--danger)",
                   cursor: "pointer",
                   fontSize: 12,
                   fontWeight: 600,
@@ -2192,10 +2192,10 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                   transition: "background 0.12s",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(239,68,68,0.16)";
+                  e.currentTarget.style.background = "var(--danger-soft)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "rgba(239,68,68,0.08)";
+                  e.currentTarget.style.background = "var(--danger-soft)";
                 }}
               >
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
@@ -2231,7 +2231,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                       height: 32,
                       background: thinkingDropdownOpen ? "var(--bg-selected)" : "var(--bg-panel)",
                       border: "1px solid var(--border)",
-                      borderRadius: 9,
+                      borderRadius: "var(--radius-md)",
                       color: "var(--text-muted)",
                       cursor: isStreaming ? "not-allowed" : "pointer",
                       fontSize: 12,
@@ -2277,8 +2277,8 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                         zIndex: 100,
                         background: "var(--bg)",
                         border: "1px solid var(--border)",
-                        borderRadius: 8,
-                        boxShadow: "0 -4px 16px rgba(0,0,0,0.10)",
+                        borderRadius: "var(--radius-md)",
+                        boxShadow: "var(--shadow-md)",
                         overflow: "hidden",
                         minWidth: 180,
                       }}
@@ -2393,8 +2393,8 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                       minWidth: 32,
                       height: 32,
                       background: toolDropdownOpen ? "var(--bg-selected)" : "var(--bg-panel)",
-                      border: `1px solid ${toolPresetKey === "full" ? "rgba(239,68,68,0.35)" : "var(--border)"}`,
-                      borderRadius: 9,
+                      border: `1px solid ${toolPresetKey === "full" ? "var(--danger-border)" : "var(--border)"}`,
+                      borderRadius: "var(--radius-md)",
                       color: "var(--text-muted)",
                       cursor: isStreaming ? "not-allowed" : "pointer",
                       fontSize: 12,
@@ -2436,8 +2436,8 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                         zIndex: 100,
                         background: "var(--bg)",
                         border: "1px solid var(--border)",
-                        borderRadius: 8,
-                        boxShadow: "0 -4px 16px rgba(0,0,0,0.10)",
+                        borderRadius: "var(--radius-md)",
+                        boxShadow: "var(--shadow-md)",
                         overflow: "hidden",
                         minWidth: 120,
                       }}
@@ -2528,7 +2528,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                     height: 32,
                     background: "var(--bg-panel)",
                     border: "1px solid var(--border)",
-                    borderRadius: 9,
+                    borderRadius: "var(--radius-md)",
                     color: "var(--text-muted)",
                     cursor: "pointer",
                     flexShrink: 0,
@@ -2563,10 +2563,10 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                         color: "var(--danger)",
                         fontSize: 11,
                         padding: "4px 8px",
-                        borderRadius: 5,
+                        borderRadius: "var(--radius-sm)",
                         whiteSpace: "nowrap",
                         pointerEvents: "none",
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+                        boxShadow: "var(--shadow-sm)",
                         zIndex: 50,
                       }}
                     >
@@ -2589,10 +2589,10 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                       padding: isMobile ? 0 : "0 9px",
                       minWidth: 32,
                       height: 32,
-                      background: isContextCompacting ? "rgba(239,68,68,0.08)" : "var(--bg-panel)",
-                      border: `1px solid ${isContextCompacting ? "rgba(239,68,68,0.3)" : "var(--border)"}`,
-                      borderRadius: 9,
-                      color: isContextCompacting ? "#ef4444" : "var(--text-muted)",
+                      background: isContextCompacting ? "var(--danger-soft)" : "var(--bg-panel)",
+                      border: `1px solid ${isContextCompacting ? "var(--danger-border)" : "var(--border)"}`,
+                      borderRadius: "var(--radius-md)",
+                      color: isContextCompacting ? "var(--danger)" : "var(--text-muted)",
                       cursor: contextCompactDisabled ? "not-allowed" : "pointer",
                       fontSize: 12,
                       opacity: contextCompactDisabled ? 0.5 : 1,
@@ -2600,16 +2600,12 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                     }}
                     onMouseEnter={(e) => {
                       if (contextCompactDisabled) return;
-                      e.currentTarget.style.background = isContextCompacting
-                        ? "rgba(239,68,68,0.16)"
-                        : "var(--bg-hover)";
-                      e.currentTarget.style.color = isContextCompacting ? "#ef4444" : "var(--text)";
+                      e.currentTarget.style.background = isContextCompacting ? "var(--danger-soft)" : "var(--bg-hover)";
+                      e.currentTarget.style.color = isContextCompacting ? "var(--danger)" : "var(--text)";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = isContextCompacting
-                        ? "rgba(239,68,68,0.08)"
-                        : "var(--bg-panel)";
-                      e.currentTarget.style.color = isContextCompacting ? "#ef4444" : "var(--text-muted)";
+                      e.currentTarget.style.background = isContextCompacting ? "var(--danger-soft)" : "var(--bg-panel)";
+                      e.currentTarget.style.color = isContextCompacting ? "var(--danger)" : "var(--text-muted)";
                     }}
                     title={
                       isContextCompacting ? t("stopCompaction", "Stop compaction") : t("compact", "Compact context")
@@ -2676,7 +2672,7 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                     padding: 0,
                     background: "var(--bg-panel)",
                     border: "1px solid var(--border)",
-                    borderRadius: 9,
+                    borderRadius: "var(--radius-md)",
                     color: soundEnabled ? "var(--text-muted)" : "var(--text-dim)",
                     cursor: "pointer",
                     opacity: soundEnabled ? 1 : 0.55,

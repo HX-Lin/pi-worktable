@@ -150,7 +150,7 @@ export function QuickChannelBinding({ sessionId, snapshot, isMobile, onSnapshotC
 
   const bound = currentBindings.length > 0;
   const singleChannel = currentChannels.length === 1 ? currentChannels[0] : undefined;
-  const accent = singleChannel === "feishu" ? "#3370ff" : "var(--accent)";
+  const accent = singleChannel === "feishu" ? "var(--blue)" : "var(--accent)";
   const label = bound
     ? online
       ? singleChannel
@@ -237,9 +237,9 @@ export function QuickChannelBinding({ sessionId, snapshot, isMobile, onSnapshotC
               overflowY: "auto",
               overscrollBehavior: "contain",
               border: "1px solid var(--border)",
-              borderRadius: 9,
+              borderRadius: "var(--radius-md)",
               background: "var(--bg)",
-              boxShadow: "0 12px 34px rgba(0,0,0,.22)",
+              boxShadow: "var(--shadow-lg)",
               padding: 12,
               outline: "none",
             }}
@@ -255,7 +255,9 @@ export function QuickChannelBinding({ sessionId, snapshot, isMobile, onSnapshotC
             </div>
 
             {error && (
-              <div style={{ marginTop: 9, color: "#ef4444", fontSize: 11, overflowWrap: "anywhere" }}>{error}</div>
+              <div style={{ marginTop: 9, color: "var(--danger)", fontSize: 11, overflowWrap: "anywhere" }}>
+                {error}
+              </div>
             )}
 
             <div style={{ display: "grid", gap: 8, marginTop: 11 }}>
@@ -263,7 +265,7 @@ export function QuickChannelBinding({ sessionId, snapshot, isMobile, onSnapshotC
                 <div
                   style={{
                     border: "1px dashed var(--border)",
-                    borderRadius: 7,
+                    borderRadius: "var(--radius-sm)",
                     padding: 12,
                     color: "var(--text-dim)",
                     fontSize: 11,
@@ -290,7 +292,7 @@ export function QuickChannelBinding({ sessionId, snapshot, isMobile, onSnapshotC
                         alignItems: "center",
                         gap: 10,
                         border: `1px solid ${boundHere ? "color-mix(in srgb, var(--accent) 35%, var(--border))" : "var(--border)"}`,
-                        borderRadius: 7,
+                        borderRadius: "var(--radius-sm)",
                         background: boundHere
                           ? "color-mix(in srgb, var(--accent) 7%, var(--bg-panel))"
                           : "var(--bg-panel)",
@@ -346,10 +348,10 @@ export function QuickChannelBinding({ sessionId, snapshot, isMobile, onSnapshotC
                         disabled={busyBindingId !== null}
                         onClick={() => void updateBinding(binding, !boundHere)}
                         style={{
-                          border: `1px solid ${boundHere ? "#ef444466" : "var(--accent)"}`,
-                          borderRadius: 6,
+                          border: `1px solid ${boundHere ? "var(--danger-border)" : "var(--accent)"}`,
+                          borderRadius: "var(--radius-sm)",
                           background: boundHere ? "var(--bg)" : "var(--accent)",
-                          color: boundHere ? "#ef4444" : "white",
+                          color: boundHere ? "var(--danger)" : "white",
                           padding: "6px 9px",
                           fontSize: 10,
                           whiteSpace: "nowrap",

@@ -45,7 +45,7 @@ const TOOL_PRESETS = {
 function buttonStyle(primary = false): React.CSSProperties {
   return {
     border: `1px solid ${primary ? "var(--accent)" : "var(--border)"}`,
-    borderRadius: 6,
+    borderRadius: "var(--radius-sm)",
     background: primary ? "var(--accent)" : "var(--bg)",
     color: primary ? "white" : "var(--text-muted)",
     minHeight: 36,
@@ -58,7 +58,7 @@ function buttonStyle(primary = false): React.CSSProperties {
 const inputStyle: React.CSSProperties = {
   width: "100%",
   border: "1px solid var(--border)",
-  borderRadius: 6,
+  borderRadius: "var(--radius-sm)",
   background: "var(--bg)",
   color: "var(--text)",
   minHeight: 36,
@@ -71,9 +71,9 @@ function statusFor(snapshot: ChannelsSnapshot, accountId: string): ChannelStatus
 }
 
 function statusColor(status?: ChannelStatus): string {
-  if (status?.state === "running") return "#22c55e";
-  if (status?.state === "starting" || status?.state === "reconnecting") return "#f59e0b";
-  if (status?.state === "error") return "#ef4444";
+  if (status?.state === "running") return "var(--success)";
+  if (status?.state === "starting" || status?.state === "reconnecting") return "var(--warning)";
+  if (status?.state === "error") return "var(--danger)";
   return "var(--text-dim)";
 }
 
@@ -87,7 +87,7 @@ function channelLabel(channel: ChannelAccountConfig["channel"], t: Translate, do
 }
 
 function channelAccent(_channel: ChannelAccountConfig["channel"]): string {
-  return "#3370ff";
+  return "var(--blue)";
 }
 
 export function ChannelsConfig({ onSnapshotChange }: { onSnapshotChange?: (snapshot: ChannelsSnapshot) => void }) {
@@ -223,10 +223,10 @@ export function ChannelsConfig({ onSnapshotChange }: { onSnapshotChange?: (snaps
           <div
             style={{
               marginTop: 14,
-              border: "1px solid #ef444466",
+              border: "1px solid var(--danger-border)",
               background: "#ef444414",
-              color: "#ef4444",
-              borderRadius: 7,
+              color: "var(--danger)",
+              borderRadius: "var(--radius-sm)",
               padding: 10,
               fontSize: 12,
             }}
@@ -253,7 +253,7 @@ export function ChannelsConfig({ onSnapshotChange }: { onSnapshotChange?: (snaps
             <div
               style={{
                 border: "1px dashed var(--border)",
-                borderRadius: 9,
+                borderRadius: "var(--radius-md)",
                 padding: 28,
                 textAlign: "center",
                 color: "var(--text-dim)",
@@ -446,14 +446,21 @@ export function AccountCard({
   const label = channelLabel(account.channel, t, account.domain);
 
   return (
-    <div style={{ border: "1px solid var(--border)", borderRadius: 9, background: "var(--bg-panel)", padding: 15 }}>
+    <div
+      style={{
+        border: "1px solid var(--border)",
+        borderRadius: "var(--radius-md)",
+        background: "var(--bg-panel)",
+        padding: 15,
+      }}
+    >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
           <div
             style={{
               width: 34,
               height: 34,
-              borderRadius: 9,
+              borderRadius: "var(--radius-md)",
               display: "grid",
               placeItems: "center",
               background: `color-mix(in srgb, ${accent} 12%, transparent)`,
@@ -487,7 +494,9 @@ export function AccountCard({
         </label>
       </div>
 
-      {status?.lastError && <div style={{ color: "#ef4444", fontSize: 11, marginTop: 10 }}>{status.lastError}</div>}
+      {status?.lastError && (
+        <div style={{ color: "var(--danger)", fontSize: 11, marginTop: 10 }}>{status.lastError}</div>
+      )}
 
       <div
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))", gap: 10, marginTop: 14 }}
@@ -739,7 +748,7 @@ export function AccountCard({
         >
           {probing ? t("testingConnection", "Testing…") : t("testConnection", "Test connection")}
         </button>
-        <button type="button" disabled={busy} style={{ ...buttonStyle(), color: "#ef4444" }} onClick={onDelete}>
+        <button type="button" disabled={busy} style={{ ...buttonStyle(), color: "var(--danger)" }} onClick={onDelete}>
           {t("delete", "Delete")}
         </button>
       </div>
@@ -752,9 +761,9 @@ export function AccountCard({
             marginTop: 9,
             padding: "7px 9px",
             border: `1px solid ${probeFeedback.ok ? "#22c55e55" : "#ef444455"}`,
-            borderRadius: 6,
+            borderRadius: "var(--radius-sm)",
             background: probeFeedback.ok ? "#22c55e12" : "#ef444412",
-            color: probeFeedback.ok ? "#16a34a" : "#ef4444",
+            color: probeFeedback.ok ? "var(--success)" : "var(--danger)",
             fontSize: 11,
           }}
         >
@@ -939,7 +948,7 @@ function BindingRow({
         </button>
         <button
           disabled={busy}
-          style={{ ...buttonStyle(), color: "#ef4444" }}
+          style={{ ...buttonStyle(), color: "var(--danger)" }}
           onClick={() => void run(() => call("channels.bindingDelete", { bindingId: binding.id }))}
           title={t("deleteBinding", "Delete binding")}
           aria-label={t("deleteBinding", "Delete binding")}
@@ -961,7 +970,7 @@ function ActivitySection({ snapshot }: { snapshot: ChannelsSnapshot }) {
       style={{
         marginTop: 22,
         border: "1px solid var(--border)",
-        borderRadius: 9,
+        borderRadius: "var(--radius-md)",
         background: "var(--bg-panel)",
         padding: "4px 15px",
       }}
@@ -1024,7 +1033,7 @@ function ActivitySection({ snapshot }: { snapshot: ChannelsSnapshot }) {
                   fontSize: 11,
                 }}
               >
-                <span style={{ color: activity.outcome === "failed" ? "#ef4444" : "var(--text-muted)" }}>
+                <span style={{ color: activity.outcome === "failed" ? "var(--danger)" : "var(--text-muted)" }}>
                   {channelLabel(activity.channel, t)} ·{" "}
                   {t(`activityDirection_${activity.direction}`, activity.direction)} ·{" "}
                   {t(`activityOutcome_${activity.outcome}`, activity.outcome)}
@@ -1098,10 +1107,10 @@ export function FeishuCredentialDialog({
           maxHeight: "calc(100dvh - 32px)",
           overflowY: "auto",
           border: "1px solid var(--border)",
-          borderRadius: 10,
+          borderRadius: "var(--radius-lg)",
           background: "var(--bg)",
           padding: 22,
-          boxShadow: "0 14px 45px rgba(0,0,0,.25)",
+          boxShadow: "var(--shadow-lg)",
         }}
       >
         <h3 style={{ margin: 0, color: "var(--text)", fontSize: 16 }}>{t("connectFeishu", "Connect Feishu / Lark")}</h3>
@@ -1139,7 +1148,7 @@ export function FeishuCredentialDialog({
           style={{
             marginTop: 14,
             border: "1px solid var(--border)",
-            borderRadius: 8,
+            borderRadius: "var(--radius-md)",
             background: "var(--bg-panel)",
             padding: "11px 13px",
             color: "var(--text-muted)",
@@ -1182,7 +1191,7 @@ export function FeishuCredentialDialog({
               maxHeight: 176,
               overflow: "auto",
               border: "1px solid var(--border)",
-              borderRadius: 6,
+              borderRadius: "var(--radius-sm)",
               background: "var(--bg)",
               color: "var(--text-muted)",
               padding: "9px 10px",
@@ -1195,7 +1204,7 @@ export function FeishuCredentialDialog({
             {FEISHU_PERMISSION_IMPORT_JSON}
           </pre>
           {permissionCopyState === "error" && (
-            <div role="alert" style={{ marginTop: 6, color: "#ef4444" }}>
+            <div role="alert" style={{ marginTop: 6, color: "var(--danger)" }}>
               {t("feishuPermissionCopyFailed", "Copy failed. Select and copy the JSON above manually.")}
             </div>
           )}
@@ -1224,7 +1233,7 @@ export function FeishuCredentialDialog({
           <div
             role="alert"
             data-testid="feishu-connect-error"
-            style={{ marginTop: 10, color: "#ef4444", fontSize: 11, lineHeight: 1.5, overflowWrap: "anywhere" }}
+            style={{ marginTop: 10, color: "var(--danger)", fontSize: 11, lineHeight: 1.5, overflowWrap: "anywhere" }}
           >
             {error}
           </div>
@@ -1262,7 +1271,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       style={{
         marginTop: 22,
         border: "1px solid var(--border)",
-        borderRadius: 9,
+        borderRadius: "var(--radius-md)",
         background: "var(--bg-panel)",
         padding: "13px 15px",
       }}

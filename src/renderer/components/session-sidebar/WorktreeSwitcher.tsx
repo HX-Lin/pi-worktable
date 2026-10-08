@@ -57,7 +57,7 @@ export function WorktreeSwitcher(
                   padding: "0 10px",
                   background: "var(--bg-hover)",
                   border: "1px solid var(--border)",
-                  borderRadius: 7,
+                  borderRadius: "var(--radius-sm)",
                   cursor: "pointer",
                   fontSize: 11,
                   lineHeight: 1.35,
@@ -121,8 +121,8 @@ export function WorktreeSwitcher(
                   zIndex: 100,
                   background: "var(--bg)",
                   border: "1px solid var(--border)",
-                  borderRadius: 8,
-                  boxShadow: "0 6px 20px rgba(0,0,0,0.10)",
+                  borderRadius: "var(--radius-md)",
+                  boxShadow: "var(--shadow-md)",
                   overflow: "hidden",
                 }}
               >
@@ -141,7 +141,7 @@ export function WorktreeSwitcher(
                             gap: 6,
                             padding: "7px 10px",
                             borderBottom: "1px solid var(--border)",
-                            background: "rgba(239,68,68,0.06)",
+                            background: "var(--danger-soft)",
                           }}
                         >
                           <span
@@ -161,10 +161,10 @@ export function WorktreeSwitcher(
                             disabled={wtBusy}
                             style={{
                               padding: "3px 9px",
-                              background: "#ef4444",
+                              background: "var(--danger)",
                               border: "none",
-                              borderRadius: 5,
-                              color: "#fff",
+                              borderRadius: "var(--radius-sm)",
+                              color: "var(--on-accent)",
                               fontSize: 11,
                               fontWeight: 600,
                               cursor: "pointer",
@@ -179,7 +179,7 @@ export function WorktreeSwitcher(
                               padding: "3px 9px",
                               background: "var(--bg-hover)",
                               border: "1px solid var(--border)",
-                              borderRadius: 5,
+                              borderRadius: "var(--radius-sm)",
                               color: "var(--text-muted)",
                               fontSize: 11,
                               cursor: "pointer",
@@ -259,13 +259,13 @@ export function WorktreeSwitcher(
                               border: "none",
                               color: "var(--text-dim)",
                               cursor: "pointer",
-                              borderRadius: 5,
+                              borderRadius: "var(--radius-sm)",
                               flexShrink: 0,
                               transition: "color 0.12s, background 0.12s",
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.color = "#ef4444";
-                              e.currentTarget.style.background = "rgba(239,68,68,0.08)";
+                              e.currentTarget.style.color = "var(--danger)";
+                              e.currentTarget.style.background = "var(--danger-soft)";
                             }}
                             onMouseLeave={(e) => {
                               e.currentTarget.style.color = "var(--text-dim)";
@@ -359,7 +359,7 @@ export function WorktreeSwitcher(
                         fontFamily: "var(--font-mono)",
                         padding: "5px 8px",
                         border: "1px solid var(--accent)",
-                        borderRadius: 5,
+                        borderRadius: "var(--radius-sm)",
                         outline: "none",
                         background: "var(--bg)",
                         color: "var(--text)",
@@ -375,8 +375,8 @@ export function WorktreeSwitcher(
                           padding: "4px 0",
                           background: "var(--accent)",
                           border: "none",
-                          borderRadius: 5,
-                          color: "#fff",
+                          borderRadius: "var(--radius-sm)",
+                          color: "var(--on-accent)",
                           fontSize: 11,
                           fontWeight: 600,
                           cursor: wtBusy || !wtNewBranch.trim() ? "not-allowed" : "pointer",
@@ -396,7 +396,7 @@ export function WorktreeSwitcher(
                           padding: "4px 0",
                           background: "var(--bg-hover)",
                           border: "1px solid var(--border)",
-                          borderRadius: 5,
+                          borderRadius: "var(--radius-sm)",
                           color: "var(--text-muted)",
                           fontSize: 11,
                           cursor: "pointer",
@@ -411,7 +411,7 @@ export function WorktreeSwitcher(
                   <div
                     style={{
                       padding: "5px 10px 8px",
-                      color: "#dc2626",
+                      color: "var(--danger)",
                       fontSize: 11,
                       lineHeight: 1.35,
                       overflowWrap: "anywhere",
@@ -447,7 +447,7 @@ export function WorktreeSwitcher(
               gap: 6,
               padding: "0 10px",
               border: "1px solid var(--border)",
-              borderRadius: 7,
+              borderRadius: "var(--radius-sm)",
               background: "var(--bg-hover)",
               color: "var(--text-dim)",
               fontSize: 11,
@@ -486,7 +486,7 @@ export function WorktreeSwitcher(
                 color: "var(--text-muted)",
                 background: "var(--bg-hover)",
                 border: "1px solid var(--border)",
-                borderRadius: 7,
+                borderRadius: "var(--radius-sm)",
               }}
             >
               {inactiveWorktreeSelector.title}

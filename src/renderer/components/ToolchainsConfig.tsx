@@ -270,7 +270,7 @@ export function ToolchainStateView({
                         gap: 7,
                         padding: "8px 8px",
                         border: "none",
-                        borderRadius: 5,
+                        borderRadius: "var(--radius-sm)",
                         cursor: "pointer",
                         background: selectedItem ? "var(--bg-selected)" : "transparent",
                         color: "var(--text)",
@@ -327,7 +327,7 @@ export function ToolchainStateView({
                 width: 7,
                 height: 7,
                 borderRadius: "50%",
-                background: !state ? "#f59e0b" : state.coreReady ? "#22c55e" : "#f59e0b",
+                background: !state ? "var(--warning)" : state.coreReady ? "var(--success)" : "var(--warning)",
                 flexShrink: 0,
               }}
             />
@@ -439,9 +439,9 @@ function ToolDetail({
         <span
           style={{
             padding: "2px 6px",
-            borderRadius: 3,
+            borderRadius: "var(--radius-sm)",
             flexShrink: 0,
-            background: "rgba(120,120,120,0.12)",
+            background: "var(--sunken-bg)",
             color: "var(--text-dim)",
             fontSize: 10,
           }}
@@ -494,13 +494,13 @@ function ToolDetail({
       </div>
 
       {(failed || actionError) && (
-        <div role="alert" style={{ color: "#f87171", fontSize: 12 }}>
+        <div role="alert" style={{ color: "var(--danger)", fontSize: 12 }}>
           {actionError ??
             t("toolDiscoveryFailed", "Tool discovery failed. Existing selections were not changed; try rescanning.")}
         </div>
       )}
       {stateReadOnly && (
-        <div role="alert" style={{ color: "#f59e0b", fontSize: 12 }}>
+        <div role="alert" style={{ color: "var(--warning)", fontSize: 12 }}>
           {t(
             "toolStateReadOnly",
             "These tool settings were written by a newer Pi Desktop. This version will not modify or delete them.",
@@ -541,7 +541,7 @@ function ToolDetail({
               minHeight: 32,
               padding: "4px 8px",
               border: "1px solid var(--border)",
-              borderRadius: 5,
+              borderRadius: "var(--radius-sm)",
               background: "var(--bg-panel)",
               color: "var(--text)",
               fontSize: 11,
@@ -567,7 +567,7 @@ function ToolDetail({
 
       {state?.candidates.length ? (
         <DetailSection title={t("toolCandidatesTitle", "Detected providers")}>
-          <div style={{ border: "1px solid var(--border)", borderRadius: 7, overflow: "hidden" }}>
+          <div style={{ border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", overflow: "hidden" }}>
             {state.candidates.map((candidate, index) => (
               <div
                 key={candidate.id}
@@ -684,7 +684,7 @@ function ToolDetail({
           </div>
           {operationVisible && operation && (
             <div style={{ marginTop: 4 }}>
-              <div style={{ fontSize: 11, color: operation.error ? "#f87171" : "var(--text-muted)" }}>
+              <div style={{ fontSize: 11, color: operation.error ? "var(--danger)" : "var(--text-muted)" }}>
                 {operationPhase(operation.phase, t)}
               </div>
               <OperationProgress operation={operation} t={t} />
@@ -821,7 +821,7 @@ function CacheDetail({
         gap: 12,
         padding: "9px 11px",
         border: "1px solid var(--border)",
-        borderRadius: 7,
+        borderRadius: "var(--radius-sm)",
         background: "var(--bg-panel)",
       }}
     >
@@ -866,7 +866,7 @@ function OperationProgress({ operation, t }: { operation: PublicToolchainOperati
         </div>
       )}
       {operation.error && (
-        <div role="alert" style={{ marginTop: 5, fontSize: 10, color: "#f87171" }}>
+        <div role="alert" style={{ marginTop: 5, fontSize: 10, color: "var(--danger)" }}>
           {friendlyErrorCode(operation.error.code, t)}
         </div>
       )}
@@ -904,7 +904,7 @@ function ActionButton({
         minHeight: 32,
         padding: "6px 11px",
         border: `1px solid ${primary ? "var(--accent)" : "var(--border)"}`,
-        borderRadius: 6,
+        borderRadius: "var(--radius-sm)",
         background: primary ? "var(--accent)" : "var(--bg)",
         color: primary ? "white" : "var(--text)",
         fontSize: 11,
@@ -1068,8 +1068,8 @@ function healthLabel(health: ToolHealth, t: Translate): string {
 }
 
 function healthColor(health: ToolHealth): string {
-  if (health === "healthy") return "#22c55e";
+  if (health === "healthy") return "var(--success)";
   if (health === "missing") return "var(--text-dim)";
-  if (health === "unverified" || health === "incomplete") return "#f59e0b";
-  return "#f87171";
+  if (health === "unverified" || health === "incomplete") return "var(--warning)";
+  return "var(--danger)";
 }

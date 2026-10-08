@@ -250,7 +250,7 @@ export function JevConfig() {
             <button type="button" onClick={() => void runTest()} disabled={busy || !channel.hasKey} style={buttonStyle}>
               {t("jevTestRun", "Test")}
             </button>
-            <span style={{ ...valueStyle, color: test && !test.ok ? "#ef4444" : "var(--text-muted)" }}>
+            <span style={{ ...valueStyle, color: test && !test.ok ? "var(--danger)" : "var(--text-muted)" }}>
               {test
                 ? test.ok
                   ? t("jevTestOk", "answered {probability} in {ms} ms ({model})")
@@ -264,7 +264,7 @@ export function JevConfig() {
             </span>
           </div>
         </Row>
-        {keyError ? <p style={{ color: "#ef4444", fontSize: 12, margin: "2px 0 0" }}>{keyError}</p> : null}
+        {keyError ? <p style={{ color: "var(--danger)", fontSize: 12, margin: "2px 0 0" }}>{keyError}</p> : null}
       </Section>
 
       <Divider />
@@ -279,7 +279,7 @@ export function JevConfig() {
 
       <RoutingSection settings={settings} busy={busy} onUpdate={update} />
 
-      {error ? <p style={{ color: "#ef4444", fontSize: 12, marginTop: 14 }}>{error}</p> : null}
+      {error ? <p style={{ color: "var(--danger)", fontSize: 12, marginTop: 14 }}>{error}</p> : null}
     </div>
   );
 }
@@ -318,7 +318,7 @@ function GateSection({
         // Enabling the gate without a working key makes every call it cannot
         // vouch for fail closed — including the assistant's own commands, which
         // leaves no way to set the key from inside the app.
-        <p style={{ color: "#f59e0b", fontSize: 12, margin: "2px 0 0" }}>
+        <p style={{ color: "var(--warning)", fontSize: 12, margin: "2px 0 0" }}>
           {t(
             "jevGateNoKeyWarning",
             "还没有可用密钥：闸门无法判断，会拦截一切未被确定性规则担保的调用（包括让助手执行命令）。请先保存密钥，或把范围改为「只判断已识别的危险形状」。",
@@ -627,7 +627,7 @@ function ListField({
         gap: 6,
         padding: "10px 12px",
         border: "1px solid var(--border)",
-        borderRadius: 8,
+        borderRadius: "var(--radius-md)",
         background: "var(--bg-panel)",
       }}
     >
@@ -677,7 +677,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
         minHeight: 46,
         padding: "8px 12px",
         border: "1px solid var(--border)",
-        borderRadius: 8,
+        borderRadius: "var(--radius-md)",
         background: "var(--bg-panel)",
       }}
     >
@@ -721,7 +721,7 @@ const textareaStyle = {
   color: "var(--text)",
   background: "var(--bg)",
   border: "1px solid var(--border)",
-  borderRadius: 6,
+  borderRadius: "var(--radius-sm)",
   resize: "vertical",
 } as const;
 
@@ -732,7 +732,7 @@ const ruleRowStyle = {
   gap: 16,
   padding: "6px 12px",
   border: "1px solid var(--border)",
-  borderRadius: 8,
+  borderRadius: "var(--radius-md)",
   background: "var(--bg-panel)",
 } as const;
 
@@ -742,7 +742,7 @@ const selectStyle = {
   color: "var(--text)",
   background: "var(--bg)",
   border: "1px solid var(--border)",
-  borderRadius: 6,
+  borderRadius: "var(--radius-sm)",
   maxWidth: 320,
 } as const;
 
@@ -755,7 +755,7 @@ const inputStyle = {
   color: "var(--text)",
   background: "var(--bg)",
   border: "1px solid var(--border)",
-  borderRadius: 6,
+  borderRadius: "var(--radius-sm)",
 } as const;
 
 const valueStyle = { fontSize: 12, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis" } as const;
@@ -767,7 +767,7 @@ const buttonStyle = {
   color: "var(--text)",
   background: "var(--bg)",
   border: "1px solid var(--border)",
-  borderRadius: 6,
+  borderRadius: "var(--radius-sm)",
   cursor: "pointer",
 } as const;
 

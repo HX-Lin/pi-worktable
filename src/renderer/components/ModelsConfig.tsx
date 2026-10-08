@@ -168,9 +168,9 @@ function ProviderDetail({
             minHeight: 32,
             padding: "0 10px",
             background: "none",
-            border: "1px solid rgba(239,68,68,0.3)",
-            borderRadius: 4,
-            color: "#ef4444",
+            border: "1px solid var(--danger-border)",
+            borderRadius: "var(--radius-sm)",
+            color: "var(--danger)",
             cursor: "pointer",
             fontSize: 12,
           }}
@@ -191,8 +191,8 @@ function ProviderDetail({
               padding: "0 12px",
               background: "var(--accent)",
               border: "none",
-              borderRadius: 4,
-              color: "#fff",
+              borderRadius: "var(--radius-sm)",
+              color: "var(--on-accent)",
               cursor: "pointer",
               fontSize: 12,
               alignSelf: "flex-start",
@@ -244,11 +244,11 @@ type ThinkingLevel = (typeof THINKING_LEVELS)[number];
 
 const LEVEL_COLORS: Record<ThinkingLevel, string> = {
   off: "var(--text-dim)",
-  minimal: "#a19d92",
-  low: "#d97706",
-  medium: "#ea580c",
-  high: "#c2410c",
-  xhigh: "#9a3412",
+  minimal: "var(--text-faint)",
+  low: "var(--warning)",
+  medium: "color-mix(in srgb, var(--accent) 80%, var(--warning))",
+  high: "var(--accent)",
+  xhigh: "color-mix(in srgb, var(--accent) 65%, var(--text-color))",
 };
 
 function ThinkingLevelMapEditor({
@@ -292,12 +292,12 @@ function ThinkingLevelMapEditor({
         };
         const btnActive: React.CSSProperties = {
           background: "var(--accent)",
-          color: "#fff",
+          color: "var(--on-accent)",
           fontWeight: 600,
         };
         const btnActiveDisabled: React.CSSProperties = {
-          background: "#ef4444",
-          color: "#fff",
+          background: "var(--danger)",
+          color: "var(--on-accent)",
           fontWeight: 600,
         };
 
@@ -309,7 +309,7 @@ function ThinkingLevelMapEditor({
               alignItems: "center",
               gap: 8,
               padding: "5px 4px",
-              borderRadius: 6,
+              borderRadius: "var(--radius-sm)",
               background: "transparent",
               border: "1px solid transparent",
             }}
@@ -342,7 +342,7 @@ function ThinkingLevelMapEditor({
             <div
               style={{
                 display: "flex",
-                borderRadius: 5,
+                borderRadius: "var(--radius-sm)",
                 border: "1px solid var(--border)",
                 overflow: "hidden",
                 flexShrink: 0,
@@ -370,7 +370,7 @@ function ThinkingLevelMapEditor({
             <div
               style={{
                 display: "flex",
-                borderRadius: 5,
+                borderRadius: "var(--radius-sm)",
                 border: `1px solid ${state === "string" ? "var(--accent)" : "var(--border)"}`,
                 overflow: "hidden",
                 transition: "border-color 0.1s",
@@ -511,7 +511,7 @@ function ModelDetail({
                 height: 24,
                 padding: "0 8px",
                 border: `1px solid ${testState.phase === "error" ? "#fecaca" : testState.phase === "success" ? "#bbf7d0" : "var(--border)"}`,
-                borderRadius: 4,
+                borderRadius: "var(--radius-sm)",
                 background:
                   testState.phase === "error" ? "#fee2e2" : testState.phase === "success" ? "#dcfce7" : "#e5e7eb",
                 color: "#111827",
@@ -535,12 +535,12 @@ function ModelDetail({
             style={{
               height: 32,
               padding: "0 10px",
-              background: testState.phase === "success" ? "#16a34a" : "none",
-              border: `1px solid ${testState.phase === "success" ? "#16a34a" : "var(--border)"}`,
-              borderRadius: 4,
+              background: testState.phase === "success" ? "var(--success)" : "none",
+              border: `1px solid ${testState.phase === "success" ? "var(--success)" : "var(--border)"}`,
+              borderRadius: "var(--radius-sm)",
               color:
                 testState.phase === "success"
-                  ? "#fff"
+                  ? "var(--on-accent)"
                   : !model.id.trim() || testState.phase === "testing"
                     ? "var(--text-dim)"
                     : "var(--text-muted)",
@@ -576,9 +576,9 @@ function ModelDetail({
               height: 32,
               padding: "0 10px",
               background: "none",
-              border: "1px solid rgba(239,68,68,0.3)",
-              borderRadius: 4,
-              color: "#ef4444",
+              border: "1px solid var(--danger-border)",
+              borderRadius: "var(--radius-sm)",
+              color: "var(--danger)",
               cursor: "pointer",
               fontSize: 12,
               boxSizing: "border-box",
@@ -639,7 +639,7 @@ function ModelDetail({
                     padding: "0 9px",
                     background: "none",
                     border: "1px solid var(--border)",
-                    borderRadius: 4,
+                    borderRadius: "var(--radius-sm)",
                     color: "var(--text-dim)",
                     cursor: "pointer",
                   }}
@@ -885,11 +885,11 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
               width: 7,
               height: 7,
               borderRadius: "50%",
-              background: provider.loggedIn ? "#4ade80" : "var(--border)",
+              background: provider.loggedIn ? "var(--success)" : "var(--border)",
               display: "inline-block",
             }}
           />
-          <span style={{ fontSize: 11, color: provider.loggedIn ? "#4ade80" : "var(--text-dim)" }}>
+          <span style={{ fontSize: 11, color: provider.loggedIn ? "var(--success)" : "var(--text-dim)" }}>
             {provider.loggedIn ? "connected" : "not connected"}
           </span>
         </div>
@@ -919,7 +919,7 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
                     padding: "6px 9px",
                     background: "var(--bg)",
                     border: "1px solid var(--border)",
-                    borderRadius: 5,
+                    borderRadius: "var(--radius-sm)",
                     color: "var(--text)",
                     cursor: "pointer",
                     fontSize: 12,
@@ -971,7 +971,7 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
                   padding: "6px 9px",
                   background: "var(--bg)",
                   border: "1px solid var(--border)",
-                  borderRadius: 5,
+                  borderRadius: "var(--radius-sm)",
                   color: "var(--text)",
                   fontSize: 12,
                   outline: "none",
@@ -986,8 +986,8 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
                   padding: "6px 12px",
                   background: inputValue.trim() ? "var(--accent)" : "var(--bg-panel)",
                   border: "none",
-                  borderRadius: 5,
-                  color: inputValue.trim() ? "#fff" : "var(--text-dim)",
+                  borderRadius: "var(--radius-sm)",
+                  color: inputValue.trim() ? "var(--on-accent)" : "var(--text-dim)",
                   cursor: inputValue.trim() ? "pointer" : "not-allowed",
                   fontSize: 12,
                   fontWeight: 600,
@@ -1009,7 +1009,7 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
                 padding: "8px 10px",
                 background: "var(--bg)",
                 border: "1px solid var(--border)",
-                borderRadius: 5,
+                borderRadius: "var(--radius-sm)",
                 color: "var(--text)",
                 fontSize: 16,
                 fontWeight: 700,
@@ -1036,12 +1036,12 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
           <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)" }}>{loginState.message}</p>
         )}
         {loginState.phase === "success" && (
-          <p style={{ margin: 0, fontSize: 12, color: loginState.warning ? "#d97706" : "#4ade80" }}>
+          <p style={{ margin: 0, fontSize: 12, color: loginState.warning ? "var(--warning)" : "var(--success)" }}>
             {loginState.message ?? "Connected successfully."}
           </p>
         )}
         {loginState.phase === "error" && (
-          <p style={{ margin: 0, fontSize: 12, color: "#f87171" }}>{loginState.message}</p>
+          <p style={{ margin: 0, fontSize: 12, color: "var(--danger)" }}>{loginState.message}</p>
         )}
       </div>
 
@@ -1054,7 +1054,7 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
               padding: "5px 12px",
               background: "none",
               border: "1px solid var(--border)",
-              borderRadius: 5,
+              borderRadius: "var(--radius-sm)",
               color: "var(--text-muted)",
               cursor: "pointer",
               fontSize: 12,
@@ -1070,8 +1070,8 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
                 padding: "5px 14px",
                 background: "var(--accent)",
                 border: "none",
-                borderRadius: 5,
-                color: "#fff",
+                borderRadius: "var(--radius-sm)",
+                color: "var(--on-accent)",
                 cursor: "pointer",
                 fontSize: 12,
                 fontWeight: 600,
@@ -1085,9 +1085,9 @@ function OAuthDetail({ provider, onRefresh }: { provider: OAuthProvider; onRefre
                 style={{
                   padding: "5px 12px",
                   background: "none",
-                  border: "1px solid rgba(239,68,68,0.3)",
-                  borderRadius: 5,
-                  color: "#ef4444",
+                  border: "1px solid var(--danger-border)",
+                  borderRadius: "var(--radius-sm)",
+                  color: "var(--danger)",
                   cursor: "pointer",
                   fontSize: 12,
                 }}
@@ -1165,11 +1165,11 @@ function ApiKeyDetail({ provider, onRefresh }: { provider: ApiKeyProvider; onRef
               width: 7,
               height: 7,
               borderRadius: "50%",
-              background: provider.configured ? "#4ade80" : "var(--border)",
+              background: provider.configured ? "var(--success)" : "var(--border)",
               display: "inline-block",
             }}
           />
-          <span style={{ fontSize: 11, color: provider.configured ? "#4ade80" : "var(--text-dim)" }}>
+          <span style={{ fontSize: 11, color: provider.configured ? "var(--success)" : "var(--text-dim)" }}>
             {provider.configured ? "configured" : "not configured"}
           </span>
         </div>
@@ -1191,7 +1191,7 @@ function ApiKeyDetail({ provider, onRefresh }: { provider: ApiKeyProvider; onRef
             padding: "7px 9px",
             background: "var(--bg-panel)",
             border: "1px solid var(--border)",
-            borderRadius: 6,
+            borderRadius: "var(--radius-sm)",
           }}
         >
           A credential is supplied by the environment variable {provider.environmentSource}. Pi uses it at request time,
@@ -1219,10 +1219,10 @@ function ApiKeyDetail({ provider, onRefresh }: { provider: ApiKeyProvider; onRef
             disabled={saving || !apiKey.trim() || savedOk}
             style={{
               padding: "6px 12px",
-              background: savedOk ? "#16a34a" : apiKey.trim() ? "var(--accent)" : "var(--bg-panel)",
+              background: savedOk ? "var(--success)" : apiKey.trim() ? "var(--accent)" : "var(--bg-panel)",
               border: "none",
-              borderRadius: 5,
-              color: apiKey.trim() || savedOk ? "#fff" : "var(--text-dim)",
+              borderRadius: "var(--radius-sm)",
+              color: apiKey.trim() || savedOk ? "var(--on-accent)" : "var(--text-dim)",
               cursor: saving || !apiKey.trim() || savedOk ? "not-allowed" : "pointer",
               fontSize: 12,
               fontWeight: 600,
@@ -1251,8 +1251,8 @@ function ApiKeyDetail({ provider, onRefresh }: { provider: ApiKeyProvider; onRef
         </div>
       </Field>
 
-      {error && <p style={{ margin: 0, fontSize: 12, color: "#f87171" }}>{error}</p>}
-      {warning && <p style={{ margin: 0, fontSize: 12, color: "#d97706" }}>{warning}</p>}
+      {error && <p style={{ margin: 0, fontSize: 12, color: "var(--danger)" }}>{error}</p>}
+      {warning && <p style={{ margin: 0, fontSize: 12, color: "var(--warning)" }}>{warning}</p>}
 
       {provider.configured && (
         <button
@@ -1262,9 +1262,9 @@ function ApiKeyDetail({ provider, onRefresh }: { provider: ApiKeyProvider; onRef
             alignSelf: "flex-start",
             padding: "5px 12px",
             background: "none",
-            border: "1px solid rgba(239,68,68,0.3)",
-            borderRadius: 5,
-            color: "#ef4444",
+            border: "1px solid var(--danger-border)",
+            borderRadius: "var(--radius-sm)",
+            color: "var(--danger)",
             cursor: removing ? "not-allowed" : "pointer",
             fontSize: 12,
           }}
@@ -1296,7 +1296,7 @@ function ProviderIcon({ id, size }: { id: string; size: number }) {
           width: size,
           height: size,
           border: "1px solid var(--border)",
-          borderRadius: 4,
+          borderRadius: "var(--radius-sm)",
           color: "var(--text-dim)",
           display: "inline-flex",
           alignItems: "center",
@@ -1362,7 +1362,7 @@ function AddProviderPicker({
     padding: "10px 12px",
     background: "var(--bg-panel)",
     border: "1px solid var(--border)",
-    borderRadius: 7,
+    borderRadius: "var(--radius-sm)",
     boxSizing: "border-box",
     cursor: "pointer",
     minWidth: 0,
@@ -1377,7 +1377,7 @@ function AddProviderPicker({
         position: "fixed",
         inset: 0,
         zIndex: 1100,
-        background: "rgba(0,0,0,0.4)",
+        background: "var(--scrim)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -1393,10 +1393,10 @@ function AddProviderPicker({
           maxHeight: "min(72vh, calc(100vh - 32px))",
           background: "var(--bg)",
           border: "1px solid var(--border)",
-          borderRadius: 10,
+          borderRadius: "var(--radius-lg)",
           display: "flex",
           flexDirection: "column",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.22)",
+          boxShadow: "var(--shadow-md)",
           overflow: "hidden",
         }}
       >
@@ -1509,7 +1509,7 @@ function AddProviderPicker({
                     style={{
                       width: 26,
                       height: 26,
-                      borderRadius: 5,
+                      borderRadius: "var(--radius-sm)",
                       background: "var(--bg-hover)",
                       border: "1px dashed var(--border)",
                       display: "flex",
@@ -1855,7 +1855,7 @@ export function ModelsConfig({
                 position: "fixed",
                 inset: 0,
                 zIndex: 1000,
-                background: "rgba(0,0,0,0.35)",
+                background: "var(--scrim)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -1883,10 +1883,10 @@ export function ModelsConfig({
                   maxHeight: "calc(100dvh - 16px)",
                   background: "var(--bg)",
                   border: "1px solid var(--border)",
-                  borderRadius: 10,
+                  borderRadius: "var(--radius-lg)",
                   display: "flex",
                   flexDirection: "column",
-                  boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
+                  boxShadow: "var(--shadow-md)",
                   overflow: "hidden",
                 }
           }
@@ -1924,7 +1924,7 @@ export function ModelsConfig({
                   width: 36,
                   height: 36,
                   padding: 0,
-                  borderRadius: 7,
+                  borderRadius: "var(--radius-sm)",
                 }}
               >
                 ×
@@ -1960,7 +1960,7 @@ export function ModelsConfig({
                         alignItems: "center",
                         gap: 7,
                         padding: "5px 8px",
-                        borderRadius: 5,
+                        borderRadius: "var(--radius-sm)",
                         cursor: "pointer",
                         background: isSelected ? "var(--bg-selected)" : "none",
                       }}
@@ -2000,7 +2000,7 @@ export function ModelsConfig({
                         alignItems: "center",
                         gap: 7,
                         padding: "5px 8px",
-                        borderRadius: 5,
+                        borderRadius: "var(--radius-sm)",
                         cursor: "pointer",
                         background: isSelected ? "var(--bg-selected)" : "none",
                       }}
@@ -2050,7 +2050,7 @@ export function ModelsConfig({
                             alignItems: "center",
                             gap: 6,
                             padding: "7px 8px",
-                            borderRadius: 5,
+                            borderRadius: "var(--radius-sm)",
                             cursor: "pointer",
                             background: isProviderSelected ? "var(--bg-selected)" : "none",
                           }}
@@ -2112,7 +2112,7 @@ export function ModelsConfig({
                                 alignItems: "center",
                                 gap: 6,
                                 padding: "5px 8px 5px 26px",
-                                borderRadius: 5,
+                                borderRadius: "var(--radius-sm)",
                                 cursor: "pointer",
                                 background: isModelSelected ? "var(--bg-selected)" : "none",
                               }}
@@ -2141,9 +2141,9 @@ export function ModelsConfig({
                                   style={{
                                     fontSize: 9,
                                     padding: "1px 4px",
-                                    background: "rgba(99,102,241,0.12)",
-                                    color: "rgba(99,102,241,0.8)",
-                                    borderRadius: 3,
+                                    background: "var(--blue-soft)",
+                                    color: "var(--blue)",
+                                    borderRadius: "var(--radius-sm)",
                                     flexShrink: 0,
                                   }}
                                 >
@@ -2165,7 +2165,7 @@ export function ModelsConfig({
                             alignItems: "center",
                             gap: 4,
                             padding: "4px 8px 4px 26px",
-                            borderRadius: 5,
+                            borderRadius: "var(--radius-sm)",
                             cursor: "pointer",
                             color: "var(--text-dim)",
                           }}
@@ -2199,7 +2199,7 @@ export function ModelsConfig({
                     padding: "6px 0",
                     background: "none",
                     border: "1px dashed var(--border)",
-                    borderRadius: 5,
+                    borderRadius: "var(--radius-sm)",
                     color: "var(--text-muted)",
                     cursor: "pointer",
                     fontSize: 12,
@@ -2251,7 +2251,7 @@ export function ModelsConfig({
               flexShrink: 0,
             }}
           >
-            {saveError && <span style={{ fontSize: 12, color: "#f87171", flex: 1 }}>{saveError}</span>}
+            {saveError && <span style={{ fontSize: 12, color: "var(--danger)", flex: 1 }}>{saveError}</span>}
             {!embedded && (
               <button
                 onClick={onClose}
@@ -2259,7 +2259,7 @@ export function ModelsConfig({
                   padding: "6px 14px",
                   background: "none",
                   border: "1px solid var(--border)",
-                  borderRadius: 6,
+                  borderRadius: "var(--radius-sm)",
                   color: "var(--text-muted)",
                   cursor: "pointer",
                   fontSize: 13,
@@ -2277,13 +2277,17 @@ export function ModelsConfig({
                 padding: "6px 16px",
                 minWidth: 92,
                 background: savedOk
-                  ? "#16a34a"
+                  ? "var(--success)"
                   : saving || loadFailed || !configLoaded
                     ? "var(--bg-panel)"
                     : "var(--accent)",
                 border: "none",
-                borderRadius: 6,
-                color: savedOk ? "#fff" : saving || loadFailed || !configLoaded ? "var(--text-muted)" : "#fff",
+                borderRadius: "var(--radius-sm)",
+                color: savedOk
+                  ? "var(--on-accent)"
+                  : saving || loadFailed || !configLoaded
+                    ? "var(--text-muted)"
+                    : "var(--on-accent)",
                 cursor: saving || savedOk || loading || loadFailed || !configLoaded ? "default" : "pointer",
                 fontSize: 13,
                 fontWeight: 600,

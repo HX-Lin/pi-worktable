@@ -89,7 +89,7 @@ export function SettingsConfig({
         position: "fixed",
         inset: 0,
         zIndex: 1000,
-        background: "rgba(0,0,0,0.35)",
+        background: "var(--scrim)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -142,10 +142,10 @@ export function SettingsConfig({
           maxHeight: "calc(100dvh - 16px)",
           background: "var(--bg)",
           border: "1px solid var(--border)",
-          borderRadius: 10,
+          borderRadius: "var(--radius-lg)",
           display: "flex",
           flexDirection: "column",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
+          boxShadow: "var(--shadow-md)",
           overflow: "hidden",
         }}
       >
@@ -183,7 +183,7 @@ export function SettingsConfig({
               width: 36,
               height: 36,
               padding: 0,
-              borderRadius: 7,
+              borderRadius: "var(--radius-sm)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -241,7 +241,7 @@ export function SettingsConfig({
                     minHeight: 40,
                     padding: isMobile ? "8px 10px" : "8px 12px",
                     border: `1px solid ${active ? "var(--accent)" : "transparent"}`,
-                    borderRadius: 7,
+                    borderRadius: "var(--radius-sm)",
                     background: active ? "var(--accent-soft)" : "transparent",
                     color: active ? "var(--accent)" : "var(--text-muted)",
                     fontSize: 12,
@@ -347,7 +347,7 @@ function AboutSettings({ onClose }: { onClose: () => void }) {
           <div
             style={{
               border: "1px solid var(--border)",
-              borderRadius: 8,
+              borderRadius: "var(--radius-md)",
               background: "var(--bg-panel)",
               overflow: "hidden",
             }}
@@ -453,7 +453,7 @@ function SoftwareUpdate({ onClose }: { onClose: () => void }) {
       <div
         style={{
           border: "1px solid var(--border)",
-          borderRadius: 8,
+          borderRadius: "var(--radius-md)",
           background: "var(--bg-panel)",
           overflow: "hidden",
         }}
@@ -523,7 +523,7 @@ function SoftwareUpdate({ onClose }: { onClose: () => void }) {
 
           {state?.phase === "error" && state.error && (
             <div role="alert" aria-atomic="true" style={{ marginTop: 12 }}>
-              <p style={{ margin: 0, fontSize: 12, lineHeight: 1.55, color: "#f87171" }}>
+              <p style={{ margin: 0, fontSize: 12, lineHeight: 1.55, color: "var(--danger)" }}>
                 {getUpdateErrorMessage(state.error, t)}
               </p>
               <code style={{ display: "block", marginTop: 5, fontSize: 10, color: "var(--text-dim)" }}>
@@ -533,7 +533,7 @@ function SoftwareUpdate({ onClose }: { onClose: () => void }) {
           )}
 
           {actionFailed && (
-            <p role="alert" style={{ margin: "12px 0 0", fontSize: 12, lineHeight: 1.55, color: "#f87171" }}>
+            <p role="alert" style={{ margin: "12px 0 0", fontSize: 12, lineHeight: 1.55, color: "var(--danger)" }}>
               {t("updateActionFailed", "The update action could not be completed. Try again or open the logs.")}
             </p>
           )}
@@ -680,7 +680,7 @@ function UpdateReleaseDetails({ state, language }: { state: DesktopUpdateState; 
               overflowY: "auto",
               padding: 10,
               border: "1px solid var(--border)",
-              borderRadius: 6,
+              borderRadius: "var(--radius-sm)",
               background: "var(--bg)",
               color: "var(--text-muted)",
               fontFamily: "inherit",
@@ -760,7 +760,7 @@ function UpdateButton({
         minHeight: 34,
         padding: "7px 12px",
         border: `1px solid ${primary ? "var(--accent)" : "var(--border)"}`,
-        borderRadius: 6,
+        borderRadius: "var(--radius-sm)",
         background: primary ? "var(--accent)" : "var(--bg)",
         color: primary ? "white" : "var(--text)",
         fontSize: 12,
@@ -828,9 +828,9 @@ function getUpdateErrorMessage(
 }
 
 function updateStatusColor(phase: DesktopUpdateState["phase"] | undefined): string {
-  if (phase === "error") return "#f87171";
+  if (phase === "error") return "var(--danger)";
   if (phase === "available" || phase === "downloaded") return "var(--accent)";
-  if (phase === "up-to-date") return "#4ade80";
+  if (phase === "up-to-date") return "var(--success)";
   return "var(--text-dim)";
 }
 
@@ -914,7 +914,7 @@ function GeneralSettings({
     width: 220,
     padding: "7px 9px",
     fontSize: 12,
-    borderRadius: 7,
+    borderRadius: "var(--radius-sm)",
     background: "var(--bg)",
     color: "var(--text)",
     border: "1px solid var(--border)",
@@ -1057,7 +1057,7 @@ function SettingRow({ label, controlId, children }: { label: string; controlId: 
         minHeight: 52,
         padding: "10px 12px",
         border: "1px solid var(--border)",
-        borderRadius: 8,
+        borderRadius: "var(--radius-md)",
         background: "var(--bg-panel)",
       }}
     >
@@ -1102,7 +1102,7 @@ const selectStyle: React.CSSProperties = {
   minHeight: 36,
   padding: "7px 30px 7px 10px",
   border: "1px solid var(--border)",
-  borderRadius: 6,
+  borderRadius: "var(--radius-sm)",
   background: "var(--bg)",
   color: "var(--text)",
   fontSize: 13,

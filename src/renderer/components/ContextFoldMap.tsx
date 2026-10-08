@@ -26,9 +26,9 @@ const KIND_TONES: Record<string, { bg: string; border: string }> = {
     bg: "color-mix(in srgb, var(--accent) 24%, transparent)",
     border: "color-mix(in srgb, var(--accent) 55%, transparent)",
   },
-  text: { bg: "rgba(59,130,246,0.18)", border: "rgba(59,130,246,0.42)" },
+  text: { bg: "var(--blue-soft)", border: "var(--blue-border)" },
   thinking: { bg: "rgba(168,85,247,0.18)", border: "rgba(168,85,247,0.42)" },
-  tool_call: { bg: "rgba(245,158,11,0.18)", border: "rgba(245,158,11,0.42)" },
+  tool_call: { bg: "var(--amber-soft)", border: "var(--amber-border)" },
   tool_result: { bg: "rgba(20,184,166,0.18)", border: "rgba(20,184,166,0.42)" },
 };
 
@@ -102,7 +102,7 @@ export function ContextFoldMap({ sessionId, refreshKey = 0 }: ContextFoldMapProp
               ...toggleStyle,
               background: snapshot.folding ? "var(--accent)" : "transparent",
               borderColor: snapshot.folding ? "var(--accent)" : "var(--border)",
-              color: snapshot.folding ? "#fff" : "var(--text-muted)",
+              color: snapshot.folding ? "var(--on-accent)" : "var(--text-muted)",
             }}
           >
             {snapshot.folding ? t("foldingOn", "Folding on") : t("foldingOff", "Folding off")}
@@ -116,7 +116,7 @@ export function ContextFoldMap({ sessionId, refreshKey = 0 }: ContextFoldMapProp
             {t("unfoldAll", "Unfold all")}
           </button>
           <span style={{ flex: 1 }} />
-          <span style={{ fontSize: 11, color: overBudget ? "#f59e0b" : "var(--text-dim)" }}>
+          <span style={{ fontSize: 11, color: overBudget ? "var(--warning)" : "var(--text-dim)" }}>
             {t("liveTokens", "context")} {stats.liveTokens.toLocaleString()} / {stats.fullTokens.toLocaleString()} tok
             {stats.savedTokens > 0 ? ` · ${t("savedTokens", "saved")} ${stats.savedTokens.toLocaleString()}` : ""}
             {stats.budget > 0 ? ` · ${t("budget", "budget")} ${stats.budget.toLocaleString()}` : ""}
@@ -160,14 +160,14 @@ export function ContextFoldMap({ sessionId, refreshKey = 0 }: ContextFoldMapProp
                     padding: "5px 7px",
                     textAlign: "left",
                     background: block.folded ? "rgba(100,116,139,0.10)" : tone.bg,
-                    border: `1px solid ${active ? "var(--accent)" : block.protectedBlock ? "rgba(245,158,11,0.45)" : tone.border}`,
-                    borderRadius: 7,
+                    border: `1px solid ${active ? "var(--accent)" : block.protectedBlock ? "var(--amber-border)" : tone.border}`,
+                    borderRadius: "var(--radius-sm)",
                     color: block.folded ? "var(--text-dim)" : "var(--text)",
                     cursor: "pointer",
                     overflow: "hidden",
                     opacity: block.folded ? 0.85 : 1,
                     backgroundImage: block.folded
-                      ? "repeating-linear-gradient(135deg, rgba(255,255,255,0.05) 0 4px, transparent 4px 8px)"
+                      ? "repeating-linear-gradient(135deg, var(--glow-05) 0 4px, transparent 4px 8px)"
                       : undefined,
                     outline: active ? "2px solid color-mix(in srgb, var(--accent) 45%, transparent)" : "none",
                   }}
@@ -209,7 +209,7 @@ export function ContextFoldMap({ sessionId, refreshKey = 0 }: ContextFoldMapProp
             display: "flex",
             flexDirection: "column",
             border: "1px solid var(--border)",
-            borderRadius: 8,
+            borderRadius: "var(--radius-md)",
             overflow: "hidden",
           }}
         >
@@ -294,7 +294,7 @@ function Hint({ children, tone }: { children: React.ReactNode; tone?: "error" })
         margin: "0 0 12px",
         fontSize: 12,
         lineHeight: 1.6,
-        color: tone === "error" ? "#ef4444" : "var(--text-dim)",
+        color: tone === "error" ? "var(--danger)" : "var(--text-dim)",
       }}
     >
       {children}
@@ -340,7 +340,7 @@ const toggleStyle = {
   color: "var(--text-muted)",
   background: "transparent",
   border: "1px solid var(--border)",
-  borderRadius: 6,
+  borderRadius: "var(--radius-sm)",
   cursor: "pointer",
 } as const;
 
@@ -350,7 +350,7 @@ const actionStyle = {
   color: "var(--text)",
   background: "var(--bg-panel)",
   border: "1px solid var(--border)",
-  borderRadius: 5,
+  borderRadius: "var(--radius-sm)",
   cursor: "pointer",
 } as const;
 

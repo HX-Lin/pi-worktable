@@ -99,7 +99,7 @@ export function PiAgentTitle() {
         style={{
           width: 22,
           height: 22,
-          borderRadius: 5,
+          borderRadius: "var(--radius-sm)",
           background: "var(--text)",
           display: "inline-flex",
           alignItems: "center",

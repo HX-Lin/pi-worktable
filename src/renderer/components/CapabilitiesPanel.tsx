@@ -233,7 +233,7 @@ export function CapabilitiesPanel({ sessionId, cwd }: { sessionId: string | null
         )}
       </Section>
 
-      {error && <p style={{ ...hintStyle, color: "#ef4444" }}>{error}</p>}
+      {error && <p style={{ ...hintStyle, color: "var(--danger)" }}>{error}</p>}
     </div>
   );
 }
@@ -241,9 +241,9 @@ export function CapabilitiesPanel({ sessionId, cwd }: { sessionId: string | null
 const valueStyle: React.CSSProperties = { fontSize: 12.5, color: "var(--text)", minWidth: 0, wordBreak: "break-word" };
 const hintStyle: React.CSSProperties = { color: "var(--text-dim)", fontSize: 11, margin: "6px 0 0" };
 const codeStyle: React.CSSProperties = {
-  background: "var(--bg-elevated, rgba(127,127,127,0.08))",
+  background: "var(--sunken-bg)",
   border: "1px solid var(--border)",
-  borderRadius: 6,
+  borderRadius: "var(--radius-sm)",
   color: "var(--text-muted)",
   fontSize: 11,
   padding: "2px 6px",
@@ -257,9 +257,9 @@ const listStyle: React.CSSProperties = {
   color: "var(--text-muted)",
 };
 const buttonStyle: React.CSSProperties = {
-  background: "var(--bg-elevated, rgba(127,127,127,0.08))",
+  background: "var(--sunken-bg)",
   border: "1px solid var(--border)",
-  borderRadius: 6,
+  borderRadius: "var(--radius-sm)",
   color: "var(--text)",
   cursor: "pointer",
   font: "inherit",
