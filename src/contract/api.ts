@@ -347,6 +347,19 @@ export interface Api {
     result: { ok: true };
   };
 
+  // Voice input (transcription runs in the host, where the credential lives)
+  "voice.config": { params: void; result: { provider: string; model: string } };
+  "voice.transcribe": {
+    params: {
+      audioBase64: string;
+      mimeType: string;
+      provider?: string;
+      model?: string;
+      language?: string;
+    };
+    result: { text: string; provider: string; model: string };
+  };
+
   // Project task board (.pi/tasks.json)
   "tasks.list": { params: { cwd: string }; result: { tasks: ProjectTask[] } };
   "tasks.add": {

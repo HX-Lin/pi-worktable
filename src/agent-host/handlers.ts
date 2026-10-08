@@ -23,6 +23,7 @@ import { pluginHandlers } from "./handlers/plugins";
 import { ensureSessionEvents } from "./handlers/session-events";
 import { sessionHandlers } from "./handlers/sessions";
 import { taskHandlers } from "./handlers/tasks";
+import { voiceHandlers } from "./handlers/voice";
 import { systemHandlers } from "./handlers/system";
 import type { HandlerContext } from "./handlers/types";
 
@@ -45,7 +46,8 @@ type ProvidedMethods =
   | keyof ReturnType<typeof modelHandlers>
   | keyof ReturnType<typeof pluginHandlers>
   | keyof ReturnType<typeof taskHandlers>
-  | keyof ReturnType<typeof memoryHandlers>;
+  | keyof ReturnType<typeof memoryHandlers>
+  | keyof ReturnType<typeof voiceHandlers>;
 
 type MissingMethods = Exclude<ApiMethod, ProvidedMethods>;
 type AssertNever<T extends never> = T;
@@ -97,6 +99,7 @@ export function registerHandlers(server: RpcServer): () => Promise<void> {
       pluginHandlers(ctx),
       taskHandlers(ctx),
       memoryHandlers(ctx),
+      voiceHandlers(ctx),
     ),
   );
 

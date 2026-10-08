@@ -8,6 +8,7 @@ import { CapabilitiesPanel } from "./CapabilitiesPanel";
 import { McpConfig } from "./McpConfig";
 import { PluginsConfig } from "./PluginsConfig";
 import { AgentsConfig } from "./AgentsConfig";
+import { loadVoiceSettings, saveVoiceSettings, type VoiceSettings } from "@/hooks/useVoiceInput";
 import { ToolchainsConfig } from "./ToolchainsConfig";
 import { ChannelsConfig } from "./channels/ChannelsConfig";
 import type { ChannelsSnapshot } from "@shared/channel-types";
@@ -901,6 +902,23 @@ function GeneralSettings({
   const { t } = useI18n();
   const [backgroundMode, setBackgroundMode] = useState(true);
   const languageControlId = useId();
+  const voiceProviderControlId = useId();
+  const voiceModelControlId = useId();
+  const voiceLanguageControlId = useId();
+  const [voice, setVoice] = useState<VoiceSettings>(() => loadVoiceSettings());
+  const updateVoice = (next: VoiceSettings) => {
+    setVoice(next);
+    saveVoiceSettings(next);
+  };
+  const voiceInputStyle: React.CSSProperties = {
+    width: 220,
+    padding: "7px 9px",
+    fontSize: 12,
+    borderRadius: 7,
+    background: "var(--bg)",
+    color: "var(--text)",
+    border: "1px solid var(--border)",
+  };
   const backgroundModeControlId = useId();
   const themeControlId = useId();
   useEffect(() => {
@@ -963,6 +981,43 @@ function GeneralSettings({
       </section>
 
       <div style={{ height: 1, background: "var(--border)", maxWidth: 620, margin: "28px 0" }} />
+
+      <section style={{ maxWidth: 620 }}>
+        <h2 style={{ margin: 0, fontSize: 14, color: "var(--text)" }}>{t("voiceTitle", "Voice input")}</h2>
+        <p style={{ margin: "6px 0 16px", fontSize: 12, lineHeight: 1.6, color: "var(--text-dim)" }}>
+          {t(
+            "voiceDescription",
+            "Recording happens in the desktop; transcription runs in the host with the API key you configured for that provider.",
+          )}
+        </p>
+        <SettingRow label={t("voiceProvider", "Provider")} controlId={voiceProviderControlId}>
+          <input
+            id={voiceProviderControlId}
+            value={voice.provider}
+            onChange={(event) => updateVoice({ ...voice, provider: event.target.value })}
+            placeholder="openai"
+            style={voiceInputStyle}
+          />
+        </SettingRow>
+        <SettingRow label={t("voiceModel", "Transcription model")} controlId={voiceModelControlId}>
+          <input
+            id={voiceModelControlId}
+            value={voice.model}
+            onChange={(event) => updateVoice({ ...voice, model: event.target.value })}
+            placeholder="whisper-1"
+            style={voiceInputStyle}
+          />
+        </SettingRow>
+        <SettingRow label={t("voiceLanguage", "Language")} controlId={voiceLanguageControlId}>
+          <input
+            id={voiceLanguageControlId}
+            value={voice.language}
+            onChange={(event) => updateVoice({ ...voice, language: event.target.value })}
+            placeholder={t("voiceLanguageAuto", "detect automatically")}
+            style={voiceInputStyle}
+          />
+        </SettingRow>
+      </section>
 
       <div style={{ height: 1, background: "var(--border)", maxWidth: 620, margin: "28px 0" }} />
 

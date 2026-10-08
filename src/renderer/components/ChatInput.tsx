@@ -28,6 +28,7 @@ import { FolderIcon, getFileIcon } from "./FileIcons";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { fileIndex as fetchFileIndex } from "@/lib/api-client";
 import { useI18n } from "@/i18n";
+import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { MAX_ATTACHED_IMAGES, shrinkImageFiles } from "@/lib/image-attachments";
 import type { ModelCatalogStatus } from "@contract/types";
 import { AUTO_COMPACT_CONTEXT_PERCENT } from "@shared/auto-compact";
@@ -453,6 +454,12 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
       attachedImagesRef.current.forEach(revokeImagePreview);
     };
   }, []);
+
+  // Voice input: record, transcribe in the host, append the text to the draft.
+  const voice = useVoiceInput((text) => {
+    setValue((current) => (current.trim() ? `${current.replace(/\s+$/, "")} ${text}` : text));
+    textareaRef.current?.focus();
+  });
 
   const handleSend = useCallback(async () => {
     const msg = value.trim();
@@ -1744,37 +1751,113 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                 )}
               </div>
             ) : (
-              <button
-                onClick={handleSend}
-                disabled={!value.trim() && !attachedImages.length}
-                style={{
-                  flexShrink: 0,
-                  alignSelf: "flex-end",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "10px 18px",
-                  background: value.trim() || attachedImages.length ? "var(--accent)" : "var(--bg-hover)",
-                  border: "none",
-                  borderRadius: 9,
-                  color: value.trim() || attachedImages.length ? "#fff" : "var(--text-dim)",
-                  cursor: value.trim() || attachedImages.length ? "pointer" : "not-allowed",
-                  fontSize: 12.5,
-                  fontWeight: 700,
-                  fontFamily: "var(--font-mono)",
-                  letterSpacing: "-0.01em",
-                  boxShadow:
-                    value.trim() || attachedImages.length
-                      ? "0 1px 3px color-mix(in srgb, var(--accent) 30%, transparent)"
-                      : "none",
-                  transition: "background 0.15s, box-shadow 0.15s",
-                }}
-              >
-                {t("send", "Send")}
-              </button>
+              <>
+                {voice.available && (
+                  <button
+                    type="button"
+                    onClick={() => (voice.recording ? voice.stop() : void voice.start())}
+                    disabled={voice.transcribing}
+                    title={
+                      voice.recording
+                        ? t("voiceStop", "Stop recording")
+                        : voice.transcribing
+                          ? t("voiceTranscribing", "Transcribing…")
+                          : t("voiceStart", "Dictate")
+                    }
+                    aria-label={voice.recording ? t("voiceStop", "Stop recording") : t("voiceStart", "Dictate")}
+                    style={{
+                      flexShrink: 0,
+                      alignSelf: "flex-end",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: 38,
+                      height: 38,
+                      background: voice.recording
+                        ? "color-mix(in srgb, var(--danger) 24%, transparent)"
+                        : "var(--bg-hover)",
+                      border: `1px solid ${voice.recording ? "var(--danger)" : "var(--border)"}`,
+                      borderRadius: 9,
+                      color: voice.recording ? "var(--danger)" : "var(--text-muted)",
+                      cursor: voice.transcribing ? "wait" : "pointer",
+                    }}
+                  >
+                    {voice.transcribing ? (
+                      <svg
+                        width="15"
+                        height="15"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        aria-hidden="true"
+                      >
+                        <circle cx="12" cy="12" r="9" opacity="0.3" />
+                        <path d="M21 12a9 9 0 0 0-9-9" />
+                      </svg>
+                    ) : (
+                      <svg
+                        width="15"
+                        height="15"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        aria-hidden="true"
+                      >
+                        <rect
+                          x="9"
+                          y="3"
+                          width="6"
+                          height="11"
+                          rx="3"
+                          fill={voice.recording ? "currentColor" : "none"}
+                        />
+                        <path d="M5 11a7 7 0 0 0 14 0" />
+                        <line x1="12" y1="18" x2="12" y2="21" />
+                      </svg>
+                    )}
+                  </button>
+                )}
+                <button
+                  onClick={handleSend}
+                  disabled={!value.trim() && !attachedImages.length}
+                  style={{
+                    flexShrink: 0,
+                    alignSelf: "flex-end",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "10px 18px",
+                    background: value.trim() || attachedImages.length ? "var(--accent)" : "var(--bg-hover)",
+                    border: "none",
+                    borderRadius: 9,
+                    color: value.trim() || attachedImages.length ? "#fff" : "var(--text-dim)",
+                    cursor: value.trim() || attachedImages.length ? "pointer" : "not-allowed",
+                    fontSize: 12.5,
+                    fontWeight: 700,
+                    fontFamily: "var(--font-mono)",
+                    letterSpacing: "-0.01em",
+                    boxShadow:
+                      value.trim() || attachedImages.length
+                        ? "0 1px 3px color-mix(in srgb, var(--accent) 30%, transparent)"
+                        : "none",
+                    transition: "background 0.15s, box-shadow 0.15s",
+                  }}
+                >
+                  {t("send", "Send")}
+                </button>
+              </>
             )}
           </div>
         </div>
+
+        {voice.error && (
+          <div style={{ padding: "0 12px 8px", fontSize: 11, color: "var(--danger)" }} role="alert">
+            {voice.error}
+          </div>
+        )}
 
         {/* Bottom bar: left | center (context) | right */}
         <div
