@@ -13,6 +13,7 @@ import type {
 import type { ModelCatalogStatus, ModelsListResult, SessionDetail, SessionRuntimeState } from "@contract/types";
 import { normalizeToolCalls } from "@/lib/normalize";
 import { sendAgentCommand } from "@/lib/agent-client";
+import { pushToast } from "@/lib/toast-store";
 import {
   agentState,
   cancelModelsRefresh,
@@ -2098,8 +2099,18 @@ export function useAgentSession(opts: UseAgentSessionOptions) {
     return () => clearTimeout(t);
   }, [compactError]);
 
+  // Compaction is a long silent pause in the middle of a conversation; say what
+  // it bought while the card in the stream keeps the summary itself.
   useEffect(() => {
     if (!compactResult) return;
+    const before = compactResult.tokensBefore;
+    const after = compactResult.estimatedTokensAfter;
+    const saved = Math.max(0, before - after);
+    pushToast({
+      level: "success",
+      text: `Compacted to ${after.toLocaleString()} tokens (was ${before.toLocaleString()})`,
+      detail: `${saved.toLocaleString()} tokens freed · ${compactResult.reason}`,
+    });
     const t = setTimeout(() => setCompactResult(null), 6000);
     return () => clearTimeout(t);
   }, [compactResult]);

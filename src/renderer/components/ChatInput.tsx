@@ -1011,6 +1011,22 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
   // manual action is permanently discoverable, never gated on message count.
   const showCompactHint = Boolean(onCompactContext);
   const isContextCompacting = Boolean(isCompacting);
+  // A compaction can take a while; counting the seconds is the only feedback
+  // available until it ends.
+  const [compactElapsedSeconds, setCompactElapsedSeconds] = useState(0);
+  useEffect(() => {
+    if (!isContextCompacting) {
+      setCompactElapsedSeconds(0);
+      return;
+    }
+    const started = Date.now();
+    const timer = setInterval(() => {
+      setCompactElapsedSeconds(Math.floor((Date.now() - started) / 1000));
+    }, 1000);
+    return () => {
+      clearInterval(timer);
+    };
+  }, [isContextCompacting]);
   const contextCompactDisabled = isStreaming && !isContextCompacting;
   const compactIsNearLimit = contextPercent >= AUTO_COMPACT_CONTEXT_PERCENT - 10;
   const compactBarLabel = t("compactContextHint", "Context {percent}% full — compacts automatically at {threshold}%")
@@ -2502,7 +2518,10 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                               <rect x="2" y="2" width="6" height="6" rx="1" fill="currentColor" />
                             </svg>
                             {!isMobile && (
-                              <span style={{ whiteSpace: "nowrap" }}>{t("compacting", "Compacting…")}</span>
+                              <span style={{ whiteSpace: "nowrap" }}>
+                                {t("compacting", "Compacting…")}
+                                {compactElapsedSeconds > 0 ? ` ${String(compactElapsedSeconds)}s` : ""}
+                              </span>
                             )}
                           </>
                         ) : (

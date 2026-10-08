@@ -1006,6 +1006,7 @@ function ToolCallBlock({
   duration?: number;
   onLoadDeferredContent?: (entryId: string, blockIndex?: number) => Promise<void>;
 }) {
+  const { t } = useI18n();
   const [expanded, setExpanded] = useState(false);
   const inputStr = JSON.stringify(block.input, null, 2);
   const isEditTool = isEditToolName(block.toolName);
@@ -1058,6 +1059,34 @@ function ToolCallBlock({
       >
         <span style={{ flexShrink: 0, opacity: 0.85 }}>{expanded ? "▾" : "▸"}</span>
         <span style={{ fontWeight: 600, flexShrink: 0 }}>{block.toolName}</span>
+        {/* Status at a glance: the header already tints for errors, but a running
+            call and a finished one looked identical. */}
+        <span
+          style={{
+            flexShrink: 0,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
+            padding: "0 6px",
+            height: 15,
+            borderRadius: 999,
+            fontSize: 9.5,
+            letterSpacing: 0.2,
+            background: isError ? "var(--red-soft)" : isRunning ? "var(--amber-soft)" : "var(--green-soft)",
+            color: isError ? "var(--red)" : isRunning ? "var(--amber)" : "var(--green)",
+          }}
+        >
+          <span
+            style={{
+              width: 4,
+              height: 4,
+              borderRadius: 999,
+              background: "currentColor",
+              ...(isRunning ? { animation: "pulse 1.5s infinite" } : {}),
+            }}
+          />
+          {isError ? t("toolFailed", "failed") : isRunning ? t("toolRunning", "running") : t("toolDone", "done")}
+        </span>
         <span
           style={{
             color: "var(--tool-fg)",
