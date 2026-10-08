@@ -219,7 +219,8 @@ const btnPrimary: CSSProperties = {
   borderRadius: "var(--radius-md)",
   border: "1px solid var(--border)",
   background: "var(--text)",
-  color: "var(--bg)",
+  /* 不要用 --bg：niri 主题下它是"几乎全透明"的底色，白底上的字会直接消失。 */
+  color: "var(--bg-color)",
   cursor: "pointer",
 };
 

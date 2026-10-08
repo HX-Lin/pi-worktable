@@ -44,9 +44,9 @@ export function ProjectPicker(props: ProjectPickerController & { selectedProject
           gap: 6,
           width: "100%",
           padding: "8px 10px",
-          background: "var(--text)",
-          border: "none",
-          color: "var(--bg)",
+          background: "var(--accent)",
+          border: "1px solid var(--accent)",
+          color: "var(--on-accent)",
           cursor: "pointer",
           borderRadius: "var(--radius-sm)",
           fontSize: 12.5,
@@ -56,10 +56,10 @@ export function ProjectPicker(props: ProjectPickerController & { selectedProject
           transition: "opacity 0.12s",
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.opacity = "0.9";
+          e.currentTarget.style.background = "var(--accent-hover)";
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.opacity = "1";
+          e.currentTarget.style.background = "var(--accent)";
         }}
       >
         <span style={{ fontSize: 14, lineHeight: 1 }}>+</span>
