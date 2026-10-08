@@ -105,6 +105,40 @@ export async function listBranches(cwd: string): Promise<GitBranchList> {
   return { current: current && current !== "HEAD" ? current : null, branches, upstream, ahead, behind };
 }
 
+export interface GitCommitInfo {
+  hash: string;
+  shortHash: string;
+  subject: string;
+  author: string;
+  /** ISO date, so the UI can format it. */
+  date: string;
+}
+
+/** Recent commits on the current branch, newest first. */
+export async function listCommits(cwd: string, limit = 40): Promise<GitCommitInfo[]> {
+  const count = Math.max(1, Math.min(200, limit));
+  const output = await runGit(cwd, ["log", `--max-count=${count}`, "--pretty=format:%H%x1f%h%x1f%s%x1f%an%x1f%aI"]);
+  return output
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [hash, shortHash, subject, author, date] = line.split("\u001f");
+      return { hash, shortHash, subject, author, date };
+    });
+}
+
+/** The patch one commit introduced. */
+export async function getCommitPatch(cwd: string, commit: string): Promise<GitDiffResult> {
+  const reference = assertSafeRef(commit, "commit");
+  const patch = await runGit(cwd, ["show", "--no-color", "--no-ext-diff", "--format=", reference]);
+  return {
+    patch: patch.length > DIFF_MAX_CHARS ? patch.slice(0, DIFF_MAX_CHARS) : patch,
+    truncated: patch.length > DIFF_MAX_CHARS,
+    files: [],
+  };
+}
+
 export async function checkoutBranch(cwd: string, branch: string): Promise<{ output: string }> {
   const ref = assertSafeRef(branch, "branch name");
   const output = await runGit(cwd, ["checkout", ref]);

@@ -13,6 +13,7 @@ import {
 import { SessionSidebar } from "./SessionSidebar";
 import { ChatWindow } from "./ChatWindow";
 import { FileExplorer } from "./FileExplorer";
+import { GitPanel } from "./GitPanel";
 import { MemoryPanel } from "./MemoryPanel";
 import { TaskBoard } from "./TaskBoard";
 import { FileViewer } from "./FileViewer";
@@ -51,6 +52,7 @@ type SessionCopyField = "file" | "id";
 const EXPLORER_TAB_ID = "explorer";
 const TASKS_TAB_ID = "tasks";
 const MEMORY_TAB_ID = "memory";
+const GIT_TAB_ID = "git";
 const EMPTY_CHANNELS: ChannelsSnapshot = { accounts: [], statuses: [], pairings: [], bindings: [], activities: [] };
 
 function initialRightPanelPreferredWidth(): number {
@@ -1744,6 +1746,43 @@ export function AppShell() {
             </button>
             <button
               type="button"
+              onClick={() => setActiveFileTabId(GIT_TAB_ID)}
+              aria-pressed={activeFileTabId === GIT_TAB_ID}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                height: 36,
+                padding: "0 12px",
+                flexShrink: 0,
+                background: activeFileTabId === GIT_TAB_ID ? "var(--bg)" : "var(--bg-panel)",
+                border: "none",
+                borderRight: "1px solid var(--border)",
+                color: activeFileTabId === GIT_TAB_ID ? "var(--text)" : "var(--text-muted)",
+                cursor: "pointer",
+                fontSize: 12,
+                fontWeight: activeFileTabId === GIT_TAB_ID ? 500 : 400,
+              }}
+            >
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                aria-hidden="true"
+              >
+                <circle cx="6" cy="6" r="2.5" />
+                <circle cx="6" cy="18" r="2.5" />
+                <circle cx="18" cy="9" r="2.5" />
+                <path d="M6 8.5v7M8.5 6h4A3.5 3.5 0 0 1 16 9.5V9" />
+              </svg>
+              {t("git", "Git")}
+            </button>
+            <button
+              type="button"
               onClick={() => setActiveFileTabId(MEMORY_TAB_ID)}
               aria-pressed={activeFileTabId === MEMORY_TAB_ID}
               style={{
@@ -1844,6 +1883,13 @@ export function AppShell() {
             </div>
             <div style={{ height: "100%", display: activeFileTabId === MEMORY_TAB_ID ? "block" : "none" }}>
               <MemoryPanel cwd={explorerCwd} />
+            </div>
+            <div style={{ height: "100%", display: activeFileTabId === GIT_TAB_ID ? "block" : "none" }}>
+              <GitPanel
+                cwd={explorerCwd}
+                refreshKey={explorerRefreshKey}
+                onOpenFile={(path) => handleOpenFile(path, path.split("/").pop() ?? path)}
+              />
             </div>
             <div style={{ height: "100%", display: activeFileTabId === EXPLORER_TAB_ID ? "block" : "none" }}>
               {explorerCwd ? (

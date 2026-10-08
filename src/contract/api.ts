@@ -123,6 +123,14 @@ export interface Api {
   "git.commit": { params: { path: string; message: string }; result: { output: string } };
   "git.push": { params: { path: string }; result: { output: string } };
   "git.pull": { params: { path: string }; result: { output: string } };
+  "git.log": {
+    params: { path: string; limit?: number };
+    result: {
+      commits: Array<{ hash: string; shortHash: string; subject: string; author: string; date: string }>;
+    };
+  };
+  "git.commitPatch": { params: { path: string; commit: string }; result: { patch: string; truncated: boolean } };
+
   "git.branches": {
     params: { path: string };
     result: {

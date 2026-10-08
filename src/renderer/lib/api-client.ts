@@ -370,6 +370,14 @@ export async function gitPull(cwd: string) {
   return call("git.pull", { path: cwd });
 }
 
+export async function gitLog(cwd: string, limit = 40) {
+  return call("git.log", { path: cwd, limit });
+}
+
+export async function gitCommitPatch(cwd: string, commit: string) {
+  return call("git.commitPatch", { path: cwd, commit });
+}
+
 export async function gitBranches(cwd: string) {
   return call("git.branches", { path: cwd });
 }

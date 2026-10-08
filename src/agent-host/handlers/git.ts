@@ -15,7 +15,9 @@ import { assertPathAllowed } from "./helpers";
 import {
   checkoutBranch,
   commitChanges,
+  getCommitPatch,
   getDiff,
+  listCommits,
   listBranches,
   pullBranch,
   pushBranch,
@@ -131,6 +133,19 @@ export function gitHandlers(_ctx: HandlerContext) {
       const { path: cwd } = params as { path: string };
       await assertPathAllowed(cwd);
       return withGitErrors(() => pullBranch(cwd));
+    },
+
+    "git.log": async (params) => {
+      const { path: cwd, limit } = params as { path: string; limit?: number };
+      await assertPathAllowed(cwd);
+      return { commits: await withGitErrors(() => listCommits(cwd, limit ?? 40)) };
+    },
+
+    "git.commitPatch": async (params) => {
+      const { path: cwd, commit } = params as { path: string; commit: string };
+      await assertPathAllowed(cwd);
+      const result = await withGitErrors(() => getCommitPatch(cwd, commit));
+      return { patch: result.patch, truncated: result.truncated };
     },
 
     "git.branches": async (params) => {
