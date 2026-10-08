@@ -6,6 +6,8 @@ import path from "node:path";
 import { agentDirectories, discoverAgents, loadAgentFile, type AgentConfig, type AgentScope } from "../subagent/agents";
 import { setFrontmatterModel } from "../subagent/frontmatter";
 import { writeFileAtomic } from "../json-file";
+import { AGENT_TEMPLATES, buildAgentFile, findAgentTemplate, isValidAgentName } from "../../shared/agent-templates";
+import { mkdirSync } from "node:fs";
 import type { HandlerContext } from "./types";
 
 /**
@@ -29,6 +31,44 @@ export function agentHandlers(_ctx: HandlerContext) {
       const { cwd, scope } = (params ?? {}) as { cwd?: string; scope?: AgentScope };
       const { agents, projectAgentsDir } = discoverAgents(cwd ?? process.cwd(), scope ?? "both");
       return { agents: agents.map(toInfo), projectAgentsDir };
+    },
+
+    "agents.templates": () => ({
+      templates: AGENT_TEMPLATES.map(({ id, name, description }) => ({ id, name, description })),
+    }),
+
+    "agents.create": (params) => {
+      const input = params as {
+        templateId: string;
+        name: string;
+        description?: string;
+        scope?: "user" | "project";
+        cwd?: string;
+      };
+      const template = findAgentTemplate(input.templateId);
+      if (!template) {
+        throw new RpcError({ code: "BAD_REQUEST", message: `Unknown agent template: ${input.templateId}` });
+      }
+      if (!isValidAgentName(input.name)) {
+        throw new RpcError({
+          code: "BAD_REQUEST",
+          message: "Agent names use lowercase letters, digits, dash and underscore (they become file names)",
+        });
+      }
+      // Project scope needs a project; otherwise the user directory is right.
+      const projectCwd = typeof input.cwd === "string" && input.cwd ? input.cwd : process.cwd();
+      const scope: AgentScope = input.scope === "project" ? "project" : "user";
+      const dir = agentDirectories(projectCwd, scope)[0];
+      if (!dir) {
+        throw new RpcError({ code: "BAD_REQUEST", message: "No agents directory is available for that scope" });
+      }
+      const filePath = path.join(dir, `${input.name}.md`);
+      if (existsSync(filePath)) {
+        throw new RpcError({ code: "CONFLICT", message: `An agent named ${input.name} already exists` });
+      }
+      mkdirSync(dir, { recursive: true });
+      writeFileAtomic(filePath, buildAgentFile(template, input.name, input.description));
+      return { filePath };
     },
 
     "agents.setModel": (params) => {

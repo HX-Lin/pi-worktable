@@ -10,6 +10,7 @@ import { Type } from "typebox";
 import type { ExtensionAPI, InlineExtension } from "@earendil-works/pi-coding-agent";
 import { discoverAgents, type AgentConfig, type AgentScope } from "./agents";
 import { runSubagent, type SubagentResult } from "./runner";
+import { startSubagentRun } from "./registry";
 
 const TaskItem = Type.Object({
   agent: Type.String({ description: "Agent name" }),
@@ -113,19 +114,38 @@ export const SUBAGENT_EXTENSION: InlineExtension = {
         const runOne = async (job: { agent: string; task: string; model?: string }): Promise<RunRecord> => {
           const agent = byName.get(job.agent)!;
           started.push(agent.name);
-          const result = await runSubagent({
-            agent,
+          const run = startSubagentRun({
+            agent: agent.name,
             task: job.task,
+            model: job.model ?? agent.model,
             cwd,
-            model: job.model,
-            signal,
-            onUpdate: (line) =>
-              onUpdate?.({
-                content: [{ type: "text", text: `[${started.join(", ")}] ${line}` }],
-                details: { running: [...started] },
-              }),
           });
-          return { agent: agent.name, result };
+          try {
+            const result = await runSubagent({
+              agent,
+              task: job.task,
+              cwd,
+              model: job.model,
+              signal,
+              onUpdate: (line) => {
+                run.update(line);
+                onUpdate?.({
+                  content: [{ type: "text", text: `[${started.join(", ")}] ${line}` }],
+                  details: { running: [...started] },
+                });
+              },
+            });
+            run.finish({
+              ok: result.ok,
+              error: result.error,
+              tokens: result.usage.inputTokens + result.usage.outputTokens,
+            });
+            return { agent: agent.name, result };
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            run.finish({ ok: false, error: message });
+            throw error;
+          }
         };
 
         const records = hasSingle ? [await runOne(jobs[0])] : await Promise.all(jobs.map(runOne));

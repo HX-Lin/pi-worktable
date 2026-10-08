@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { SyntaxHighlighter, vs, vscDarkPlus } from "@/lib/syntax-highlight";
 import { shouldHighlightCode } from "@/lib/code-highlight-policy";
 import { useTheme } from "@/hooks/useTheme";
@@ -11,6 +11,8 @@ interface Props {
   filePath: string;
   cwd?: string;
   sourceSessionId?: string | null;
+  /** Send the selected lines to the conversation as a quoted reference. */
+  onQuote?: (quote: { path: string; startLine: number; endLine: number; text: string }) => void;
 }
 
 interface FileData {
@@ -781,7 +783,46 @@ function DocumentViewer({ filePath, cwd, sourceSessionId }: Props) {
   );
 }
 
-export function FileViewer({ filePath, cwd, sourceSessionId }: Props) {
+const HEX_BYTES_LIMIT = 4096;
+
+/**
+ * Binary files get a hex dump instead of "cannot be shown": seeing the magic
+ * bytes is often enough to recognise a format, and it beats an error string.
+ */
+function HexView({ base64 }: { base64: string }) {
+  const bytes = useMemo(() => {
+    try {
+      const binary = atob(base64);
+      const out = new Uint8Array(Math.min(binary.length, HEX_BYTES_LIMIT));
+      for (let i = 0; i < out.length; i++) out[i] = binary.charCodeAt(i);
+      return out;
+    } catch {
+      return new Uint8Array();
+    }
+  }, [base64]);
+
+  const rows = useMemo(() => {
+    const lines: string[] = [];
+    for (let offset = 0; offset < bytes.length; offset += 16) {
+      const slice = bytes.subarray(offset, offset + 16);
+      const hex = [...slice].map((byte) => byte.toString(16).padStart(2, "0")).join(" ");
+      const ascii = [...slice].map((byte) => (byte >= 32 && byte < 127 ? String.fromCharCode(byte) : ".")).join("");
+      lines.push(`${offset.toString(16).padStart(8, "0")}  ${hex.padEnd(47, " ")}  ${ascii}`);
+    }
+    return lines;
+  }, [bytes]);
+
+  return (
+    <div style={{ padding: 12, fontFamily: "var(--font-mono)", fontSize: 12, lineHeight: 1.5 }}>
+      <div style={{ marginBottom: 8, color: "var(--text-dim)", fontSize: 11 }}>
+        binary · first {bytes.length.toLocaleString()} bytes
+      </div>
+      <pre style={{ margin: 0, color: "var(--text-muted)", whiteSpace: "pre" }}>{rows.join("\n")}</pre>
+    </div>
+  );
+}
+
+export function FileViewer({ filePath, cwd, sourceSessionId, onQuote }: Props) {
   if (isImagePath(filePath)) {
     return <ImageViewer filePath={filePath} cwd={cwd} sourceSessionId={sourceSessionId} />;
   }
@@ -791,10 +832,10 @@ export function FileViewer({ filePath, cwd, sourceSessionId }: Props) {
   if (isDocumentPreviewPath(filePath)) {
     return <DocumentViewer filePath={filePath} cwd={cwd} sourceSessionId={sourceSessionId} />;
   }
-  return <TextFileViewer filePath={filePath} cwd={cwd} sourceSessionId={sourceSessionId} />;
+  return <TextFileViewer filePath={filePath} cwd={cwd} sourceSessionId={sourceSessionId} onQuote={onQuote} />;
 }
 
-function TextFileViewer({ filePath, cwd, sourceSessionId }: Props) {
+function TextFileViewer({ filePath, cwd, sourceSessionId, onQuote }: Props) {
   const { isDark } = useTheme();
   const [data, setData] = useState<FileData | null>(null);
   const [prevContent, setPrevContent] = useState<string | null>(null);
@@ -810,8 +851,32 @@ function TextFileViewer({ filePath, cwd, sourceSessionId }: Props) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedFlash, setSavedFlash] = useState(false);
+  const [binaryBase64, setBinaryBase64] = useState<string | null>(null);
   const editingRef = useRef(true);
   editingRef.current = editing;
+  // Selection quoting: work out the line range from the textarea's offsets, so
+  // the reference we hand to the conversation names exact lines.
+  const editorRef = useRef<HTMLTextAreaElement | null>(null);
+  const [selection, setSelection] = useState<{ startLine: number; endLine: number; text: string } | null>(null);
+
+  const updateSelection = useCallback(() => {
+    const area = editorRef.current;
+    if (!area || !onQuote) return;
+    const { selectionStart, selectionEnd } = area;
+    if (selectionStart === selectionEnd) {
+      setSelection(null);
+      return;
+    }
+    const text = area.value.slice(selectionStart, selectionEnd);
+    if (!text.trim()) {
+      setSelection(null);
+      return;
+    }
+    const before = area.value.slice(0, selectionStart);
+    const startLine = before.split("\n").length;
+    const endLine = startLine + text.split("\n").length - 1;
+    setSelection({ startLine, endLine, text });
+  }, [onQuote]);
 
   const loadGen = useRef(0);
 
@@ -831,9 +896,10 @@ function TextFileViewer({ filePath, cwd, sourceSessionId }: Props) {
             return null;
           }
           if (d.encoding === "base64") {
-            setError("Binary file cannot be shown as text");
+            setBinaryBase64(d.content);
             return null;
           }
+          setBinaryBase64(null);
           const payload: FileData = {
             content: d.content,
             language: d.language ?? "text",
@@ -1063,8 +1129,37 @@ function TextFileViewer({ filePath, cwd, sourceSessionId }: Props) {
           </button>
         )}
 
+        {/* Quote the selected lines into the conversation */}
+        {editing && !binaryBase64 && selection && onQuote && (
+          <button
+            type="button"
+            onClick={() => {
+              onQuote({
+                path: getRelativeFilePath(filePath, cwd),
+                startLine: selection.startLine,
+                endLine: selection.endLine,
+                text: selection.text,
+              });
+              setSelection(null);
+            }}
+            title={`Add lines ${String(selection.startLine)}-${String(selection.endLine)} to the conversation`}
+            style={{
+              minHeight: 32,
+              padding: "0 10px",
+              fontSize: 12,
+              cursor: "pointer",
+              background: "var(--accent-soft)",
+              color: "var(--accent)",
+              border: "1px solid color-mix(in srgb, var(--accent) 45%, transparent)",
+              borderRadius: "var(--radius-sm)",
+            }}
+          >
+            {`Quote ${String(selection.startLine)}-${String(selection.endLine)}`}
+          </button>
+        )}
+
         {/* Inline edit / save controls — files open directly in edit mode */}
-        {editing && (
+        {editing && !binaryBase64 && (
           <>
             <button
               type="button"
@@ -1204,7 +1299,9 @@ function TextFileViewer({ filePath, cwd, sourceSessionId }: Props) {
 
       {/* Content area */}
       <div style={{ flex: 1, minHeight: 0, overflow: "auto", background: "var(--bg)" }}>
-        {editing ? (
+        {binaryBase64 ? (
+          <HexView base64={binaryBase64} />
+        ) : editing ? (
           <div
             style={{
               display: "flex",
@@ -1215,8 +1312,15 @@ function TextFileViewer({ filePath, cwd, sourceSessionId }: Props) {
             }}
           >
             <textarea
+              ref={editorRef}
               value={draftContent}
-              onChange={(e) => setDraftContent(e.target.value)}
+              onChange={(e) => {
+                setDraftContent(e.target.value);
+                setSelection(null);
+              }}
+              onSelect={updateSelection}
+              onMouseUp={updateSelection}
+              onKeyUp={updateSelection}
               onKeyDown={(e) => {
                 if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
                   e.preventDefault();

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { SectionTitle } from "./form-controls";
 import { useI18n } from "@/i18n";
 import { call, listModels } from "@/lib/api-client";
+import { pushToast } from "@/lib/toast-store";
 import type { AgentInfo } from "@contract/types";
 
 interface Props {
@@ -19,14 +20,19 @@ export function AgentsConfig({ cwd }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyFile, setBusyFile] = useState<string | null>(null);
+  const [templates, setTemplates] = useState<Array<{ id: string; name: string; description: string }>>([]);
+  const [draft, setDraft] = useState<{ templateId: string; name: string } | null>(null);
+  const [creating, setCreating] = useState(false);
 
   const load = useCallback(async () => {
     setError(null);
     try {
-      const [listed, catalog] = await Promise.all([
+      const [listed, catalog, templateList] = await Promise.all([
         call("agents.list", cwd ? { cwd, scope: "both" } : { scope: "both" }),
         listModels(cwd ?? undefined).catch(() => null),
+        call("agents.templates").catch(() => null),
       ]);
+      setTemplates(templateList?.templates ?? []);
       setAgents(listed.agents);
       setModels(catalog ? [...new Set(catalog.models.map((model) => `${model.provider}/${model.id}`))].sort() : []);
     } catch (e) {
@@ -55,6 +61,24 @@ export function AgentsConfig({ cwd }: Props) {
     }
   }, []);
 
+  const createFromTemplate = useCallback(async () => {
+    if (!draft) return;
+    setCreating(true);
+    setError(null);
+    try {
+      await call("agents.create", { templateId: draft.templateId, name: draft.name, cwd: cwd ?? undefined });
+      pushToast({ level: "success", text: `Created agent "${draft.name}"` });
+      setDraft(null);
+      await load();
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      setError(message);
+      pushToast({ level: "error", text: "Could not create that agent", detail: message });
+    } finally {
+      setCreating(false);
+    }
+  }, [cwd, draft, load]);
+
   // A pinned model that is no longer configured must still be selectable.
   const optionsFor = useMemo(
     () => (agent: AgentInfo) => (agent.model && !models.includes(agent.model) ? [agent.model, ...models] : models),
@@ -74,6 +98,93 @@ export function AgentsConfig({ cwd }: Props) {
       {error && (
         <div style={{ fontSize: 12, color: "var(--danger)", padding: "7px 9px", background: "var(--bg-panel)" }}>
           {error}
+        </div>
+      )}
+
+      {templates.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{t("agentTemplates", "Start from a template")}</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {templates.map((template) => (
+              <button
+                key={template.id}
+                type="button"
+                title={template.description}
+                onClick={() => setDraft({ templateId: template.id, name: template.name })}
+                style={{
+                  padding: "5px 10px",
+                  fontSize: 11.5,
+                  borderRadius: "var(--radius-sm)",
+                  background: draft?.templateId === template.id ? "var(--accent-soft)" : "var(--bg-panel)",
+                  color: draft?.templateId === template.id ? "var(--accent)" : "var(--text-muted)",
+                  border: `1px solid ${
+                    draft?.templateId === template.id
+                      ? "color-mix(in srgb, var(--accent) 45%, transparent)"
+                      : "var(--border)"
+                  }`,
+                  cursor: "pointer",
+                }}
+              >
+                {template.name}
+              </button>
+            ))}
+          </div>
+          {draft && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <input
+                value={draft.name}
+                onChange={(event) => setDraft({ ...draft, name: event.target.value })}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") void createFromTemplate();
+                  if (event.key === "Escape") setDraft(null);
+                }}
+                aria-label={t("agentName", "Agent name")}
+                placeholder={t("agentName", "Agent name")}
+                autoFocus
+                style={{
+                  width: 200,
+                  padding: "5px 8px",
+                  fontSize: 12,
+                  borderRadius: "var(--radius-sm)",
+                  background: "var(--bg)",
+                  color: "var(--text)",
+                  border: "1px solid var(--border)",
+                }}
+              />
+              <button
+                type="button"
+                disabled={creating || draft.name.trim().length === 0}
+                onClick={() => void createFromTemplate()}
+                style={{
+                  padding: "5px 12px",
+                  fontSize: 12,
+                  borderRadius: "var(--radius-sm)",
+                  background: "var(--accent)",
+                  color: "var(--on-accent)",
+                  border: "none",
+                  cursor: creating ? "default" : "pointer",
+                  opacity: creating || draft.name.trim().length === 0 ? 0.6 : 1,
+                }}
+              >
+                {creating ? t("creating", "Creating…") : t("createAgent", "Create")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setDraft(null)}
+                style={{
+                  padding: "5px 10px",
+                  fontSize: 12,
+                  borderRadius: "var(--radius-sm)",
+                  background: "var(--bg-panel)",
+                  color: "var(--text-muted)",
+                  border: "1px solid var(--border)",
+                  cursor: "pointer",
+                }}
+              >
+                {t("cancelCreate", "Cancel")}
+              </button>
+            </div>
+          )}
         </div>
       )}
 

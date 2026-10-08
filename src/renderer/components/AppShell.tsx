@@ -24,6 +24,7 @@ import { QuickChannelBinding } from "./channels/QuickChannelBinding";
 import { useWorktrees } from "./session-sidebar/useWorktrees";
 import { useTheme } from "@/hooks/useTheme";
 import { GlobalSearch } from "./GlobalSearch";
+import { SubagentsPanel } from "./SubagentsPanel";
 import { ToastHost } from "./ToastHost";
 import type { GlobalSearchAction, GlobalSearchItem } from "@/lib/global-search";
 import { useIsMobile } from "@/hooks/useIsMobile";
@@ -55,6 +56,7 @@ type SessionCopyField = "file" | "id";
 const EXPLORER_TAB_ID = "explorer";
 const TASKS_TAB_ID = "tasks";
 const MEMORY_TAB_ID = "memory";
+const SUBAGENTS_TAB_ID = "subagents";
 const GIT_TAB_ID = "git";
 
 const PANEL_ICON = {
@@ -93,6 +95,16 @@ function PanelIconTasks() {
     </svg>
   );
 }
+function PanelIconAgents() {
+  return (
+    <svg {...PANEL_ICON} aria-hidden="true">
+      <circle cx="9" cy="8" r="3" />
+      <path d="M3 20a6 6 0 0 1 12 0" />
+      <path d="M16 6a3 3 0 0 1 0 6M18 20a6 6 0 0 0-3-5.2" />
+    </svg>
+  );
+}
+
 function PanelIconMemory() {
   return (
     <svg {...PANEL_ICON} aria-hidden="true">
@@ -849,6 +861,7 @@ export function AppShell() {
             "panel-git": GIT_TAB_ID,
             "panel-tasks": TASKS_TAB_ID,
             "panel-memory": MEMORY_TAB_ID,
+            "panel-subagents": SUBAGENTS_TAB_ID,
           }[item.action.id];
           setActiveFileTabId(tabId);
           openRightPanel();
@@ -899,6 +912,7 @@ export function AppShell() {
     { id: EXPLORER_TAB_ID, label: t("explorer", "Explorer"), icon: <PanelIconExplorer /> },
     { id: GIT_TAB_ID, label: t("git", "Git"), icon: <PanelIconGit /> },
     { id: TASKS_TAB_ID, label: t("tasksTitle", "Tasks"), icon: <PanelIconTasks /> },
+    { id: SUBAGENTS_TAB_ID, label: t("subagentsTitle", "Subagents"), icon: <PanelIconAgents /> },
     { id: MEMORY_TAB_ID, label: t("memoryTitle", "Memory"), icon: <PanelIconMemory /> },
   ];
   const explorerCwd = activeCwd ?? selectedSession?.cwd ?? newSessionCwd;
@@ -1989,6 +2003,9 @@ export function AppShell() {
             <div style={{ height: "100%", display: activeFileTabId === TASKS_TAB_ID ? "block" : "none" }}>
               <TaskBoard cwd={explorerCwd} />
             </div>
+            <div style={{ height: "100%", display: activeFileTabId === SUBAGENTS_TAB_ID ? "block" : "none" }}>
+              <SubagentsPanel />
+            </div>
             <div style={{ height: "100%", display: activeFileTabId === MEMORY_TAB_ID ? "block" : "none" }}>
               <MemoryPanel cwd={explorerCwd} />
             </div>
@@ -2036,6 +2053,12 @@ export function AppShell() {
                   filePath={activeFileTab.filePath}
                   cwd={activeCwd ?? undefined}
                   sourceSessionId={activeFileTab.sourceSessionId}
+                  onQuote={(quote) => {
+                    // Reference the file and inline the exact lines: the agent
+                    // gets both the path it can read and the text you meant.
+                    const block = `@${quote.path}\n\n\`\`\`\n${quote.text}\n\`\`\`\n`;
+                    chatInputRef.current?.insertText(block);
+                  }}
                 />
               ) : (
                 <div

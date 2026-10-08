@@ -415,6 +415,14 @@ export interface Api {
     params: { cwd?: string; scope?: "user" | "project" | "both" } | void;
     result: { agents: AgentInfo[]; projectAgentsDir: string | null };
   };
+  "agents.templates": {
+    params: void;
+    result: { templates: Array<{ id: string; name: string; description: string }> };
+  };
+  "agents.create": {
+    params: { templateId: string; name: string; description?: string; scope?: "user" | "project"; cwd?: string };
+    result: { filePath: string };
+  };
   "agents.setModel": {
     params: { filePath: string; model?: string | null };
     result: { ok: true };
@@ -437,6 +445,25 @@ export interface Api {
   };
   "system.defaultCwd": { params: void; result: { cwd: string } };
   "system.allowRoot": { params: { path: string }; result: { ok: true } };
+  "subagents.list": {
+    params: void;
+    result: {
+      runs: Array<{
+        id: string;
+        agent: string;
+        task: string;
+        model?: string;
+        cwd: string;
+        status: "running" | "done" | "failed" | "cancelled";
+        startedAt: number;
+        finishedAt?: number;
+        lastLine?: string;
+        error?: string;
+        tokens?: number;
+      }>;
+    };
+  };
+
   "system.runningCount": { params: void; result: { count: number; sessionIds: string[] } };
 }
 

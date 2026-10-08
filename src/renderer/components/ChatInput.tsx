@@ -101,6 +101,8 @@ interface Props {
 export interface ChatInputHandle {
   insertText: (text: string) => void;
   insertIfEmpty: (text: string) => void;
+  /** Append after whatever is typed; never replaces the draft. */
+  appendText: (text: string) => void;
   prependText: (text: string) => void;
   addImages: (files: File[]) => void;
 }
@@ -383,6 +385,21 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
         ta.focus();
         ta.style.height = "auto";
         ta.style.height = `${Math.min(ta.scrollHeight, 200)}px`;
+      });
+    },
+    appendText(text: string) {
+      if (!text.trim()) return;
+      const ta = textareaRef.current;
+      const current = ta ? ta.value : value;
+      const combined = [current, text].filter((part) => part.trim()).join("\n\n");
+      setValue(combined);
+      setAtQuery(null);
+      requestAnimationFrame(() => {
+        if (!ta) return;
+        ta.focus();
+        ta.style.height = "auto";
+        ta.style.height = `${Math.min(ta.scrollHeight, 200)}px`;
+        ta.setSelectionRange(ta.value.length, ta.value.length);
       });
     },
     prependText(text: string) {
