@@ -6,20 +6,18 @@ import {
   useEffect,
   useMemo,
   useSyncExternalStore,
-  type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { ProjectRenameDialog } from "./ProjectRenameDialog";
+import { EXPLORER_TAB_ID, RightPanel } from "./RightPanel";
+import type { Tab } from "./TabBar";
 import { SessionInfoPanel } from "./SessionInfoPanel";
 import { SessionSidebar } from "./SessionSidebar";
 import { StatusBar } from "./StatusBar";
 import { WORKSPACE_VIEWS } from "./views/AppViews";
 import { ChatWindow } from "./ChatWindow";
-import { FileExplorer } from "./FileExplorer";
-import { FileViewer } from "./FileViewer";
 import { WindowControls } from "./WindowControls";
-import { TabBar, type Tab } from "./TabBar";
 import { SettingsConfig, type SettingsTab } from "./SettingsConfig";
 import { QuickChannelBinding } from "./channels/QuickChannelBinding";
 import { useWorktrees } from "./session-sidebar/useWorktrees";
@@ -50,8 +48,6 @@ import type { SessionInfo } from "@/lib/types";
 import type { ChatInputHandle } from "./ChatInput";
 import type { SessionStatsInfo } from "@/lib/pi-types";
 import type { ChannelsSnapshot } from "@shared/channel-types";
-
-const EXPLORER_TAB_ID = "explorer";
 
 const PANEL_ICON = {
   width: 15,
@@ -1515,227 +1511,34 @@ export function AppShell() {
             </div>
           </div>
 
-          {/* Right panel: Explorer and file previews — always mounted, width animated via CSS */}
-          <div
-            className={`right-panel-container${rightPanelOpen ? " right-panel-open" : " right-panel-closed"}${rightPanelResizing ? " right-panel-resizing" : ""}`}
-            style={
-              {
-                display: "flex",
-                flexDirection: "column",
-                borderLeft: "1px solid var(--border)",
-                background: "var(--bg)",
-                "--right-panel-width": `${rightPanelWidth}px`,
-                "--right-panel-min-width": `${rightPanelBounds.minWidth}px`,
-              } as CSSProperties
-            }
-          >
-            <div
-              className="right-panel-resizer"
-              role="separator"
-              aria-label={t("resizeRightPanel", "Resize right panel")}
-              aria-orientation="vertical"
-              aria-valuemin={rightPanelBounds.minWidth}
-              aria-valuemax={rightPanelBounds.maxWidth}
-              aria-valuenow={Math.round(rightPanelWidth)}
-              aria-valuetext={`${Math.round(rightPanelWidth)} pixels`}
-              tabIndex={isMobile ? -1 : 0}
-              onPointerDown={handleRightPanelResizeStart}
-              onKeyDown={handleRightPanelResizeKeyDown}
-            />
-            {/* Right panel tab bar */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                flexShrink: 0,
-                background: "var(--bg-panel)",
-                borderBottom: "1px solid var(--border)",
-                height: 36,
-                paddingRight: 36 + windowControlsWidth,
-                boxSizing: "border-box",
-              }}
-            >
-              {/* Project panels: an icon rail, so the file tabs keep the width.
-                Scope matters here — these four describe the repository, the tabs
-                after the divider belong to this conversation. */}
-              <div
-                role="tablist"
-                aria-label={t("projectPanels", "Project panels")}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 2,
-                  padding: 3,
-                  margin: "0 6px",
-                  flexShrink: 0,
-                  background: "var(--control-chip-bg)",
-                  border: "1px solid var(--control-chip-border)",
-                  borderRadius: "var(--radius-md)",
-                }}
-              >
-                {panelTabs.map((panel) => {
-                  const active = activeFileTabId === panel.id;
-                  return (
-                    <button
-                      key={panel.id}
-                      type="button"
-                      role="tab"
-                      aria-selected={active}
-                      title={panel.label}
-                      aria-label={panel.label}
-                      data-panel-tab={panel.id}
-                      onClick={() => setActiveFileTabId(panel.id)}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: 28,
-                        height: 28,
-                        padding: 0,
-                        border: "none",
-                        borderRadius: "var(--radius-md)",
-                        background: active ? "var(--accent-soft)" : "transparent",
-                        color: active ? "var(--accent)" : "var(--text-muted)",
-                        cursor: "pointer",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!active) e.currentTarget.style.color = "var(--text)";
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!active) e.currentTarget.style.color = "var(--text-muted)";
-                      }}
-                    >
-                      {panel.icon}
-                    </button>
-                  );
-                })}
-              </div>
-              <div
-                aria-hidden="true"
-                style={{ width: 1, height: 18, background: "var(--border)", flexShrink: 0, margin: "0 6px" }}
-              />
-              <div style={{ flex: 1, overflow: "hidden", display: "flex", alignItems: "center", minWidth: 0 }}>
-                <div style={{ flex: 1, overflow: "hidden", minWidth: 0 }}>
-                  <TabBar
-                    tabs={allTabs}
-                    activeTabId={activeFileTabId ?? ""}
-                    onSelectTab={setActiveFileTabId}
-                    onCloseTab={handleCloseFileTab}
-                  />
-                </div>
-              </div>
-              {activeFileTabId === EXPLORER_TAB_ID && explorerCwd && (
-                <button
-                  type="button"
-                  onClick={() => setExplorerRefreshKey((key) => key + 1)}
-                  title={t("refreshExplorer", "Refresh explorer")}
-                  aria-label={t("refreshExplorer", "Refresh explorer")}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    width: 34,
-                    height: 34,
-                    padding: 0,
-                    marginRight: 2,
-                    flexShrink: 0,
-                    background: "var(--control-chip-bg)",
-                    border: "1px solid var(--control-chip-border)",
-                    color: "var(--control-chip-fg)",
-                    cursor: "pointer",
-                    borderRadius: "var(--radius-sm)",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = "var(--accent)";
-                    e.currentTarget.style.background = "var(--control-chip-bg-hover)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "var(--control-chip-fg)";
-                    e.currentTarget.style.background = "var(--control-chip-bg)";
-                  }}
-                >
-                  <svg
-                    width="13"
-                    height="13"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
-                    <path d="M3 3v5h5" />
-                  </svg>
-                </button>
-              )}
-            </div>
-
-            {/* Explorer / Terminal / file content - mounted persistently so a
-              running terminal survives tab switches (display toggled). */}
-            <div style={{ flex: 1, overflow: "hidden" }}>
-              <div style={{ height: "100%", display: activeFileTabId === EXPLORER_TAB_ID ? "block" : "none" }}>
-                {explorerCwd ? (
-                  <div style={{ height: "100%", overflowY: "auto", overflowX: "hidden", paddingTop: 4 }}>
-                    <FileExplorer
-                      cwd={explorerCwd}
-                      onOpenFile={handleOpenFile}
-                      refreshKey={explorerRefreshKey}
-                      onAtMention={handleAtMention}
-                    />
-                  </div>
-                ) : (
-                  <div
-                    style={{
-                      height: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "var(--text-dim)",
-                      fontSize: 12,
-                    }}
-                  >
-                    {t("selectProjectPlaceholder", "Select a project to browse files")}
-                  </div>
-                )}
-              </div>
-              <div
-                style={{
-                  height: "100%",
-                  display: panelTabs.some((panel) => panel.id === activeFileTabId) ? "none" : "block",
-                }}
-              >
-                {activeFileTab?.filePath ? (
-                  <FileViewer
-                    key={activeFileTab.id ?? activeFileTab.filePath}
-                    filePath={activeFileTab.filePath}
-                    cwd={activeCwd ?? undefined}
-                    sourceSessionId={activeFileTab.sourceSessionId}
-                    onQuote={(quote) => {
-                      // Reference the file and inline the exact lines: the agent
-                      // gets both the path it can read and the text you meant.
-                      const block = `@${quote.path}\n\n\`\`\`\n${quote.text}\n\`\`\`\n`;
-                      chatInputRef.current?.insertText(block);
-                    }}
-                  />
-                ) : (
-                  <div
-                    style={{
-                      height: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "var(--text-dim)",
-                      fontSize: 12,
-                    }}
-                  >
-                    Select Explorer or open a file
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+          <RightPanel
+            open={rightPanelOpen}
+            resizing={rightPanelResizing}
+            width={rightPanelWidth}
+            bounds={rightPanelBounds}
+            onResizeStart={handleRightPanelResizeStart}
+            onResizeKeyDown={handleRightPanelResizeKeyDown}
+            isMobile={isMobile}
+            windowControlsWidth={windowControlsWidth}
+            panelTabs={panelTabs}
+            activePanelId={activeFileTabId}
+            onSelectPanel={setActiveFileTabId}
+            tabs={allTabs}
+            activeFileTab={activeFileTab ?? undefined}
+            onCloseTab={handleCloseFileTab}
+            onOpenFile={(filePath) => handleOpenFile(filePath, getFileName(filePath))}
+            explorerCwd={explorerCwd}
+            explorerRefreshKey={explorerRefreshKey}
+            onRefreshExplorer={() => setExplorerRefreshKey((key) => key + 1)}
+            onAtMention={handleAtMention}
+            activeCwd={activeCwd}
+            onQuote={(quote) => {
+              // Reference the file and inline the exact lines: the agent gets
+              // both the path it can read and the text you meant.
+              const block = `@${quote.path}\n\n\`\`\`\n${quote.text}\n\`\`\`\n`;
+              chatInputRef.current?.insertText(block);
+            }}
+          />
         </div>
 
         {showChat && (
@@ -1758,6 +1561,7 @@ export function AppShell() {
           />
         )}
       </div>
+
       {/* File panel toggle — always visible at top-right */}
       <button
         onClick={handleRightPanelToggle}
