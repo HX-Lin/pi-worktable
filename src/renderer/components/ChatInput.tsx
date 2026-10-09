@@ -25,6 +25,7 @@ import {
   type FileIndexEntry,
 } from "@/lib/file-fuzzy";
 import { FolderIcon, getFileIcon } from "./FileIcons";
+import { SLASH_SOURCE_ORDER, SlashCommandPalette, type SlashCommandSource } from "./SlashCommandPalette";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { fileIndex as fetchFileIndex } from "@/lib/api-client";
 import { useI18n } from "@/i18n";
@@ -138,8 +139,6 @@ type SlashCommandPaletteItem =
       source: "builtin";
     };
 
-type SlashCommandSource = SlashCommandPaletteItem["source"];
-
 const BUILTIN_SLASH_COMMANDS: SlashCommandPaletteItem[] = [
   { name: "compact", description: "Compress context, optionally with instructions", source: "builtin" },
   { name: "reload", description: "Reload extensions, skills, prompts, and tools", source: "builtin" },
@@ -149,20 +148,6 @@ const BUILTIN_SLASH_COMMANDS: SlashCommandPaletteItem[] = [
 ];
 
 const SLASH_SOURCES: SlashCommandSource[] = ["builtin", "extension", "prompt", "skill"];
-
-const SLASH_SOURCE_GROUP_LABEL: Record<SlashCommandSource, string> = {
-  builtin: "Built-in",
-  extension: "Extensions",
-  prompt: "Prompts",
-  skill: "Skills",
-};
-
-const SLASH_SOURCE_ORDER: Record<SlashCommandSource, number> = {
-  builtin: 0,
-  extension: 1,
-  prompt: 2,
-  skill: 3,
-};
 
 function slashMatchRank(command: SlashCommandPaletteItem, query: string): number {
   const name = command.name.toLowerCase();
@@ -1407,141 +1392,16 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
         {/* Main input */}
         <div style={{ position: "relative" }}>
           {slashMenuOpen && slashQuery !== null && (
-            <div
-              style={{
-                position: "absolute",
-                left: 0,
-                right: 0,
-                bottom: "calc(100% + 8px)",
-                zIndex: 120,
-                background: "var(--bg)",
-                border: "1px solid var(--border)",
-                borderRadius: "var(--radius-md)",
-                boxShadow: "var(--shadow-md)",
-                overflow: "hidden",
-                maxHeight: "min(56vh, 460px)",
-              }}
-            >
-              <div
-                style={{
-                  padding: "8px 10px",
-                  borderBottom: "1px solid var(--border)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 8,
-                  fontSize: 11,
-                  color: "var(--text-dim)",
-                }}
-              >
-                <span>
-                  {slashCommandsLoading ? "Loading commands..." : `Slash commands · ${slashCommandCountLabel}`}
-                </span>
-                <span style={{ fontFamily: "var(--font-mono)" }}>Tab / Enter</span>
-              </div>
-              <div style={{ maxHeight: "calc(min(56vh, 460px) - 34px)", overflowY: "auto", padding: 10 }}>
-                {!slashCommandsLoading && filteredSlashCommands.length === 0 ? (
-                  <div style={{ padding: "2px 2px 4px", fontSize: 12, color: "var(--text-dim)" }}>
-                    No extension, prompt, or skill commands found
-                  </div>
-                ) : (
-                  groupedSlashCommands.map((group) => (
-                    <section key={group.source} style={{ marginBottom: 12 }}>
-                      <div
-                        style={{
-                          position: "sticky",
-                          top: -10,
-                          zIndex: 1,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          gap: 8,
-                          padding: "4px 0 6px",
-                          background: "var(--bg)",
-                          color: "var(--text-dim)",
-                          fontSize: 10,
-                          fontWeight: 600,
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        <span>{SLASH_SOURCE_GROUP_LABEL[group.source]}</span>
-                        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 500 }}>{group.items.length}</span>
-                      </div>
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                          gap: 8,
-                        }}
-                      >
-                        {group.items.map(({ command, index }) => {
-                          const active = index === slashActiveIndex;
-                          return (
-                            <button
-                              key={`${command.source}:${command.name}`}
-                              ref={(node) => {
-                                slashItemRefs.current[index] = node;
-                              }}
-                              type="button"
-                              onMouseDown={(e) => {
-                                e.preventDefault();
-                                applySlashCommand(command);
-                              }}
-                              onMouseEnter={() => setSlashActiveIndex(index)}
-                              style={{
-                                width: "100%",
-                                minWidth: 0,
-                                minHeight: 58,
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: 4,
-                                justifyContent: "center",
-                                padding: "9px 10px",
-                                border: `1px solid ${active ? "var(--accent)" : "var(--border)"}`,
-                                borderRadius: "var(--radius-sm)",
-                                background: active ? "var(--bg-selected)" : "var(--bg-panel)",
-                                color: "var(--text)",
-                                cursor: "pointer",
-                                textAlign: "left",
-                                boxShadow: active
-                                  ? "0 0 0 1px color-mix(in srgb, var(--accent) 28%, transparent)"
-                                  : "none",
-                              }}
-                            >
-                              <span
-                                style={{
-                                  fontSize: 13,
-                                  fontFamily: "var(--font-mono)",
-                                  overflowWrap: "anywhere",
-                                  wordBreak: "break-word",
-                                }}
-                              >
-                                /{command.name}
-                              </span>
-                              {command.description && (
-                                <span
-                                  style={{
-                                    display: "-webkit-box",
-                                    WebkitBoxOrient: "vertical",
-                                    WebkitLineClamp: 2,
-                                    overflow: "hidden",
-                                    fontSize: 11,
-                                    lineHeight: 1.35,
-                                    color: "var(--text-dim)",
-                                  }}
-                                >
-                                  {command.description}
-                                </span>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </section>
-                  ))
-                )}
-              </div>
-            </div>
+            <SlashCommandPalette
+              loading={Boolean(slashCommandsLoading)}
+              countLabel={slashCommandCountLabel}
+              groups={groupedSlashCommands}
+              isEmpty={filteredSlashCommands.length === 0}
+              activeIndex={slashActiveIndex}
+              onActiveIndexChange={setSlashActiveIndex}
+              itemRefs={slashItemRefs}
+              onPick={applySlashCommand}
+            />
           )}
           {atMenuOpen &&
             atQuery !== null &&
