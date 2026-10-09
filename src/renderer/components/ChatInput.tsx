@@ -8,7 +8,6 @@ import React, {
   forwardRef,
   KeyboardEvent,
 } from "react";
-import { createPortal } from "react-dom";
 import type {
   BuiltinSlashCommandResult,
   CompactResultInfo,
@@ -25,6 +24,7 @@ import {
   type FileIndexEntry,
 } from "@/lib/file-fuzzy";
 import { AtMentionMenu } from "./AtMentionMenu";
+import { ModelSelector } from "./ModelSelector";
 import { SLASH_SOURCE_ORDER, SlashCommandPalette, type SlashCommandSource } from "./SlashCommandPalette";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { fileIndex as fetchFileIndex } from "@/lib/api-client";
@@ -1540,231 +1540,29 @@ export const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
                     <polyline points="21 15 16 10 5 21" />
                   </svg>
                 </button>
-                {/* Model selector — visible always, disabled during streaming */}
-                {(onModelsRefresh || (modelOptions.length > 0 && currentName && onModelChange)) && (
-                  <div
-                    ref={dropdownRef}
-                    style={{ position: "relative", flex: isMobile ? "1 1 auto" : undefined, minWidth: 0 }}
-                  >
-                    <button
-                      ref={modelButtonRef}
-                      onClick={() => {
-                        updateModelDropdownRect();
-                        setModelDropdownOpen((v) => !v);
-                      }}
-                      disabled={isStreaming}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6,
-                        justifyContent: isMobile ? "flex-start" : undefined,
-                        padding: isMobile ? "8px 10px" : "8px 12px",
-                        height: 32,
-                        width: isMobile ? "100%" : undefined,
-                        maxWidth: isMobile ? "100%" : 220,
-                        overflow: "hidden",
-                        background: modelDropdownOpen ? "var(--bg-selected)" : "var(--control-chip-bg)",
-                        border: "1px solid var(--control-chip-border)",
-                        borderRadius: "var(--radius-md)",
-                        color: "var(--control-chip-fg)",
-                        cursor: isStreaming ? "not-allowed" : "pointer",
-                        fontSize: 12,
-                        opacity: isStreaming ? 0.5 : 1,
-                        transition: "background 0.12s, color 0.12s",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (isStreaming) return;
-                        e.currentTarget.style.background = "var(--bg-hover)";
-                        e.currentTarget.style.color = "var(--text)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = modelDropdownOpen ? "var(--bg-selected)" : "var(--bg-panel)";
-                        e.currentTarget.style.color = "var(--text-muted)";
-                      }}
-                    >
-                      <svg
-                        width="11"
-                        height="11"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <rect x="4" y="4" width="16" height="16" rx="2" />
-                        <rect x="9" y="9" width="6" height="6" />
-                        <line x1="9" y1="1" x2="9" y2="4" />
-                        <line x1="15" y1="1" x2="15" y2="4" />
-                        <line x1="9" y1="20" x2="9" y2="23" />
-                        <line x1="15" y1="20" x2="15" y2="23" />
-                        <line x1="20" y1="9" x2="23" y2="9" />
-                        <line x1="20" y1="14" x2="23" y2="14" />
-                        <line x1="1" y1="9" x2="4" y2="9" />
-                        <line x1="1" y1="14" x2="4" y2="14" />
-                      </svg>
-                      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>
-                        {currentName ?? t("models", "Models")}
-                      </span>
-                    </button>
-                    {modelDropdownOpen &&
-                      modelDropdownRect &&
-                      typeof document !== "undefined" &&
-                      createPortal(
-                        (() => {
-                          const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
-                          const bottom = viewportHeight - modelDropdownRect.top + 6;
-                          const maxH = Math.max(120, Math.min(modelDropdownRect.top - 8, viewportHeight * 0.6));
-                          // On mobile, pin to a small left margin and cap width to the
-                          // viewport so long model names never push the panel off-screen.
-                          const panelPos: React.CSSProperties = isMobile
-                            ? { left: 8, right: 8, maxWidth: "calc(100vw - 16px)" }
-                            : { left: modelDropdownRect.left, width: "max-content", minWidth: modelDropdownRect.width };
-                          return (
-                            <div
-                              ref={modelDropdownPanelRef}
-                              style={{
-                                position: "fixed",
-                                bottom,
-                                ...panelPos,
-                                zIndex: 500,
-                                background: "var(--bg)",
-                                border: "1px solid var(--border)",
-                                borderRadius: "var(--radius-md)",
-                                boxShadow: "var(--shadow-md)",
-                                overflow: "hidden",
-                                maxHeight: maxH,
-                                overflowY: "auto",
-                              }}
-                            >
-                              {onModelsRefresh && (
-                                <div
-                                  style={{
-                                    padding: "7px 8px",
-                                    borderBottom: "1px solid var(--border)",
-                                    minWidth: 240,
-                                  }}
-                                >
-                                  <button
-                                    type="button"
-                                    disabled={modelRefreshing}
-                                    onClick={() => void onModelsRefresh?.()}
-                                    style={{
-                                      width: "100%",
-                                      padding: "7px 9px",
-                                      border: "1px solid var(--border)",
-                                      borderRadius: "var(--radius-sm)",
-                                      background: "var(--bg-panel)",
-                                      color: "var(--text)",
-                                      cursor: modelRefreshing ? "wait" : "pointer",
-                                      fontSize: 12,
-                                      textAlign: "left",
-                                    }}
-                                  >
-                                    {modelRefreshing
-                                      ? t("refreshingModels", "Refreshing model directory…")
-                                      : t("refreshModels", "Refresh model directory")}
-                                  </button>
-                                  {modelCatalog?.source === "offline" && (
-                                    <div style={{ marginTop: 6, color: "var(--text-dim)", fontSize: 11 }}>
-                                      {t("modelsOfflineCache", "Offline: using the cached model directory.")}
-                                    </div>
-                                  )}
-                                  {(modelCatalog?.warnings ?? []).map((warning) => (
-                                    <div
-                                      key={`${warning.provider}:${warning.code}`}
-                                      role="alert"
-                                      style={{
-                                        marginTop: 6,
-                                        color: "var(--warning)",
-                                        fontSize: 11,
-                                        whiteSpace: "normal",
-                                      }}
-                                    >
-                                      {warning.message}
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                              {modelsByProvider.map((group, gi) => (
-                                <div key={group.provider}>
-                                  {modelsByProvider.length > 1 && (
-                                    <div
-                                      style={{
-                                        padding: "6px 12px 4px",
-                                        fontSize: 10,
-                                        fontWeight: 600,
-                                        color: "var(--text-dim)",
-                                        textTransform: "uppercase",
-                                        letterSpacing: "0.07em",
-                                        borderTop: gi > 0 ? "1px solid var(--border)" : "none",
-                                      }}
-                                    >
-                                      {group.provider}
-                                    </div>
-                                  )}
-                                  {group.options.map((opt) => {
-                                    const isActive = opt.modelId === model?.modelId && opt.provider === model?.provider;
-                                    return (
-                                      <button
-                                        key={`${opt.provider}:${opt.modelId}`}
-                                        onClick={() => {
-                                          setModelDropdownOpen(false);
-                                          if (!isActive || isAutoModelSelection)
-                                            onModelChange?.(opt.provider, opt.modelId);
-                                        }}
-                                        style={{
-                                          display: "flex",
-                                          alignItems: "center",
-                                          gap: 8,
-                                          width: "100%",
-                                          padding: "7px 12px",
-                                          background: isActive ? "var(--bg-selected)" : "none",
-                                          border: "none",
-                                          color: isActive ? "var(--text)" : "var(--text-muted)",
-                                          cursor: "pointer",
-                                          fontSize: 12,
-                                          textAlign: "left",
-                                          fontWeight: isActive ? 600 : 400,
-                                          whiteSpace: "nowrap",
-                                        }}
-                                        onMouseEnter={(e) => {
-                                          if (!isActive) e.currentTarget.style.background = "var(--bg-hover)";
-                                        }}
-                                        onMouseLeave={(e) => {
-                                          if (!isActive) e.currentTarget.style.background = "none";
-                                        }}
-                                      >
-                                        {isActive ? (
-                                          <svg
-                                            width="10"
-                                            height="10"
-                                            viewBox="0 0 10 10"
-                                            fill="none"
-                                            stroke="var(--accent)"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            style={{ flexShrink: 0 }}
-                                          >
-                                            <polyline points="1.5 5 4 7.5 8.5 2.5" />
-                                          </svg>
-                                        ) : (
-                                          <span style={{ width: 10, flexShrink: 0 }} />
-                                        )}
-                                        {opt.name}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              ))}
-                            </div>
-                          );
-                        })(),
-                        document.body,
-                      )}
-                  </div>
-                )}
+                <ModelSelector
+                  options={modelOptions}
+                  byProvider={modelsByProvider}
+                  currentName={currentName}
+                  activeModel={model ?? null}
+                  autoSelection={isAutoModelSelection === true}
+                  open={modelDropdownOpen}
+                  onToggle={() => {
+                    updateModelDropdownRect();
+                    setModelDropdownOpen((v) => !v);
+                  }}
+                  onClose={() => setModelDropdownOpen(false)}
+                  onSelect={(provider, modelId) => onModelChange?.(provider, modelId)}
+                  onRefresh={onModelsRefresh}
+                  refreshing={modelRefreshing === true}
+                  catalog={modelCatalog}
+                  rect={modelDropdownRect}
+                  containerRef={dropdownRef}
+                  buttonRef={modelButtonRef}
+                  panelRef={modelDropdownPanelRef}
+                  isMobile={isMobile}
+                  isStreaming={isStreaming}
+                />
               </div>
 
               {/* spacer */}
