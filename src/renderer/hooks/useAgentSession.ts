@@ -1,4 +1,5 @@
-import { useState, useCallback, useRef, useEffect, useLayoutEffect, useReducer } from "react";
+import { useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState } from "react";
+
 import type {
   AgentMessage,
   AssistantContentBlock,
@@ -6,11 +7,10 @@ import type {
   ExtensionUiRequest,
   ExtensionWidgetItem,
   ImageContent,
-  SessionInfo,
-  SessionTreeNode,
   TextContent,
 } from "@/lib/types";
-import type { ModelCatalogStatus, ModelsListResult, SessionDetail, SessionRuntimeState } from "@contract/types";
+import type { ModelCatalogStatus, ModelsListResult } from "@contract/types";
+import type { SessionStatsInfo } from "@/lib/pi-types";
 import { normalizeToolCalls } from "@/lib/normalize";
 import { sendAgentCommand } from "@/lib/agent-client";
 import { pushToast } from "@/lib/toast-store";
@@ -22,15 +22,15 @@ import {
   getSessionContextPage,
   getSessionEntryContent,
   listModels,
-  newAgent,
   refreshModels as requestModelsRefresh,
+  newAgent,
   subscribeAgentEvents,
   subscribeSessionsChanged,
 } from "@/lib/api-client";
 import { getToolNamesForPreset, type ToolEntry } from "@/lib/tool-presets";
-import type { SessionStatsInfo } from "@/lib/pi-types";
 import { subscribeActiveSessionLiveSync } from "./active-session-live-sync";
 import { isNearChatBottom, shouldStopChatAutoFollow } from "./chat-scroll-policy";
+import { mergeHistoryTail, prependHistoryPage } from "@/lib/session-pagination";
 import {
   consumeSessionLoadTrace,
   failSessionLoadTrace,
@@ -39,327 +39,67 @@ import {
   markSessionLoadPhase,
   type SessionLoadTrace,
 } from "@/lib/session-performance";
-import { mergeHistoryTail, prependHistoryPage } from "@/lib/session-pagination";
+import {
+  AGENT_STATE_RECONCILE_MS,
+  DEFERRED_CONTENT_CACHE_SIZE,
+  EVENT_STREAM_CONNECT_TIMEOUT_MS,
+  HISTORY_PAGE_MAX_BYTES,
+  INITIAL_HISTORY_TURNS,
+  NOTICE_EXIT_ANIMATION_MS,
+  NOTICE_VISIBLE_MS,
+  PROGRAMMATIC_SCROLL_IGNORE_MS,
+  PROMPT_SETTLE_INITIAL_DELAY_MS,
+  PROMPT_SETTLE_MAX_MS,
+  PROMPT_SETTLE_POLL_MS,
+  SCROLL_KEYS,
+  USER_SCROLL_INTENT_MS,
+  createNoticeId,
+  delay,
+  entriesFromQueue,
+  normalizeQueuedMessages,
+  noticeReducer,
+  notifyIfUnfocused,
+  queuedMessagesFrom,
+  readCompactResult,
+  streamReducer,
+  userMessageKey,
+  type AgentEvent,
+  type AgentPhase,
+  type AgentStateResponse,
+  type AttachedImage,
+  type BuiltinSlashCommandResult,
+  type CompactCommandResult,
+  type CompactResultInfo,
+  EventStreamConnectionError,
+  type EventStreamConnectionResult,
+  type ExtensionUiCustomRequest,
+  type ExtensionUiDialogRequest,
+  type LastAssistantTextResponse,
+  type ModelEntry,
+  type NoticeType,
+  type QueuedEntry,
+  type QueuedKind,
+  type QueuedMessages,
+  type SelectedModel,
+  type SessionData,
+  type SlashCommandInfo,
+  type SlashCommandsResponse,
+  type ThinkingLevelOption,
+  type UseAgentSessionOptions,
+} from "./agent-session/helpers";
 
-export type SessionData = SessionDetail;
-type AgentStateResponse = SessionRuntimeState;
-
-interface StreamingState {
-  isStreaming: boolean;
-  streamingMessage: Partial<AgentMessage> | null;
-}
-
-type StreamAction =
-  { type: "start" } | { type: "update"; message: Partial<AgentMessage> } | { type: "end" } | { type: "reset" };
-
-function streamReducer(state: StreamingState, action: StreamAction): StreamingState {
-  switch (action.type) {
-    case "start":
-      return { isStreaming: true, streamingMessage: null };
-    case "update":
-      return { isStreaming: true, streamingMessage: action.message };
-    case "end":
-    case "reset":
-      return { isStreaming: false, streamingMessage: null };
-    default:
-      return state;
-  }
-}
-
-interface AgentEvent {
-  type: string;
-  [key: string]: unknown;
-}
-
-interface CompactCommandResult {
-  tokensBefore?: number;
-  estimatedTokensAfter?: number;
-}
-
-interface LastAssistantTextResponse {
-  text?: string;
-}
-
-export interface QueuedMessages {
-  steering: string[];
-  followUp: string[];
-}
-
-function normalizeQueuedMessages(q?: { steering?: string[]; followUp?: string[] } | null): QueuedMessages {
-  return { steering: q?.steering ?? [], followUp: q?.followUp ?? [] };
-}
-
-/**
- * Raise a system notification when the window is not focused.
- *
- * The gate can block a call for up to ten minutes waiting for an answer, so an approval that only
- * exists inside an unfocused window is a stalled turn nobody notices. Clicking the notification
- * brings the app forward.
- */
-function notifyIfUnfocused(title: string, body: string): void {
-  try {
-    if (typeof document !== "undefined" && document.hasFocus()) return;
-    if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
-    const notification = new Notification(title, { body });
-    notification.onclick = () => {
-      window.focus();
-      notification.close();
-    };
-  } catch {
-    // Notifications are a convenience; never let them break the turn.
-  }
-}
-
-type ExtensionUiDialogRequest = Extract<ExtensionUiRequest, { method: "select" | "confirm" | "input" | "editor" }>;
-type ExtensionUiCustomRequest = Extract<ExtensionUiRequest, { method: "custom" }>;
-export type NoticeType = "info" | "success" | "warning" | "error";
-
-export type NoticeItem = {
-  id: string;
-  message: string;
-  type: NoticeType;
-  exiting?: boolean;
-};
-
-type NoticeState = {
-  visible: NoticeItem[];
-  pending: NoticeItem[];
-};
-
-type NoticeAction =
-  { type: "add"; notice: NoticeItem } | { type: "mark_oldest_exiting" } | { type: "remove"; id: string };
-
-export type AgentPhase =
-  | { kind: "waiting_model" }
-  | { kind: "running_command" }
-  | { kind: "running_tools"; tools: { id: string; name: string }[] }
-  | null;
-
-export interface CompactResultInfo {
-  reason: "manual" | "threshold" | "overflow" | "auto" | string;
-  tokensBefore: number;
-  estimatedTokensAfter: number;
-}
-
-export interface SlashCommandInfo {
-  name: string;
-  description?: string;
-  source: "extension" | "prompt" | "skill";
-  sourceInfo?: {
-    path: string;
-    source: string;
-    scope: "user" | "project" | "temporary";
-    origin: "package" | "top-level";
-    baseDir?: string;
-  };
-}
-
-export type BuiltinSlashCommandResult =
-  { handled: false } | { handled: true; message?: string; error?: string; action?: "openSessionStats" };
-
-export interface UseAgentSessionOptions {
-  session: SessionInfo | null;
-  newSessionCwd: string | null;
-  onAgentEnd?: () => void;
-  onSessionCreated?: (session: SessionInfo) => void;
-  onSessionForked?: (newSessionId: string) => void;
-  modelsRefreshKey?: number;
-  chatInputRef?: React.RefObject<ChatInputHandle | null>;
-  onBranchDataChange?: (
-    tree: SessionTreeNode[],
-    activeLeafId: string | null,
-    onLeafChange: (leafId: string | null) => void,
-  ) => void;
-  onSystemPromptChange?: (prompt: string | null) => void;
-  onSessionStatsPanelOpen?: () => void;
-  setToolPreset?: (preset: "none" | "default" | "full") => void;
-}
-
-export type ThinkingLevelOption = "auto" | "off" | "minimal" | "low" | "medium" | "high" | "xhigh";
-
-const PROGRAMMATIC_SCROLL_IGNORE_MS = 700;
-const USER_SCROLL_INTENT_MS = 1200;
-const PROMPT_SETTLE_INITIAL_DELAY_MS = 800;
-const PROMPT_SETTLE_POLL_MS = 600;
-const PROMPT_SETTLE_MAX_MS = 20_000;
-const AGENT_STATE_RECONCILE_MS = 15_000;
-const EVENT_STREAM_CONNECT_TIMEOUT_MS = 5_000;
-const INITIAL_HISTORY_TURNS = 20;
-const HISTORY_PAGE_MAX_BYTES = 1024 * 1024;
-const DEFERRED_CONTENT_CACHE_SIZE = 12;
-const MAX_NOTICES = 5;
-const NOTICE_VISIBLE_MS = 5000;
-const NOTICE_EXIT_ANIMATION_MS = 180;
-const SCROLL_KEYS = new Set(["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " ", "Space", "Spacebar"]);
-
-type EventStreamConnectionStatus = "connected" | "timeout" | "closed";
-
-type EventStreamConnectionResult = {
-  status: EventStreamConnectionStatus;
-  unsubscribe: () => void;
-};
-
-class EventStreamConnectionError extends Error {
-  constructor(public readonly status: Exclude<EventStreamConnectionStatus, "connected">) {
-    super(
-      status === "timeout"
-        ? "Timed out connecting to the agent event stream. Please try again."
-        : "Failed to connect to the agent event stream. Please try again.",
-    );
-    this.name = "EventStreamConnectionError";
-  }
-}
-
-function createNoticeId(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
-  }
-  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
-
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function markOldestNoticeExiting(notices: NoticeItem[]): NoticeItem[] {
-  const index = notices.findIndex((notice) => !notice.exiting);
-  if (index === -1) return notices;
-  return notices.map((notice, i) => (i === index ? { ...notice, exiting: true } : notice));
-}
-
-function fillPendingNotices(visible: NoticeItem[], pending: NoticeItem[]): NoticeState {
-  let nextVisible = visible;
-  let nextPending = pending;
-  while (nextPending.length > 0 && nextVisible.length < MAX_NOTICES) {
-    const [next, ...rest] = nextPending;
-    nextVisible = [...nextVisible, next];
-    nextPending = rest;
-  }
-  if (nextPending.length > 0 && !nextVisible.some((notice) => notice.exiting)) {
-    nextVisible = markOldestNoticeExiting(nextVisible);
-  }
-  return { visible: nextVisible, pending: nextPending };
-}
-
-function noticeReducer(state: NoticeState, action: NoticeAction): NoticeState {
-  switch (action.type) {
-    case "add": {
-      if (state.visible.some((notice) => notice.exiting) || state.visible.length >= MAX_NOTICES) {
-        return {
-          visible: state.visible.some((notice) => notice.exiting)
-            ? state.visible
-            : markOldestNoticeExiting(state.visible),
-          pending: [...state.pending, action.notice],
-        };
-      }
-      return { ...state, visible: [...state.visible, action.notice] };
-    }
-    case "mark_oldest_exiting":
-      return { ...state, visible: markOldestNoticeExiting(state.visible) };
-    case "remove": {
-      const visible = state.visible.filter((notice) => notice.id !== action.id);
-      return fillPendingNotices(visible, state.pending);
-    }
-    default:
-      return state;
-  }
-}
-
-function extractMessageText(message: Partial<AgentMessage>): string {
-  const content = (message as { content?: unknown }).content;
-  if (typeof content === "string") return content;
-  if (!Array.isArray(content)) return "";
-  return content
-    .map((block) =>
-      block &&
-      typeof block === "object" &&
-      (block as { type?: string }).type === "text" &&
-      typeof (block as { text?: unknown }).text === "string"
-        ? (block as { text: string }).text
-        : "",
-    )
-    .filter(Boolean)
-    .join("\n");
-}
-
-function imageSignature(block: unknown): string {
-  if (!block || typeof block !== "object" || (block as { type?: unknown }).type !== "image") return "";
-  const source = (block as { source?: unknown }).source;
-  if (source && typeof source === "object") {
-    const src = source as { type?: unknown; media_type?: unknown; data?: unknown; url?: unknown };
-    return [
-      src.type === "url" ? "url" : "base64",
-      typeof src.media_type === "string" ? src.media_type : "",
-      typeof src.data === "string" ? src.data : "",
-      typeof src.url === "string" ? src.url : "",
-    ].join(":");
-  }
-  const flat = block as { data?: unknown; mimeType?: unknown };
-  return [
-    "base64",
-    typeof flat.mimeType === "string" ? flat.mimeType : "",
-    typeof flat.data === "string" ? flat.data : "",
-    "",
-  ].join(":");
-}
-
-function userMessageKey(message: Partial<AgentMessage>): string {
-  const content = (message as { content?: unknown }).content;
-  if (typeof content === "string") return JSON.stringify({ text: content, images: [] });
-  if (!Array.isArray(content)) return JSON.stringify({ text: "", images: [] });
-  return JSON.stringify({
-    text: extractMessageText(message),
-    images: content.map(imageSignature).filter(Boolean),
-  });
-}
-
-function readCompactResult(result: unknown, reason: string): CompactResultInfo | null {
-  if (!result || typeof result !== "object") return null;
-  const r = result as CompactCommandResult;
-  if (typeof r.tokensBefore !== "number" || typeof r.estimatedTokensAfter !== "number") return null;
-  return { reason, tokensBefore: r.tokensBefore, estimatedTokensAfter: r.estimatedTokensAfter };
-}
-
-export interface ChatInputHandle {
-  insertText: (text: string) => void;
-  insertIfEmpty: (content: string) => void;
-  prependText: (text: string) => void;
-  addImages: (files: File[]) => void;
-}
-
-export interface AttachedImage {
-  data: string;
-  mimeType: string;
-  previewUrl: string;
-}
-
-type SelectedModel = { provider: string; modelId: string };
-type ModelEntry = { id: string; name: string; provider: string };
-type SlashCommandsResponse = {
-  commands?: SlashCommandInfo[];
-};
-
-/** A queued message plus where it came from, so single-item edits keep order. */
-export type QueuedKind = "steering" | "followUp";
-interface QueuedEntry {
-  text: string;
-  kind: QueuedKind;
-  index: number;
-}
-
-function entriesFromQueue(queue: { steering: string[]; followUp: string[] }): QueuedEntry[] {
-  return [
-    ...queue.steering.map((text, index) => ({ text, kind: "steering" as const, index })),
-    ...queue.followUp.map((text, index) => ({ text, kind: "followUp" as const, index })),
-  ];
-}
-
-function queuedMessagesFrom(entries: QueuedEntry[]): QueuedMessages {
-  return {
-    steering: entries.filter((entry) => entry.kind === "steering").map((entry) => entry.text),
-    followUp: entries.filter((entry) => entry.kind === "followUp").map((entry) => entry.text),
-  };
-}
+export type {
+  AgentPhase,
+  AttachedImage,
+  BuiltinSlashCommandResult,
+  ChatInputHandle,
+  CompactResultInfo,
+  NoticeItem,
+  NoticeType,
+  QueuedMessages,
+  SessionData,
+  SlashCommandInfo,
+} from "./agent-session/helpers";
 
 export function useAgentSession(opts: UseAgentSessionOptions) {
   const {
