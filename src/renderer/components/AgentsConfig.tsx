@@ -146,7 +146,7 @@ export function AgentsConfig({ cwd }: Props) {
                   padding: "5px 8px",
                   fontSize: 12,
                   borderRadius: "var(--radius-sm)",
-                  background: "var(--bg)",
+                  background: "var(--view-bg)",
                   color: "var(--text)",
                   border: "1px solid var(--border)",
                 }}
@@ -245,7 +245,7 @@ export function AgentsConfig({ cwd }: Props) {
                     padding: "5px 7px",
                     fontSize: 11,
                     borderRadius: "var(--radius-sm)",
-                    background: "var(--bg)",
+                    background: "var(--view-bg)",
                     color: agent.model ? "var(--text)" : "var(--text-dim)",
                     border: "1px solid var(--border)",
                   }}

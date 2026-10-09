@@ -91,7 +91,7 @@ export function TrajectoryView({ sessionId, refreshKey }: Props) {
   }
 
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "var(--bg)" }}>
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "var(--view-bg)" }}>
       <div
         style={{
           display: "flex",

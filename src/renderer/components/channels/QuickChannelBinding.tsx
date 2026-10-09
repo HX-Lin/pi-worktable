@@ -238,7 +238,7 @@ export function QuickChannelBinding({ sessionId, snapshot, isMobile, onSnapshotC
               overscrollBehavior: "contain",
               border: "1px solid var(--border)",
               borderRadius: "var(--radius-md)",
-              background: "var(--bg)",
+              background: "var(--view-bg)",
               boxShadow: "var(--shadow-lg)",
               padding: 12,
               outline: "none",

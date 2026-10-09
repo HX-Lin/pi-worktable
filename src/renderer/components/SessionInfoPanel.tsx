@@ -35,7 +35,7 @@ export function SessionInfoPanel({ stats: sessionStats, contextUsage, isMobile }
     <div
       className="session-info-popover"
       style={{
-        background: "var(--bg-panel)",
+        background: "var(--view-bg)",
         borderBottom: "1px solid var(--border)",
         boxShadow: "var(--shadow-md)",
         padding: "12px 16px",

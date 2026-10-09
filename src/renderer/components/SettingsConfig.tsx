@@ -273,7 +273,7 @@ export function SettingsConfig({
           maxWidth: "calc(100vw - 16px)",
           height: isMobile ? "calc(100dvh - 16px)" : "82vh",
           maxHeight: "calc(100dvh - 16px)",
-          background: "var(--bg)",
+          background: "var(--view-bg)",
           border: "1px solid var(--border)",
           borderRadius: "var(--radius-lg)",
           display: "flex",
@@ -340,7 +340,7 @@ export function SettingsConfig({
               borderRight: "1px solid var(--border)",
               overflowY: "auto",
               flexShrink: 0,
-              background: "var(--bg-panel)",
+              background: "var(--view-bg)",
             }}
           >
             {tabs.map((tab) => {

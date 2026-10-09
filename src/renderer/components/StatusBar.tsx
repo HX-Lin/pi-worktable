@@ -68,7 +68,7 @@ export function StatusBar({
         flexShrink: 0,
         height: 26,
         padding: "0 10px",
-        background: "var(--bg-panel)",
+        background: "var(--view-bg)",
         borderTop: "1px solid var(--border)",
         fontSize: 11,
         color: "var(--text-muted)",

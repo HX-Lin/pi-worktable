@@ -278,7 +278,7 @@ export function ComposerScmBar({ cwd, refreshKey = 0, worktrees }: Props) {
                 padding: "6px 8px",
                 fontSize: 12,
                 borderRadius: "var(--radius-sm)",
-                background: "var(--bg)",
+                background: "var(--view-bg)",
                 color: "var(--text)",
                 border: "1px solid var(--border)",
                 fontFamily: "inherit",

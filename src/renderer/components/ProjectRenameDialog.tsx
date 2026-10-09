@@ -44,7 +44,7 @@ export function ProjectRenameDialog({ root, value, onValueChange, onCommit, onCa
         style={{
           width: 360,
           maxWidth: "calc(100vw - 40px)",
-          background: "var(--bg-panel)",
+          background: "var(--view-bg)",
           border: "1px solid var(--border)",
           borderRadius: "var(--radius-lg)",
           padding: 18,

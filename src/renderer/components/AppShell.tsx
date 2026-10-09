@@ -1421,7 +1421,7 @@ export function AppShell() {
                           zIndex: 6,
                           display: "flex",
                           flexDirection: "column",
-                          background: "var(--bg)",
+                          background: "var(--view-bg)",
                         }}
                       >
                         {view.render({
